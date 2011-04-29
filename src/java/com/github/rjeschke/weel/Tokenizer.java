@@ -341,6 +341,9 @@ final class Tokenizer
                 case '*':
                     this.read();
                     return Token.MUL;
+                case '?':
+                    this.read();
+                    return Token.TERNARY;
                 case '/':
                     this.read();
                     if (this.current == '/')
@@ -471,6 +474,11 @@ final class Tokenizer
                     if (this.current == ':')
                     {
                         this.read();
+                        if(this.current == ':')
+                        {
+                            this.read();
+                            return Token.TRIPPLE_COLON;
+                        }
                         return Token.DOUBLE_COLON;
                     }
                     return Token.COLON;

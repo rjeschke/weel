@@ -9,8 +9,7 @@ package com.github.rjeschke.weel;
  * 
  * @author René Jeschke <rene_jeschke@yahoo.de>
  */
-// FIXME Finalize more!
-public final class WeelFunction
+public class WeelFunction
 {
     /** The Weel function index. */
     int index;
@@ -20,9 +19,14 @@ public final class WeelFunction
     int arguments;
     /** Does this function return a value? */
     boolean returnsValue;
-    /** Function type. */
-    @Deprecated
-    WeelFunctionType type;
+    /** Virtual function? */
+    boolean isVirtual;
+    /** Function parent. */
+    WeelFunction parent;
+    /** Closure environment. */
+    Value[] environment;
+    /** Environment indices. */
+    int[] envLocals;
 
     /** The class name. */
     String clazz;
@@ -32,6 +36,39 @@ public final class WeelFunction
     Object instance;
     /** Invoker for invocation from outside Weel compiled code. */
     WeelInvoker invoker;
+
+    /**
+     * Creates a virtual function from this function.
+     * 
+     * @param runtime
+     *            The Weel runtime.
+     * @return The cloned virtual function.
+     */
+    WeelFunction cloneVirtual(final Runtime runtime)
+    {
+        final WeelFunction func = new WeelFunction();
+
+        func.index = this.index;
+        func.name = "ANON";
+        func.arguments = this.arguments;
+        func.returnsValue = this.returnsValue;
+        func.isVirtual = true;
+        func.parent = this;
+
+        // Closure?
+        if (this.envLocals != null)
+        {
+            // Yes, save environment
+            func.environment = new Value[this.envLocals.length];
+            for (int i = 0; i < this.envLocals.length; i++)
+            {
+                // We clone here ...
+                func.environment[i] = runtime.gloc(this.envLocals[i]);
+            }
+        }
+
+        return func;
+    }
 
     /**
      * Calls WeelInvoker.initialize().
@@ -52,14 +89,17 @@ public final class WeelFunction
      */
     public void invoke(final Runtime runtime)
     {
-        this.invoker.invoke(runtime);
+        if (this.isVirtual)
+            this.parent.invoker.invoke(runtime, this);
+        else
+            this.invoker.invoke(runtime);
     }
 
     /** @see java.lang.Object#toString() */
     @Override
     public String toString()
     {
-        return (this.returnsValue ? "function " : "sub ") + this.name + "("
+        return (this.returnsValue ? "func " : "sub ") + this.name + "("
                 + this.arguments + ")";
     }
 

@@ -138,12 +138,12 @@ public class Main
         
         ByteList code = mw.getCodeList();
         
-        mw.wLoad(1);
-        mw.wLoad(2);
+        mw.dLoad(1);
+        mw.dLoad(2);
         mw.getCodeList().add(JvmOp.ALOAD_0);
         mw.getCodeList().add(JvmOp.INVOKEVIRTUAL);
         mw.getCodeList().addShort(cw.addMethodRefConstant("com.github.rjeschke.weel.Runtime", "add", "()V"));
-        mw.wLoad(42);
+        mw.dLoad(42);
         mw.getCodeList().add(JvmOp.ALOAD_0);
         mw.getCodeList().add(JvmOp.INVOKEVIRTUAL);
         mw.getCodeList().addShort(cw.addMethodRefConstant("com.github.rjeschke.weel.Runtime", "mul", "()V"));

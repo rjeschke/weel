@@ -17,19 +17,248 @@ import java.util.Map.Entry;
  */
 public final class ValueMap implements Iterable<Entry<Value, Value>>
 {
+    /** Integer keys. */
     private Map<Integer, Integer> intKeys = new HashMap<Integer, Integer>();
+    /** String keys. */
     private Map<String, Integer> strKeys = new HashMap<String, Integer>();
+    /** The size. */
     int size;
+    /** Is this map ordered? */
     private boolean ordered = true;
+    /** The data. */
     ArrayList<Value> data;
+    /** The keys. */
     ArrayList<Value> keys;
 
+    /**
+     * Creates a new ValueMap.
+     */
     public ValueMap()
     {
         this.data = new ArrayList<Value>();
         this.keys = new ArrayList<Value>();
     }
 
+    /**
+     * Creates an ordered ValueMap with the given size.
+     * 
+     * @param size
+     *            The size.
+     */
+    public ValueMap(final int size)
+    {
+        if (size > 0)
+        {
+            this.data = new ArrayList<Value>(size);
+            this.keys = new ArrayList<Value>(size);
+            for (int i = 0; i < size; i++)
+            {
+                this.data.add(new Value());
+                this.keys.add(new Value(i));
+            }
+            this.size = size;
+        }
+        else
+        {
+            this.data = new ArrayList<Value>();
+            this.keys = new ArrayList<Value>();
+        }
+    }
+
+    /**
+     * Gets the size of this map.
+     * 
+     * @return The size.
+     */
+    public int size()
+    {
+        return this.size;
+    }
+
+    /**
+     * Get the value at the given index.
+     * 
+     * @param index
+     *            The index.
+     * @return The value or a Value of type NULL.
+     * @throws WeelException
+     *             If the index is invalid.
+     */
+    public Value get(final Value index)
+    {
+        final Value out = new Value();
+        this.get(index, out);
+        return out;
+    }
+
+    /**
+     * Get the value at the given index.
+     * 
+     * @param index
+     *            The index.
+     * @return The value or a Value of type NULL.
+     * @throws WeelException
+     *             If the index is invalid.
+     */
+    public Value get(final int index)
+    {
+        return this.get(new Value(index));
+    }
+
+    /**
+     * Get the value at the given index.
+     * 
+     * @param index
+     *            The index.
+     * @return The value or a Value of type NULL.
+     * @throws WeelException
+     *             If the index is invalid.
+     */
+    public Value get(final String index)
+    {
+        return this.get(new Value(index));
+    }
+
+    /**
+     * Gets the value at the given index.
+     * 
+     * @param index
+     *            The index.
+     * @param out
+     *            The output Value.
+     * @throws WeelException
+     *             If the index is invalid.
+     */
+    public void get(final Value index, final Value out)
+    {
+        switch (index.type)
+        {
+        case NUMBER:
+        {
+            final int idx = (int) index.number;
+            if (this.ordered)
+            {
+                if (idx < 0 || idx >= this.size)
+                    out.setNull();
+                else
+                    this.data.get(idx).copyTo(out);
+
+            }
+            else
+            {
+                final Integer idx2 = this.intKeys.get(idx);
+                if (idx2 != null)
+                    this.data.get(idx2).copyTo(out);
+                else
+                    out.setNull();
+            }
+            break;
+        }
+        case STRING:
+        {
+            final Integer idx = this.strKeys.get(index.string);
+            if (idx != null)
+                this.data.get(idx).copyTo(out);
+            else
+                out.setNull();
+            break;
+        }
+        default:
+            throw new WeelException("Illegal map index type: " + index.type);
+        }
+    }
+
+    /**
+     * Creates integer key mappings for ordered to unordered transition.
+     */
+    private void unorder()
+    {
+        // There can only be integer keys inside the map right now
+        for (int i = 0; i < this.size; i++)
+        {
+            this.intKeys.put((int) this.keys.get(i).number, i);
+        }
+    }
+
+    /**
+     * Sets the value at the given index. Maps grow automatically.
+     * 
+     * @param index
+     *            The index.
+     * @param value
+     *            The value.
+     * @throws WeelException
+     *             If the index is invalid.
+     */
+    public void set(final Value index, final Value value)
+    {
+        switch (index.type)
+        {
+        case NUMBER:
+        {
+            final int idx = (int) index.number;
+            if (this.ordered && idx >= 0 && idx <= this.size)
+            {
+                if (idx == this.size)
+                {
+                    this.keys.add(new Value(idx));
+                    this.data.add(value.clone());
+                    this.size++;
+                }
+                else
+                {
+                    value.copyTo(this.data.get(idx));
+                }
+            }
+            else
+            {
+                if (this.ordered)
+                {
+                    this.ordered = false;
+                    this.unorder();
+                }
+                final Integer idx2 = this.intKeys.get(idx);
+                if (idx2 != null)
+                {
+                    value.copyTo(this.data.get(idx2));
+                }
+                else
+                {
+                    this.intKeys.put(idx, this.size);
+                    this.keys.add(new Value(idx));
+                    this.data.add(value.clone());
+                    this.size++;
+                }
+            }
+            break;
+        }
+        case STRING:
+        {
+            if (this.ordered)
+            {
+                this.ordered = false;
+                this.unorder();
+            }
+            final Integer idx = this.strKeys.get(index.string);
+            if (idx != null)
+            {
+                value.copyTo(this.data.get(idx));
+            }
+            else
+            {
+                this.strKeys.put(index.string, this.size);
+                this.keys.add(index.clone());
+                this.data.add(value.clone());
+                this.size++;
+            }
+            break;
+        }
+        default:
+            throw new WeelException("Illegal map index type: " + index.type);
+        }
+    }
+
+    /** @see java.lang.Iterable#iterator() */
     @Override
     public Iterator<Entry<Value, Value>> iterator()
     {

@@ -66,4 +66,28 @@ final class WeelReflectionInvoker implements WeelInvoker
             throw new WeelException(e);
         }
     }
+
+    /** @see com.github.rjeschke.weel.WeelInvoker#invoke(Runtime, WeelFunction) */
+    @Override
+    public void invoke(Runtime runtime, WeelFunction function)
+    {
+        try
+        {
+            runtime.initVirtual(function);
+            this.method.invoke(this.function.instance, runtime);
+            runtime.exitVirtual();
+        }
+        catch (IllegalArgumentException e)
+        {
+            throw new WeelException(e);
+        }
+        catch (IllegalAccessException e)
+        {
+            throw new WeelException(e);
+        }
+        catch (InvocationTargetException e)
+        {
+            throw new WeelException(e);
+        }
+    }
 }

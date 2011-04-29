@@ -20,6 +20,17 @@ interface WeelInvoker
     public void invoke(final Runtime runtime);
 
     /**
+     * Invokes a Weel virtual function.
+     * 
+     * @param runtime
+     *            The Weel Runtime.
+     * @param function
+     *            The virtual WeelFunction.
+     * 
+     */
+    public void invoke(final Runtime runtime, final WeelFunction function);
+
+    /**
      * Initializes this invoker.
      * 
      * @param function

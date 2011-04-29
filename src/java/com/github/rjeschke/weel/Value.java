@@ -12,7 +12,7 @@ package com.github.rjeschke.weel;
 public final class Value
 {
     /** This Value's type. */
-    ValueType type = ValueType.NULL;
+    ValueType type;
     /** This Value's double value. */
     double number;
     /** This Value's String value. */
@@ -24,6 +24,80 @@ public final class Value
     /** This Value's object. */
     Object object;
 
+    /**
+     * Creates a Value of type NULL.
+     */
+    public Value()
+    {
+        this.type = ValueType.NULL;
+    }
+    
+    /**
+     * Creates a Value of type NUMBER.
+     * 
+     * @param value The value.
+     */
+    public Value(final int value)
+    {
+        this.type = ValueType.NUMBER;
+        this.number = value;
+    }
+
+    /**
+     * Creates a Value of type NUMBER.
+     * 
+     * @param value The value.
+     */
+    public Value(final double value)
+    {
+        this.type = ValueType.NUMBER;
+        this.number = value;
+    }
+
+    /**
+     * Creates a Value of type STRING.
+     * 
+     * @param value The value.
+     */
+    public Value(final String value)
+    {
+        this.type = ValueType.STRING;
+        this.string = value;
+    }
+    
+    /**
+     * Creates a Value of type MAP.
+     * 
+     * @param value The value.
+     */
+    public Value(final ValueMap value)
+    {
+        this.type = ValueType.MAP;
+        this.map = value;
+    }
+    
+    /**
+     * Creates a Value of type FUNCTION.
+     * 
+     * @param value The value.
+     */
+    public Value(final WeelFunction value)
+    {
+        this.type = ValueType.FUNCTION;
+        this.function = value;
+    }
+    
+    /**
+     * Creates a Value of type OBJECT.
+     * 
+     * @param value The value.
+     */
+    public Value(final Object value)
+    {
+        this.type = ValueType.OBJECT;
+        this.object = value;
+    }
+    
     /**
      * Changes the type of this Value to <code>NULL</code>, clears references.
      */

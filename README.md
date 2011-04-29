@@ -46,8 +46,10 @@ runtime class for its operation.
 *   Fully written in Java without any external dependencies
 *   Hand-written compiler and tokenizer
 *   Easily extendible by Java methods 
-*   Multithreading support with simple locking mechanisms
+*   Multithreading support with a simple locking mechanism to protect
+    global variable accessing 
 *   Basic OOP functionality (by using maps)
+*   Closures and anonymous functions
 *   Possibility to export the compiled scripts to avoid making
     your script sources publicly viewable  
 
@@ -57,7 +59,78 @@ runtime class for its operation.
 
 This is just a rough outline of the framework.
 
+### How would Weel source code look like?
 
+	func fold(list, fc)
+		if size(list) == 0 then
+			return null
+		elseif size(list) == 1 then
+			return list[0]
+		else
+			ret = fc(list[0], list[1])
+			for i = 2, size(list) - 1 do
+				ret = fc(ret, list[i])
+		    end
+		    return ret
+		end
+	end
+
+	ilist = {1, 2, 3, 4}
+	slist = {"Hello", "world!"}
+	
+	println("Result: "..fold(ilist, func(a, b) return a + b; end));
+	// OUTPUT: Result: 10
+	
+	println("Result: "..fold(slist, 
+		func(a, b) 
+			return a.." "..b
+		end));
+	// OUTPUT: Result: Hello world!
+	
+	func create(var)
+		return 
+			sub()
+				print(var)
+			end
+	end
+
+	f0 = create("Foo");
+	f1 = create("Bar");
+	f0() print(" ")	f1() println()
+	// OUTPUT: Foo Bar
+	
+	clazz = {}
+	clazz.var = "Hello world!"
+	
+	sub clazz::println()
+		println(this->var)
+	end
+	
+	my = new(clazz)
+	my->var = "Hello John!"
+	my->println()
+	// OUTPUT: "Hello John!"
+	
+	clazz->println()
+	// OUTPUT: Hello world!
+
+	config = {
+		user = {
+			name = "John Doe"
+		},
+		prefs = {
+			nocolors = false,
+			verbose = true,
+			shell = "/bin/bash"
+		},
+		flags = { 0, 3, -2, 1 }
+	}
+	
+	println(config.user.name)
+	// OUTPUT: John Doe
+	println(config["prefs"]["verbose"])
+	// OUTPUT: -1
+	
 ***
 
 [Lua]: http://www.lua.org/ "The Programming Language Lua"

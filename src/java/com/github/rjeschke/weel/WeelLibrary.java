@@ -4,6 +4,7 @@
  */
 package com.github.rjeschke.weel;
 
+import com.github.rjeschke.weel.annotations.WeelMethod;
 import com.github.rjeschke.weel.annotations.WeelRawMethod;
 
 /**
@@ -17,6 +18,11 @@ public final class WeelLibrary
      * *** Console functions ***
      */
 
+    @WeelMethod
+    public final static double test(double a, double b)
+    {
+        return a + b;
+    }
     /**
      * <code>println(v)</code>
      * <p>

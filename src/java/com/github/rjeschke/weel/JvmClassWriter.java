@@ -9,24 +9,44 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * Class for writing Java .class files.
+ * 
+ * @author René Jeschke <rene_jeschke@yahoo.de>
+ */
 final class JvmClassWriter
 {
+    /** .class file version 50.0 */
     private final static int CLASS_VERSION = 0x00320000;
+    /** Constant pool. */
     private ArrayList<JvmConstant> constants = new ArrayList<JvmConstant>();
+    /** Constant pool hashmap. */
     private HashMap<JvmConstant, Integer> mapConstants = new HashMap<JvmConstant, Integer>();
+    /** Methods. */
     private ArrayList<JvmMethodWriter> methods = new ArrayList<JvmMethodWriter>();
+    /** The full class name. */
     private String className;
 
+    /**
+     * Constructor.
+     * 
+     * @param className The full class name.
+     */
     public JvmClassWriter(final String className)
     {
+        // Insert unused constant #0
         this.constants.add(null);
         this.className = className;
+        // Put class constant
         this.addConstant(new JvmConstant(JvmConstant.CONSTANT_Class, this
                 .addConstant(new JvmConstant(className.replace('.', '/')))));
+        // Put 'Code' constant
         this.addConstant(new JvmConstant("Code"));
+        // Put super class constant
         this.addConstant(new JvmConstant(JvmConstant.CONSTANT_Class, this
                 .addConstant(new JvmConstant("java/lang/Object"))));
 
+        // Create default constructor
         final JvmMethodWriter mw = this.createMethod("<init>", "()V");
         mw.maxLocals = mw.maxStack = 1;
         mw.access = Modifier.PRIVATE;
@@ -37,17 +57,30 @@ final class JvmClassWriter
         mw.code.add(JvmOp.RETURN);
     }
 
+    /**
+     * Creates a method.
+     * 
+     * @param methodName The name of the method.
+     * @param descriptor The descriptor.
+     * @return A JvmMethodWriter.
+     */
     public JvmMethodWriter createMethod(final String methodName,
-            final String signature)
+            final String descriptor)
     {
         final JvmMethodWriter mw = new JvmMethodWriter(this, methodName,
-                signature);
+                descriptor);
         mw.nameIndex = this.addConstant(new JvmConstant(methodName));
-        mw.descriptorIndex = this.addConstant(new JvmConstant(signature));
+        mw.descriptorIndex = this.addConstant(new JvmConstant(descriptor));
         this.methods.add(mw);
         return mw;
     }
 
+    /**
+     * Adds a constant.
+     * 
+     * @param c The constant.
+     * @return The index of this constant in the constant pool.
+     */
     public int addConstant(final JvmConstant c)
     {
         final Integer t = this.mapConstants.get(c);
@@ -75,16 +108,23 @@ final class JvmClassWriter
                                 .addConstant(new JvmConstant(type))))));
     }
 
+    /**
+     * Builds a .class file.
+     * 
+     * @return A byte array containing the .class file.
+     */
     public byte[] build()
     {
         final ByteList bytes = new ByteList();
 
         try
         {
+            // .class header
             bytes.addInteger(0xcafebabe);
             bytes.addShort(CLASS_VERSION);
             bytes.addShort(CLASS_VERSION >> 16);
 
+            // write constants
             bytes.addShort(this.constants.size());
 
             for (int i = 1; i < this.constants.size(); i++)
@@ -134,12 +174,14 @@ final class JvmClassWriter
                 }
             }
 
+            // class access modifiers
             bytes.addShort(Modifier.PUBLIC | Modifier.FINAL);
             bytes.addShort(2); // this
             bytes.addShort(5); // super class
             bytes.addShort(0); // interfaces
             bytes.addShort(0); // fields
 
+            // write methods
             bytes.addShort(this.methods.size());
             for (int i = 0; i < this.methods.size(); i++)
             {
@@ -171,6 +213,12 @@ final class JvmClassWriter
         return bytes.toArray();
     }
 
+    /**
+     * Builds a method descriptor.
+     * 
+     * @param args The types.
+     * @return The method descriptor.
+     */
     public static String buildDescriptor(Class<?>... args)
     {
         final StringBuilder sb = new StringBuilder();

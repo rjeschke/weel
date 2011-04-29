@@ -10,8 +10,8 @@ import java.util.ArrayList;
  * Weel runtime.
  * 
  * <p>
- * As you can see all methods declared in Runtime are public. This is by design
- * to support the Weel compiling method.
+ * As you can see that most of the methods declared in Runtime are public. This
+ * is by design to support the Weel compiling method.
  * </p>
  * <p>
  * You might say that this can cause serious trouble when someone doesn't know
@@ -24,18 +24,28 @@ import java.util.ArrayList;
  */
 public final class Runtime
 {
+    /** Default size of the operand stack. */
+    public final static int DEFAULT_VALUE_STACK_SIZE = 8192;
+    /** Default size of the function frame stack. */
+    public final static int DEFAULT_FRAME_STACK_SIZE = 4096;
+    /** Default size of the virtual function stack. */
+    public final static int DEFAULT_VIRTUAL_STACK_SIZE = 256;
     /** The creating Weel instance. */
     final Weel mother;
     /** The Weel stack. */
-    private final Value[] stack = new Value[4096];
+    private final Value[] stack = new Value[DEFAULT_VALUE_STACK_SIZE];
     /** Weel function frame start. */
-    private final int[] frameStart = new int[4096];
+    private final int[] frameStart = new int[DEFAULT_FRAME_STACK_SIZE];
     /** Weel function frame size. */
-    private final int[] frameSize = new int[4096];
+    private final int[] frameSize = new int[DEFAULT_FRAME_STACK_SIZE];
+    /** Weel virtual function stack. */
+    private final WeelFunction[] virtualFunctions = new WeelFunction[DEFAULT_VIRTUAL_STACK_SIZE];
     /** The Weel stack pointer. */
     private int sp = -1;
     /** The Weel frame pointer. */
     private int fp = -1;
+    /** The Weel virtual function pointer. */
+    private int vp = -1;
     /** Global variables. */
     private final ArrayList<Value> globals;
     /** Function list. */
@@ -147,6 +157,38 @@ public final class Runtime
     public void lglob(final int index)
     {
         this.globals.get(index).copyTo(this.stack[++this.sp]);
+    }
+
+    /**
+     * Loads a Value from an inherited environment.
+     * 
+     * <p>
+     * <code>... &rArr; ..., value </code>
+     * </p>
+     * 
+     * @param index
+     *            The index of the variable.
+     */
+    public void linenv(final int index)
+    {
+        this.virtualFunctions[this.vp].environment[index]
+                .copyTo(this.stack[++this.sp]);
+    }
+
+    /**
+     * Stores a Value into a inherited environment.
+     * 
+     * <p>
+     * <code>..., value &rArr; ... </code>
+     * </p>
+     * 
+     * @param index
+     *            The index of the variable.
+     */
+    public void sinenv(final int index)
+    {
+        this.stack[this.sp--]
+                .copyTo(this.virtualFunctions[this.vp].environment[index]);
     }
 
     /**
@@ -323,6 +365,87 @@ public final class Runtime
     }
 
     /**
+     * Binary and.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ..., value1 &amp; value2 </code>
+     * </p>
+     * 
+     * <p>
+     * All binary operations in Weel are performed on 32 Bit integer. As Weel
+     * uses (like most other weakly-types languages) double as its number type,
+     * and doubles only have 52(+1) Bits mantissa, only 32 Bit binary integer
+     * arithmetics makes sense.
+     * </p>
+     */
+    public void and()
+    {
+        final Value b = this.stack[this.sp--];
+        final Value a = this.stack[this.sp];
+        a.number = (int) a.number & (int) b.number;
+    }
+
+    /**
+     * Binary or.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ..., value1 | value2 </code>
+     * </p>
+     * 
+     * @see #and()
+     */
+    public void or()
+    {
+        final Value b = this.stack[this.sp--];
+        final Value a = this.stack[this.sp];
+        a.number = (int) a.number | (int) b.number;
+    }
+
+    /**
+     * Binary exclusive or.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ..., value1 ^ value2 </code>
+     * </p>
+     * 
+     * @see #and()
+     */
+    public void xor()
+    {
+        final Value b = this.stack[this.sp--];
+        final Value a = this.stack[this.sp];
+        a.number = (int) a.number ^ (int) b.number;
+    }
+
+    /**
+     * Binary not.
+     * 
+     * <p>
+     * <code>..., value &rArr; ..., ~value</code>
+     * </p>
+     * 
+     * @see #and()
+     */
+    public void not()
+    {
+        final Value a = this.stack[this.sp];
+        a.number = ~(int) a.number;
+    }
+
+    /**
+     * Logical not.
+     * 
+     * <p>
+     * <code>..., value &rArr; ..., !toBoolean(value)</code>
+     * </p>
+     */
+    public void lnot()
+    {
+        this.stack[this.sp].number = this.stack[this.sp].toBoolean() ? 0 : -1;
+        this.stack[this.sp].type = ValueType.NUMBER;
+    }
+
+    /**
      * Loads a float value onto the Weel stack.
      * 
      * <p>
@@ -387,6 +510,54 @@ public final class Runtime
     }
 
     /**
+     * Loads a ValueMap value onto the Weel stack.
+     * 
+     * <p>
+     * <code>... &rArr; ..., value</code>
+     * </p>
+     * 
+     * @param value
+     *            ValueMap value to load.
+     */
+    public void load(final ValueMap value)
+    {
+        this.stack[++this.sp].type = ValueType.MAP;
+        this.stack[this.sp].map = value;
+    }
+
+    /**
+     * Loads a function value onto the Weel stack.
+     * 
+     * <p>
+     * <code>... &rArr; ..., value</code>
+     * </p>
+     * 
+     * @param value
+     *            Function value to load.
+     */
+    public void load(final WeelFunction value)
+    {
+        this.stack[++this.sp].type = ValueType.FUNCTION;
+        this.stack[this.sp].function = value;
+    }
+
+    /**
+     * Loads an object value onto the Weel stack.
+     * 
+     * <p>
+     * <code>... &rArr; ..., value</code>
+     * </p>
+     * 
+     * @param value
+     *            Object value to load.
+     */
+    public void load(final Object value)
+    {
+        this.stack[++this.sp].type = ValueType.OBJECT;
+        this.stack[this.sp].object = value;
+    }
+
+    /**
      * Opens a function frame.
      * 
      * @param args
@@ -444,26 +615,110 @@ public final class Runtime
      * 
      * @param args
      *            Number of arguments.
+     * @param shouldReturn
+     *            Flag indicating that the context expects a return value.
      * @throws WeelException
-     *             If the target Value is not a function.
+     *             If the target Value is not a function or the number of
+     *             arguments doesn't match.
      */
-    public void stackCall(final int args)
+    public void stackCall(final int args, final boolean shouldReturn)
     {
         final WeelFunction func = this.stack[this.sp - args].getFunction();
+
+        if (func.arguments != args)
+            throw new WeelException("Argument count mismatch, expected " + args
+                    + " got " + func.arguments);
+
         func.invoke(this);
+        // Check return value
         if (func.returnsValue)
-            this.stack[this.sp].copyTo(this.stack[this.sp - 1]);
-        this.sp--;
+        {
+            if (shouldReturn)
+            {
+                this.stack[this.sp].copyTo(this.stack[this.sp - 1]);
+                --this.sp;
+            }
+            else
+            {
+                this.sp -= 2;
+            }
+        }
+        else if (shouldReturn)
+        {
+            this.stack[this.sp].setNull();
+        }
+        else
+        {
+            --this.sp;
+        }
+    }
+
+    /**
+     * Creates a map.
+     * 
+     * <p>
+     * <code>... &rArr; ..., map</code>
+     * </p>
+     */
+    public void createMap()
+    {
+        this.stack[++this.sp].type = ValueType.MAP;
+        this.stack[this.sp].map = new ValueMap();
+    }
+
+    /**
+     * Creates an ordered map of the given size.
+     * 
+     * <p>
+     * <code>... &rArr; ..., map</code>
+     * </p>
+     */
+    public void createMap(final int size)
+    {
+        this.stack[++this.sp].type = ValueType.MAP;
+        this.stack[this.sp].map = new ValueMap(size);
+    }
+
+    /**
+     * Gets a value from a map.
+     * 
+     * <p>
+     * <code>..., map, index &rArr; ..., value</code>
+     * </p>
+     * 
+     * @throws WeelException
+     *             If the 'map' is not a ValueMap.
+     */
+    public void getMap()
+    {
+        final ValueMap map = this.stack[this.sp - 1].getMap();
+        map.get(this.stack[this.sp], this.stack[this.sp - 1]);
+        --this.sp;
+    }
+
+    /**
+     * Sets a value in a map.
+     * 
+     * <p>
+     * <code>..., map, index, value &rArr; ...</code>
+     * </p>
+     * 
+     * @throws WeelException
+     *             If the 'map' is not a ValueMap.
+     */
+    public void setMap()
+    {
+        final ValueMap map = this.stack[this.sp - 2].getMap();
+        map.set(this.stack[this.sp - 1], this.stack[this.sp]);
+        this.sp -= 3;
     }
 
     /**
      * Returns the Weel instance which created this Runtime.
-     * <p>
-     * <em>Are you my mummy?</em>
-     * </p>
      * 
      * @return The Weel instance.
      */
+    // Are you my mummy?
     public Weel getMother()
     {
         return this.mother;
@@ -610,5 +865,50 @@ public final class Runtime
         final Value value = this.stack[this.sp + offset];
         return value.type == ValueType.NULL ? null : this.stack[this.sp
                 + offset].getObject();
+    }
+
+    /**
+     * Creates a virtual function from a static anonymous function.
+     * 
+     * @param index
+     *            The function index.
+     */
+    public void createVirtual(final int index)
+    {
+        this.stack[++this.sp].type = ValueType.FUNCTION;
+        this.stack[this.sp].function = this.mother.functions.get(index)
+                .cloneVirtual(this);
+    }
+
+    /**
+     * Initializes a virtual function. Called from invokers only.
+     * 
+     * @param function
+     *            The virtual function.
+     */
+    void initVirtual(final WeelFunction function)
+    {
+        this.virtualFunctions[++this.vp] = function;
+    }
+
+    /**
+     * Ends a virtual function. Called from invokers only.
+     */
+    void exitVirtual()
+    {
+        // We nullify to give the GC a chance to collect the virtual function
+        this.virtualFunctions[this.vp--] = null;
+    }
+
+    /**
+     * Gets the clone of a local variable. Used in closures only.
+     * 
+     * @param var
+     *            The index of the local variable.
+     * @return The clone of the local variable.
+     */
+    Value gloc(final int var)
+    {
+        return this.stack[var + this.frameStart[this.fp]].clone();
     }
 }
