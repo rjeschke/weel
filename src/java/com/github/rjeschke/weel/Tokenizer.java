@@ -14,6 +14,8 @@ import java.io.Reader;
  */
 final class Tokenizer
 {
+    /** Unary operator priority. */
+    final static int UOPR_PRIORITY = 14;
     /** The input stream: */
     private Reader reader;
     /** Builder for names/strings and numbers. */
@@ -24,13 +26,15 @@ final class Tokenizer
     private int lineNumber;
     /** Current filename. */
     private String filename;
+    /** The current token. */
+    Token token;
 
     /** Tokenized reserved word. */
-    private ReservedWord reserved = null;
+    ReservedWord reserved = null;
     /** Tokenized string or name. */
-    private String string;
+    String string;
     /** Tokenized number. */
-    private double number;
+    double number;
 
     /**
      * Constructor.
@@ -41,36 +45,6 @@ final class Tokenizer
     public Tokenizer(Reader reader)
     {
         this.reader = reader;
-    }
-
-    /**
-     * Gets the last tokenized reserved word.
-     * 
-     * @return The reserved word.
-     */
-    public ReservedWord getReservedWord()
-    {
-        return this.reserved;
-    }
-
-    /**
-     * Gets the last tokenized string or name.
-     * 
-     * @return The string or name.
-     */
-    public String getString()
-    {
-        return this.string;
-    }
-
-    /**
-     * Gets the last tokenized number.
-     * 
-     * @return The number.
-     */
-    public double getNumber()
-    {
-        return this.number;
     }
 
     /**
@@ -319,7 +293,7 @@ final class Tokenizer
                 switch (this.current)
                 {
                 case -1:
-                    return Token.EOF;
+                    return this.token = Token.EOF;
                 case '\n':
                     this.lineNumber++;
                     //$FALL-THROUGH$
@@ -331,19 +305,22 @@ final class Tokenizer
                 case '"':
                 case '\'':
                     this.readString();
-                    return Token.STRING;
+                    return this.token = Token.STRING;
                 case '+':
                     this.read();
-                    return Token.ADD;
+                    return this.token = Token.ADD;
                 case '-':
                     this.read();
-                    return Token.SUB;
+                    return this.token = Token.SUB;
                 case '*':
                     this.read();
-                    return Token.MUL;
-                case '?':
+                    return this.token = Token.MUL;
+                case '%':
                     this.read();
-                    return Token.TERNARY;
+                    return this.token = Token.MODULO;
+                    // case '?':
+                    // this.read();
+                    // return this.token = Token.TERNARY;
                 case '/':
                     this.read();
                     if (this.current == '/')
@@ -381,120 +358,120 @@ final class Tokenizer
                         }
                         continue;
                     }
-                    return Token.DIV;
+                    return this.token = Token.DIV;
                 case '(':
                     this.read();
-                    return Token.BRACE_OPEN;
+                    return this.token = Token.BRACE_OPEN;
                 case ')':
                     this.read();
-                    return Token.BRACE_CLOSE;
+                    return this.token = Token.BRACE_CLOSE;
                 case '{':
                     this.read();
-                    return Token.CURLY_BRACE_OPEN;
+                    return this.token = Token.CURLY_BRACE_OPEN;
                 case '}':
                     this.read();
-                    return Token.CURLY_BRACE_CLOSE;
+                    return this.token = Token.CURLY_BRACE_CLOSE;
                 case '[':
                     this.read();
-                    return Token.BRACKET_OPEN;
+                    return this.token = Token.BRACKET_OPEN;
                 case ']':
                     this.read();
-                    return Token.BRACKET_CLOSE;
+                    return this.token = Token.BRACKET_CLOSE;
                 case '.':
                     this.read();
                     if (this.current == '.')
                     {
-                        return Token.STRING_CONCAT;
+                        return this.token = Token.STRING_CONCAT;
                     }
                     else if (Character.isDigit(this.current))
                     {
                         this.readNumber(true);
-                        return Token.NUMBER;
+                        return this.token = Token.NUMBER;
                     }
                     return Token.DOT;
                 case ';':
                     this.read();
-                    return Token.SEMICOLON;
+                    return this.token = Token.SEMICOLON;
                 case '~':
                     this.read();
-                    return Token.BINARY_NOT;
+                    return this.token = Token.BINARY_NOT;
                 case '^':
                     this.read();
-                    return Token.BINARY_XOR;
+                    return this.token = Token.BINARY_XOR;
                 case '=':
                     this.read();
                     if (this.current == '=')
                     {
                         this.read();
-                        return Token.EQUAL;
+                        return this.token = Token.EQUAL;
                     }
-                    return Token.ASSIGN;
+                    return this.token = Token.ASSIGN;
                 case '>':
                     this.read();
                     if (this.current == '=')
                     {
                         this.read();
-                        return Token.GREATER_EQUAL;
+                        return this.token = Token.GREATER_EQUAL;
                     }
-                    return Token.GREATER;
+                    return this.token = Token.GREATER;
                 case '<':
                     this.read();
                     if (this.current == '=')
                     {
                         this.read();
-                        return Token.LESS_EQUAL;
+                        return this.token = Token.LESS_EQUAL;
                     }
-                    return Token.LESS;
+                    return this.token = Token.LESS;
                 case '&':
                     this.read();
                     if (this.current == '&')
                     {
                         this.read();
-                        return Token.LOGICAL_AND;
+                        return this.token = Token.LOGICAL_AND;
                     }
-                    return Token.BINARY_AND;
+                    return this.token = Token.BINARY_AND;
                 case '|':
                     this.read();
                     if (this.current == '|')
                     {
                         this.read();
-                        return Token.LOGICAL_OR;
+                        return this.token = Token.LOGICAL_OR;
                     }
-                    return Token.BINARY_OR;
+                    return this.token = Token.BINARY_OR;
                 case '!':
                     this.read();
                     if (this.current == '=')
                     {
                         this.read();
-                        return Token.NOT_EQUAL;
+                        return this.token = Token.NOT_EQUAL;
                     }
-                    return Token.LOGICAL_NOT;
+                    return this.token = Token.LOGICAL_NOT;
                 case ':':
                     this.read();
                     if (this.current == ':')
                     {
                         this.read();
-                        if(this.current == ':')
+                        if (this.current == ':')
                         {
                             this.read();
-                            return Token.TRIPPLE_COLON;
+                            return this.token = Token.TRIPPLE_COLON;
                         }
-                        return Token.DOUBLE_COLON;
+                        return this.token = Token.DOUBLE_COLON;
                     }
-                    return Token.COLON;
+                    return this.token = Token.COLON;
                 default:
                     if (Character.isLetter(this.current) || this.current == '_')
                     {
                         this.readName();
                         if ((this.reserved = ReservedWord
                                 .fromString(this.string)) != null)
-                            return Token.RESERVED;
-                        return Token.NAME;
+                            return this.token = Token.RESERVED;
+                        return this.token = Token.NAME;
                     }
                     else if (Character.isDigit(this.current))
                     {
                         this.readNumber(false);
-                        return Token.NUMBER;
+                        return this.token = Token.NUMBER;
                     }
                     throw new WeelException(this.error(
                             "Illegal character '%c'", this.current));
@@ -504,6 +481,140 @@ final class Tokenizer
         catch (final IOException e)
         {
             throw new WeelException(this.error(e.toString()), e);
+        }
+    }
+
+    /**
+     * Checks if the token is a unary operator.
+     * 
+     * @param t
+     *            The token.
+     * @return <code>true</code> if it is a unary operator.
+     */
+    public boolean isUnary(final Token t)
+    {
+        switch (t)
+        {
+        case LOGICAL_NOT:
+        case BINARY_NOT:
+        case SUB:
+        case BRACE_OPEN:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    /**
+     * Checks if the token is a binary operator.
+     * 
+     * @param t
+     *            The token.
+     * @return <code>true</code> if it is a binary operator.
+     */
+    public boolean isBinary(final Token t)
+    {
+        switch (t)
+        {
+        case ADD:
+        case SUB:
+        case MUL:
+        case DIV:
+        case MODULO:
+        case STRING_CONCAT:
+        case EQUAL:
+        case NOT_EQUAL:
+        case LESS:
+        case LESS_EQUAL:
+        case GREATER:
+        case GREATER_EQUAL:
+        case LOGICAL_AND:
+        case LOGICAL_OR:
+        case BINARY_AND:
+        case BINARY_OR:
+        case BINARY_XOR:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    /**
+     * Check if the current token starts an expression.
+     * 
+     * @return <code>true</code> if so.
+     */
+    public boolean isExpression()
+    {
+        if (this.isUnary(this.token) || this.isBinary(this.token))
+            return true;
+
+        switch (this.token)
+        {
+        case NAME:
+        case NUMBER:
+        case STRING:
+        case BRACE_OPEN:
+        case CURLY_BRACE_OPEN:
+            return true;
+        case RESERVED:
+            switch (this.reserved)
+            {
+            case FUNC:
+            case SUB:
+            case TRUE:
+            case FALSE:
+            case NULL:
+            case THIS:
+                return true;
+            default:
+                return false;
+            }
+        default:
+            return false;
+        }
+    }
+
+    /**
+     * Gets the priority of a binary operator.
+     * 
+     * @param t
+     *            The token.
+     * @return The priority.
+     */
+    public int getBinaryPriority(final Token t)
+    {
+        switch (t)
+        {
+        case STRING_CONCAT:
+            return 13;
+        case MUL:
+        case DIV:
+        case MODULO:
+            return 12;
+        case ADD:
+        case SUB:
+            return 11;
+        case GREATER:
+        case GREATER_EQUAL:
+        case LESS:
+        case LESS_EQUAL:
+            return 9;
+        case NOT_EQUAL:
+        case EQUAL:
+            return 8;
+        case BINARY_AND:
+            return 7;
+        case BINARY_XOR:
+            return 6;
+        case BINARY_OR:
+            return 5;
+        case LOGICAL_AND:
+            return 4;
+        case LOGICAL_OR:
+            return 3;
+        default:
+            return 0;
         }
     }
 }

@@ -911,4 +911,16 @@ public final class Runtime
     {
         return this.stack[var + this.frameStart[this.fp]].clone();
     }
+
+    /**
+     * Gets the clone of a closure variable. Used in closures only.
+     * 
+     * @param var
+     *            The index of the closure variable.
+     * @return The clone of the closure variable.
+     */
+    Value ginenv(final int var)
+    {
+        return this.virtualFunctions[this.vp].environment[var];
+    }
 }

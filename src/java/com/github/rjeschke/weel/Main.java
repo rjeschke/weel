@@ -115,14 +115,14 @@ public class Main
             switch(t)
             {
             case NUMBER:
-                System.out.println(": " + tokenizer.getNumber());
+                System.out.println(": " + tokenizer.number);
                 break;
             case RESERVED:
-                System.out.println(": " + tokenizer.getReservedWord());
+                System.out.println(": " + tokenizer.reserved);
                 break;
             case STRING:
             case NAME:
-                System.out.println(": '" + tokenizer.getString() + "'");
+                System.out.println(": '" + tokenizer.string + "'");
                 break;
             default:
                 System.out.println();

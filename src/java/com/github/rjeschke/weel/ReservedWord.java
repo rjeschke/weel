@@ -13,7 +13,35 @@ import java.util.HashMap;
  */
 enum ReservedWord
 {
-    BREAK, CASE, DO, ELSE, ELSEIF, END, EXIT, FALSE, FOR, FOREACH, FUNC, GLOBAL, IF, LOCAL, LOCK, NULL, RETURN, SUB, SWITCH, TRUE, UNTIL, WHILE;
+    BREAK,
+
+    CASE,
+
+    DO,
+
+    ELSE, ELSEIF, END, EXIT,
+
+    FALSE, FOR, FOREACH, FUNC,
+
+    GLOBAL,
+
+    IF,
+
+    LOCAL, LOCK,
+
+    NULL,
+
+    OUTER,
+    
+    RETURN,
+
+    SUB, SWITCH,
+
+    THIS, TRUE,
+
+    UNTIL,
+
+    WHILE;
 
     /** String to enum mapping. */
     private final static HashMap<String, ReservedWord> map = new HashMap<String, ReservedWord>();

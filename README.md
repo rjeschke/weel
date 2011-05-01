@@ -131,6 +131,21 @@ This is just a rough outline of the framework.
 	println(config["prefs"]["verbose"])
 	// OUTPUT: -1
 	
+	myFunc = func()
+		// 'outer' explicitly declares a closure variable
+		// closure variables can be modified and used to
+		// store the state between function calls
+		outer counter = 0
+		ret = counter
+		counter += 1
+		return ret
+	end
+	
+	println(myFunc())
+	// OUTPUT: 0
+	println(myFunc())
+	// OUTPUT: 1
+	
 ***
 
 [Lua]: http://www.lua.org/ "The Programming Language Lua"

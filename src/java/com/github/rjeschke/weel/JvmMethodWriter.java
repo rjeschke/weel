@@ -31,6 +31,7 @@ final class JvmMethodWriter
         this.descriptor = descriptor;
     }
 
+    @Deprecated
     public ByteList getCodeList()
     {
         return this.code;

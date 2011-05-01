@@ -1,8 +1,11 @@
 /*
-* Copyright (C) 2011 René Jeschke <rene_jeschke@yahoo.de>
-* See LICENSE.txt for licensing information.
-*/
+ * Copyright (C) 2011 René Jeschke <rene_jeschke@yahoo.de>
+ * See LICENSE.txt for licensing information.
+ */
 package com.github.rjeschke.weel;
+
+import java.io.StringReader;
+import java.util.ArrayList;
 
 /**
  * Weel compiler.
@@ -12,61 +15,92 @@ package com.github.rjeschke.weel;
 final class Compiler
 {
     /*
-     *  Maybe it's time to re-think the whole compiler thingy ... dunno if I
-     *  really should do it the same way as I always did ... well, we'll see^^
+     * Setup:
      * 
-     *  Planned new features:
-     *  - closures and anonymous functions
-     *  Should I rename 'function' to 'func' ? Does any language use 'func' as a keyword?
-     *  Google revealed that at least 'Go' uses 'func' as a keyword ... so if it works for
-     *  'Go' it should work for Weel.
-     *  
-     *  Anonymous functions:
-     *  
-     *  list = {1, 2, 3, 4}
-     *  list2 = {5, 6, 7, 8}
-     *  
-     *  result = fold(list, func(a, b) return a + b; end)
-     *  forAll(list, sub(a) println(a); end)
-     *  convolve(list, list2, func(a, b) return a * b; end)
-     *  
-     *  or:
-     *  result = fold(list, 
-     *      func(a, b) 
-     *          return a + b
-     *      end)
-     *  
-     *  that means that you could do things like:
-     *  
-     *  func myFunc()
-     *      return sub() println("Hello world!"); end
-     *  end
-     *  
-     *  and with closures you could do:
-     *  
-     *  func myFunc(target)
-     *      return sub() println("Hello "..target.."!"); end
-     *  end
-     *  
-     *  and myFunc("world")() would produce:
-     *      Hello world!
-     *  
-     *  I think that I'll have to implement some sort of 'virtual functions'
-     *  to support closures ... and some fancy startup code to initialize
-     *  the inherited state.
-     *  
-     *  So every call to myFunc in the above example will create a new virtual 
-     *  function with its own state ... yep, this should work ... closures ftw^^ 
+     * - We've got Scopes and CodeBlocks Each file has a static scope with a
+     * code block Every function/sub opens a new scope and code block
      * 
-     *  Do I want to support currying ? Not now^^
+     * - Local variables get registered in the code block, names are stored in
+     * scope.
      * 
-     *  Changes to the runtime to support anonymous functions:
-     *  - createVirtual : creates a virtual function from a static function
-     *                    and prepare closures if needed
-     *  Changes to the runtime to support closures:
-     *  - linhenv, sinhenv : load/store inherited environment value
-     *  - openClosure, closeClosure, closeClosureRet
-     *  - a virtual function stack
-     *  
+     * - Closure variables are registered and stored in scope.
      */
+    /** The current tokenizer. */
+    Tokenizer tokenizer;
+    /** The Weel. */
+    Weel weel;
+    /** Nested scopes. */
+    ArrayList<Scope> scopes = new ArrayList<Scope>();
+    /** The current CodeBlock. */
+    CodeBlock block;
+    /** The current Scope. */
+    Scope scope;
+
+    /** Counter for compiled script classes. */
+    private static int classCounter = 0;
+    /** Counter for anonymous functions. */
+    private static int anonCounter = 0;
+    /** The class writer. */
+    private JvmClassWriter classWriter;
+
+    /**
+     * Compiles the given input String.
+     * 
+     * @param input
+     *            The input String.
+     */
+    public void compile(final String input)
+    {
+        this.tokenizer = new Tokenizer(new StringReader(input));
+        this.initialize();
+
+        this.tokenizer.next();
+    }
+
+    /**
+     * Initializes this compiler.
+     */
+    private void initialize()
+    {
+        this.classWriter = new JvmClassWriter(
+                "com.github.rjeschke.weel.scripts.Script" + classCounter++);
+
+        final Scope s = new Scope(ScopeType.STATIC);
+        s.block = new CodeBlock(this.classWriter.createMethod("STATIC",
+                "(Lcom/github/rjeschke/weel/Runtime;)V"));
+        s.parent = null;
+
+        this.addScope(s);
+    }
+
+    /**
+     * Adds a scope.
+     * 
+     * @param s
+     *            The scope.
+     */
+    private void addScope(final Scope s)
+    {
+        this.scopes.add(s);
+        this.scope = s;
+    }
+
+    /**
+     * Compiles a token.
+     */
+    private void compileToken()
+    {
+        switch (this.tokenizer.token)
+        {
+        case NAME:
+            break;
+        case RESERVED:
+            break;
+        }
+    }
+
+    private void findVarOrFunc(final String name, final int[] var)
+    {
+
+    }
 }

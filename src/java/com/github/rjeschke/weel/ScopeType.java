@@ -9,7 +9,7 @@ package com.github.rjeschke.weel;
  * 
  * @author René Jeschke <rene_jeschke@yahoo.de>
  */
-enum BlockType
+enum ScopeType
 {
-    IF, SWITCH, DO, WHILE, FOR, FOREACH, FUNCTION, SUB, SCOPE
+    IF, SWITCH, DO, WHILE, FOR, FOREACH, FUNC, SUB, SCOPE, STATIC, BORDER
 }
