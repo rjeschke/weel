@@ -25,7 +25,7 @@ final class JvmClassWriter
     /** Methods. */
     private ArrayList<JvmMethodWriter> methods = new ArrayList<JvmMethodWriter>();
     /** The full class name. */
-    private String className;
+    final String className;
 
     /**
      * Constructor.

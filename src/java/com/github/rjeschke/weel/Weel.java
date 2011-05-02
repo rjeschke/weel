@@ -4,6 +4,7 @@
  */
 package com.github.rjeschke.weel;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -24,14 +25,16 @@ public final class Weel
     /** Function list. */
     ArrayList<WeelFunction> functions = new ArrayList<WeelFunction>();
     /** Name to global variable index mapping. */
-    private HashMap<String, Integer> mapGlobals = new HashMap<String, Integer>();
+    HashMap<String, Integer> mapGlobals = new HashMap<String, Integer>();
     /** Name to function index mapping. */
-    private HashMap<String, Integer> mapFunctions = new HashMap<String, Integer>();
+    HashMap<String, Integer> mapFunctions = new HashMap<String, Integer>();
     /** Name to exact function index mapping. */
-    private HashMap<String, Integer> mapFunctionsExact = new HashMap<String, Integer>();
+    HashMap<String, Integer> mapFunctionsExact = new HashMap<String, Integer>();
     /** Weel class loader. */
     final static WeelLoader classLoader = new WeelLoader();
-
+    /** Compiled script classes. */
+    final ArrayList<String> scriptClasses = new ArrayList<String>();
+    
     /** ThreadLocal variable for Weel Runtimes associated with this Weel class. */
     private final ThreadLocal<Runtime> runtime = new ThreadLocal<Runtime>()
     {
@@ -52,10 +55,46 @@ public final class Weel
     public Weel()
     {
         this.importFunctions(WeelLibrary.class);
-        for (final WeelFunction f : this.functions)
-            System.out.println(f);
     }
 
+    public void runStatic()
+    {
+        final Runtime runtime = this.getRuntime();
+        
+        for(final String name : this.scriptClasses)
+        {
+            try
+            {
+                final Class<?> clazz = classLoader.findClass(name);
+                clazz.getMethod("STATIC", Runtime.class).invoke(null, runtime);
+            }
+            catch (ClassNotFoundException e)
+            {
+                throw new WeelException(e);
+            }
+            catch (IllegalArgumentException e)
+            {
+                throw new WeelException(e);
+            }
+            catch (SecurityException e)
+            {
+                throw new WeelException(e);
+            }
+            catch (IllegalAccessException e)
+            {
+                throw new WeelException(e);
+            }
+            catch (InvocationTargetException e)
+            {
+                throw new WeelException(e);
+            }
+            catch (NoSuchMethodException e)
+            {
+                throw new WeelException(e);
+            }
+        }
+    }
+    
     /**
      * Gets a Runtime object local to the current Thread.
      * 

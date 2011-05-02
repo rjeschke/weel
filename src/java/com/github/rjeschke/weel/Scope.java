@@ -7,12 +7,17 @@ package com.github.rjeschke.weel;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+import com.github.rjeschke.weel.Variable.Type;
+
 /**
- * 
+ * A Weel scope.
+ *  
  * @author René Jeschke <rene_jeschke@yahoo.de>
  */
-public class Scope
+class Scope
 {
+    /** The weel. */
+    final Weel weel;
     /** The scope type. */
     final ScopeType type;
     /** The parent. */
@@ -28,11 +33,23 @@ public class Scope
     /** Various flags. */
     boolean hasElse, hasDefault, hasCase, hasReturn;
     
-    public Scope(final ScopeType type)
+    /**
+     * Constructor.
+     * 
+     * @param weel The Weel.
+     * @param type The type.
+     */
+    public Scope(final Weel weel, final ScopeType type)
     {
         this.type = type;
+        this.weel = weel;
     }
 
+    /**
+     * Finds a surrounding code block.
+     *  
+     * @return The code block or <code>null</code>
+     */
     Scope findOuterCodeScope()
     {
         Scope current = this;
@@ -45,6 +62,11 @@ public class Scope
         return null;
     }
 
+    /**
+     * Finds a border scope.
+     * 
+     * @return The border scope or <code>null</code>
+     */
     Scope getBorderScope()
     {
         Scope current = this;
@@ -57,27 +79,53 @@ public class Scope
         return null;
     }
     
+    /**
+     * Adds a break.
+     * 
+     * @param pc Program counter.
+     */
     void addBreak(final int pc)
     {
         this.breaks.add(pc);
     }
     
+    /**
+     * Removes a break.
+     * 
+     * @return The break's PC.
+     */
     int removeBreak()
     {
         return this.breaks.removeLast();
     }
     
+    /**
+     * Adds a continue.
+     * 
+     * @param pc Program counter.
+     */
     void addContinue(final int pc)
     {
         this.continues.add(pc);
     }
 
+    /**
+     * Removes a continue.
+     * 
+     * @return The continue's PC.
+     */
     int removeContinue()
     {
         return this.continues.removeLast();
     }
 
-    int findLocal(String name)
+    /**
+     * Finds a local variable.
+     *  
+     * @param name The name.
+     * @return The index or <code>-1</code>
+     */
+    int findLocal(final String name)
     {
         if(this.locals.containsKey(name))
         {
@@ -90,6 +138,12 @@ public class Scope
         return -1;
     }
     
+    /**
+     * Adds a local variable to this scope.
+     * 
+     * @param name The name.
+     * @return The index.
+     */
     int addLocal(String name)
     {
         int ret = this.block.registerLocal();
@@ -97,11 +151,61 @@ public class Scope
         return ret;
     }
     
+    /**
+     * Unregisters all locals assigned with this scope.
+     */
     void unregisterLocals()
     {
         for(final int idx : this.locals.values())
         {
             this.block.unregisterLocal(idx);
+        }
+    }
+    
+    /**
+     * Initialize Variable.
+     * 
+     * @param var The Variable (out).
+     * @param name The name.
+     * @return The supplied Variable.
+     */
+    Variable findVariable(final Variable var, final String name)
+    {
+        final Integer glob = this.weel.mapGlobals.get(name);
+        var.name = name;
+        var.type = Type.NONE;
+        if(glob != null)
+        {
+            var.index = glob;
+            var.type = Type.GLOBAL; 
+        }
+        else
+        {
+            final int loc = this.findLocal(name);
+            if(loc != -1)
+            {
+                var.index = loc;
+                var.type = Type.LOCAL;
+            }
+        }
+        var.function = this.weel.findFunction(name);
+        return var;
+    }
+    
+    /**
+     * Finds or adds a variable.
+     * 
+     * @param var The Variable (out).
+     * @param name The name.
+     */
+    void findAddVariable(final Variable var, final String name)
+    {
+        this.findVariable(var, name);
+        if(var.type == Type.NONE)
+        {
+            var.type = Type.LOCAL;
+            var.index = this.block.registerLocal();
+            this.locals.put(var.name, var.index);
         }
     }
 }

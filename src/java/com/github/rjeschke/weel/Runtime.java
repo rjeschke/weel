@@ -88,6 +88,14 @@ public final class Runtime
     }
 
     /**
+     * Pops <code>1</code> Value from the Weel stack.
+     */
+    public void pop1()
+    {
+        this.sp--;
+    }
+
+    /**
      * Pops a Value from the Weel stack.
      * 
      * @return The popped Value.
@@ -205,6 +213,73 @@ public final class Runtime
     }
 
     /**
+     * Duplicates the second value on top of the Weel stack.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ..., value1, value2, value1 </code>
+     * </p>
+     */
+    public void sdupx1()
+    {
+        this.stack[this.sp - 1].copyTo(this.stack[this.sp + 1]);
+        this.sp++;
+    }
+
+    /**
+     * Duplicates two values on top of the Weel stack.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ..., value1, value2, value1, value2 </code>
+     * </p>
+     */
+    public void sdup2()
+    {
+        this.stack[this.sp - 1].copyTo(this.stack[this.sp + 1]);
+        this.stack[this.sp].copyTo(this.stack[this.sp + 2]);
+        this.sp += 2;
+    }
+
+    /**
+     * Test the stack top as a boolean. Pops the stack if the boolean is false.
+     * 
+     * @return <code>true</code> if the value is true.
+     */
+    public boolean testPopTrue()
+    {
+        if (this.stack[this.sp].toBoolean())
+            return true;
+        this.sp--;
+        return false;
+    }
+
+    /**
+     * Test the stack top as a boolean. Pops the stack if the boolean is true.
+     * 
+     * @return <code>true</code> if the value is false.
+     */
+    public boolean testPopFalse()
+    {
+        if (!this.stack[this.sp].toBoolean())
+            return true;
+        this.sp--;
+        return false;
+    }
+
+    /**
+     * Pops the top of the stack and returns the popped value as a boolean;
+     * 
+     * <p>
+     * <code>..., value &rArr; ... </code>
+     * </p>
+     * 
+     * @return The boolean representation of the popped value.
+     */
+    public boolean popBoolean()
+    {
+        return this.stack[this.sp--].toBoolean();
+    }
+
+    /**
      * Compares two values.
      * 
      * <p>
@@ -216,10 +291,11 @@ public final class Runtime
      *             If the values differ in type or type is not of NULL, NUMBER
      *             or STRING.
      */
-    public int cmp()
+    int cmp()
     {
         final Value a = this.stack[this.sp - 1];
         final Value b = this.stack[this.sp];
+        this.sp -= 2;
         if (a.type != b.type)
             throw new WeelException("Incompatible values for comparison: "
                     + a.type + " <-> " + b.type);
@@ -237,6 +313,90 @@ public final class Runtime
     }
 
     /**
+     * Compares for equality.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ..., result </code>
+     * </p>
+     */
+    public void cmpEq()
+    {
+        final boolean res = this.cmpEqual();
+        this.stack[++this.sp].type = ValueType.NUMBER;
+        this.stack[this.sp].number = res ? -1 : 0;
+    }
+
+    /**
+     * Compares for inequality.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ..., result </code>
+     * </p>
+     */
+    public void cmpNe()
+    {
+        final boolean res = this.cmpEqual();
+        this.stack[++this.sp].type = ValueType.NUMBER;
+        this.stack[this.sp].number = res ? 0 : -1;
+    }
+
+    /**
+     * Compares for greater than.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ..., result </code>
+     * </p>
+     */
+    public void cmpGt()
+    {
+        final int res = this.cmp();
+        this.stack[++this.sp].type = ValueType.NUMBER;
+        this.stack[this.sp].number = res > 0 ? -1 : 0;
+    }
+
+    /**
+     * Compares for greater or equal.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ..., result </code>
+     * </p>
+     */
+    public void cmpGe()
+    {
+        final int res = this.cmp();
+        this.stack[++this.sp].type = ValueType.NUMBER;
+        this.stack[this.sp].number = res >= 0 ? -1 : 0;
+    }
+
+    /**
+     * Compares for less than.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ..., result </code>
+     * </p>
+     */
+    public void cmpLt()
+    {
+        final int res = this.cmp();
+        this.stack[++this.sp].type = ValueType.NUMBER;
+        this.stack[this.sp].number = res < 0 ? -1 : 0;
+    }
+
+    /**
+     * Compares for less or equal.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ..., result </code>
+     * </p>
+     */
+    public void cmpLe()
+    {
+        final int res = this.cmp();
+        this.stack[++this.sp].type = ValueType.NUMBER;
+        this.stack[this.sp].number = res <= 0 ? -1 : 0;
+    }
+
+    /**
      * Compares two values for equality.
      * 
      * <p>
@@ -247,7 +407,7 @@ public final class Runtime
      * 
      * @return <code>true</code> if the values are equal.
      */
-    public boolean cmpEqual()
+    boolean cmpEqual()
     {
         final Value a = this.stack[this.sp - 1];
         final Value b = this.stack[this.sp];
@@ -309,6 +469,21 @@ public final class Runtime
     }
 
     /**
+     * String concatenation.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ..., value1 + value2 </code>
+     * </p>
+     */
+    public void strcat()
+    {
+        final Value b = this.stack[this.sp--];
+        final Value a = this.stack[this.sp];
+        a.string = a.toString() + b.toString();
+        a.type = ValueType.STRING;
+    }
+
+    /**
      * Addition.
      * 
      * <p>
@@ -365,6 +540,20 @@ public final class Runtime
     }
 
     /**
+     * Modulo.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ..., value1 % value2 </code>
+     * </p>
+     */
+    public void mod()
+    {
+        final Value b = this.stack[this.sp--];
+        final Value a = this.stack[this.sp];
+        a.number %= b.number;
+    }
+
+    /**
      * Binary and.
      * 
      * <p>
@@ -373,9 +562,9 @@ public final class Runtime
      * 
      * <p>
      * All binary operations in Weel are performed on 32 Bit integer. As Weel
-     * uses (like most other weakly-types languages) double as its number type,
-     * and doubles only have 52(+1) Bits mantissa, only 32 Bit binary integer
-     * arithmetics makes sense.
+     * uses (like most other dynamically types languages) double as its number
+     * type, and doubles only have 52(+1) Bits mantissa, only 32 Bit binary
+     * integer arithmetics makes sense.
      * </p>
      */
     public void and()
@@ -433,6 +622,19 @@ public final class Runtime
     }
 
     /**
+     * Arithmetic not.
+     * 
+     * <p>
+     * <code>..., value &rArr; ..., -value</code>
+     * </p>
+     */
+    public void neg()
+    {
+        final Value a = this.stack[this.sp];
+        a.number = -a.number;
+    }
+
+    /**
      * Logical not.
      * 
      * <p>
@@ -443,6 +645,18 @@ public final class Runtime
     {
         this.stack[this.sp].number = this.stack[this.sp].toBoolean() ? 0 : -1;
         this.stack[this.sp].type = ValueType.NUMBER;
+    }
+
+    /**
+     * Loads NULL onto the stack.
+     * 
+     * <p>
+     * <code>... &rArr; ..., NULL</code>
+     * </p>
+     */
+    public void load()
+    {
+        this.stack[++this.sp].type = ValueType.NULL;
     }
 
     /**
@@ -558,6 +772,22 @@ public final class Runtime
     }
 
     /**
+     * Loads a function.
+     * 
+     * <p>
+     * <code>... &rArr; ..., value</code>
+     * </p>
+     * 
+     * @param index
+     *            The function index.
+     */
+    public void loadFunc(final int index)
+    {
+        this.stack[++this.sp].type = ValueType.FUNCTION;
+        this.stack[this.sp].function = this.mother.functions.get(index);
+    }
+
+    /**
      * Opens a function frame.
      * 
      * @param args
@@ -578,7 +808,7 @@ public final class Runtime
     public void closeFrame()
     {
         // TODO maybe nullify stack values?
-        this.sp = this.frameStart[this.fp--];
+        this.sp -= this.frameSize[this.fp--];
     }
 
     /**
@@ -607,7 +837,8 @@ public final class Runtime
     }
 
     /**
-     * Calls a Weel function defined by a value on the stack.
+     * Calls a Weel function defined by a value on the stack. Stack calls are
+     * significantly slower than 'normal' calls.
      * 
      * <p>
      * <code>..., function, [arguments] &rArr; ..., [return value]</code>

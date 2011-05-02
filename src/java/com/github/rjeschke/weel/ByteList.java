@@ -210,6 +210,18 @@ final class ByteList
     }
 
     /**
+     * Gets the (unsigned) short at the given index.
+     * 
+     * @param index
+     *            The index.
+     * @return The short at the given position.
+     */
+    public int getShort(final int index)
+    {
+        return ((this.array[index] & 255) << 8) | (this.array[index + 1] & 255);
+    }
+
+    /**
      * Gets the byte at the given index as an unsigned value.
      * 
      * @param index

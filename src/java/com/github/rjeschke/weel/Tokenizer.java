@@ -23,11 +23,13 @@ final class Tokenizer
     /** Current input char. */
     private int current = ' ';
     /** Current line number. */
-    private int lineNumber;
+    private int lineNumber = 1;
     /** Current filename. */
     private String filename;
     /** The current token. */
     Token token;
+    /** The ungot token. */
+    Token ungot = null;
 
     /** Tokenized reserved word. */
     ReservedWord reserved = null;
@@ -280,12 +282,29 @@ final class Tokenizer
     }
 
     /**
+     * Ungets a token.
+     * 
+     * @param t The token.
+     */
+    public void ungetToken(final Token t)
+    {
+        this.ungot = this.token;
+        this.token = t;
+    }
+    
+    /**
      * Reads the next token.
      * 
      * @return The next token.
      */
     public Token next()
     {
+        if(this.ungot != null)
+        {
+            this.token = this.ungot;
+            this.ungot = null;
+            return this.token;
+        }
         try
         {
             for (;;)
@@ -377,10 +396,14 @@ final class Tokenizer
                 case ']':
                     this.read();
                     return this.token = Token.BRACKET_CLOSE;
+                case ',':
+                    this.read();
+                    return this.token = Token.COMMA;
                 case '.':
                     this.read();
                     if (this.current == '.')
                     {
+                        this.read();
                         return this.token = Token.STRING_CONCAT;
                     }
                     else if (Character.isDigit(this.current))
@@ -388,7 +411,7 @@ final class Tokenizer
                         this.readNumber(true);
                         return this.token = Token.NUMBER;
                     }
-                    return Token.DOT;
+                    return this.token = Token.DOT;
                 case ';':
                     this.read();
                     return this.token = Token.SEMICOLON;

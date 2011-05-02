@@ -29,7 +29,7 @@ get an overview of Weel's features.
 
 ### Architecture
 
-Weel is a stack based, weakly-typed language with a syntax similar 
+Weel is a stack based, dynamically typed language with a syntax similar 
 to [Lua] and Basic. (At the time I wrote Yjasl1 I worked heavily 
 with [Lua] for creating [Enigma] levels. That's why there's so many
 syntax similarities.)

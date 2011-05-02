@@ -40,6 +40,18 @@ final class WeelLoader extends ClassLoader
         return clazz;
     }
 
+    /**
+     * Adds the given class to this ClassLoader.
+     * 
+     * @param writer
+     *            The class writer.
+     * @return The ready-to-use class.
+     */
+    public Class<?> addClass(final JvmClassWriter writer)
+    {
+        return this.addClass(writer.className, writer.build());
+    }
+
     /** @see java.lang.ClassLoader#findClass(String) */
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException
