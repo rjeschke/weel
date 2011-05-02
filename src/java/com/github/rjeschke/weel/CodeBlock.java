@@ -29,6 +29,8 @@ final class CodeBlock
     final JvmClassWriter classWriter;
     /** Enclosing WeelFunction (if not STATIC). */
     WeelFunction function;
+    /** Flag indicating that we're an anonymous function. */
+    boolean isAnonymousFunction;
 
     /**
      * Constructor.
@@ -159,6 +161,25 @@ final class CodeBlock
     void callRuntime(final String name, final String descriptor)
     {
         this.code.add(JvmOp.ALOAD_0);
+        this.code.add(JvmOp.INVOKEVIRTUAL);
+        this.code.addShort(this.classWriter.addMethodRefConstant(
+                "com.github.rjeschke.weel.Runtime", name, descriptor));
+    }
+
+    /**
+     * Calls a runtime function.
+     * 
+     * @param name
+     *            The name.
+     * @param descriptor
+     *            The descriptor.
+     * @param arg0
+     *            Integer argument.
+     */
+    void callRuntime(final String name, final String descriptor, final int arg0)
+    {
+        this.code.add(JvmOp.ALOAD_0);
+        this.ldcInt(arg0);
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(this.classWriter.addMethodRefConstant(
                 "com.github.rjeschke.weel.Runtime", name, descriptor));

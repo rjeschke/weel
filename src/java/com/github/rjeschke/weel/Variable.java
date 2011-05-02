@@ -12,18 +12,18 @@ package com.github.rjeschke.weel;
 class Variable
 {
     /** The name. */
-    public String name;
+    String name;
     /** The index. */
-    public int index;
+    int index;
     /** The type. */
-    public Type type;
+    Type type;
     /** The function. */
-    public WeelFunction function;
+    WeelFunction function;
 
     /**
      * Constructor.
      */
-    public Variable()
+    Variable()
     {
         //
     }
@@ -33,7 +33,7 @@ class Variable
      * 
      * @author René Jeschke <rene_jeschke@yahoo.de>
      */
-    public enum Type
+    enum Type
     {
         GLOBAL,
         LOCAL,

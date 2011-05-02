@@ -240,6 +240,23 @@ public final class Runtime
     }
 
     /**
+     * Duplicates the values on top of the Weel stack and moves it three places
+     * up.
+     * 
+     * <p>
+     * <code>..., value1, value2 value3, &rArr; ..., value3, value1, value2, value3 </code>
+     * </p>
+     */
+    public void sdups()
+    {
+        this.stack[this.sp].copyTo(this.stack[this.sp + 1]);
+        this.stack[this.sp - 1].copyTo(this.stack[this.sp]);
+        this.stack[this.sp - 2].copyTo(this.stack[this.sp - 1]);
+        this.stack[this.sp + 1].copyTo(this.stack[this.sp - 2]);
+        this.sp++;
+    }
+
+    /**
      * Test the stack top as a boolean. Pops the stack if the boolean is false.
      * 
      * @return <code>true</code> if the value is true.
@@ -411,6 +428,7 @@ public final class Runtime
     {
         final Value a = this.stack[this.sp - 1];
         final Value b = this.stack[this.sp];
+        this.sp -= 2;
         if (a.type != b.type)
             return false;
         switch (a.type)
@@ -457,7 +475,7 @@ public final class Runtime
      * @throws WeelException
      *             If the for variable is not a number.
      */
-    public boolean beginForloop(final int var)
+    public boolean beginForLoop(final int var)
     {
         final int index = var + this.frameStart[this.fp];
         final double step = this.stack[this.sp].number;

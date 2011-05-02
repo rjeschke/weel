@@ -5,7 +5,6 @@
 package com.github.rjeschke.weel;
 
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 
 /**
  * Method writer specialized for Weel.

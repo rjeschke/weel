@@ -14,8 +14,10 @@ public class Main
         {
             final Weel weel = new Weel();
             final Compiler compiler = new Compiler(weel);
-
+            
+            long t0 = System.nanoTime();
             compiler.compile(Main.class.getResourceAsStream("/com/github/rjeschke/weel/test/test.weel"));
+            t0 = System.nanoTime() - t0;
 
             byte[] cdata = compiler.classWriter.build();
 
@@ -24,8 +26,14 @@ public class Main
             fos.write(cdata);
             fos.close();
 
+            long t1 = System.nanoTime();
             weel.runStatic();
+            t1 = System.nanoTime() - t1;
             
+            System.out.println();
+            System.out.println("Compile: " + (t0 / 1e9) + " sec");
+            System.out.println("Execute: " + (t1 / 1e9) + " sec");
+
             if(weel.getRuntime().getStackPointer() != -1)
                 System.err.println("Doh! You messed it up!");
         }

@@ -15,7 +15,7 @@ enum ReservedWord
 {
     BREAK,
 
-    CASE,
+    CASE, CONTINUE,
 
     DO,
 
@@ -37,7 +37,7 @@ enum ReservedWord
 
     SUB, SWITCH,
 
-    THIS, TRUE,
+    THEN, THIS, TRUE,
 
     UNTIL,
 

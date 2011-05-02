@@ -148,6 +148,15 @@ This is just a rough outline of the framework.
 	
 ***
 
+### Current compiler state
+
+*   Parses expressions (assignments, calls, ...)
+*	if, elseif, else
+*   for loops
+*	do/end, do/until scopes/loops
+
+***
+
 [Lua]: http://www.lua.org/ "The Programming Language Lua"
 [Enigma]: http://www.nongnu.org/enigma/ "Enigma is a puzzle game inspired by Oxyd on the Atari ST and Rock'n'Roll on the Amiga"
 

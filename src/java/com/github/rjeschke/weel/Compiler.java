@@ -9,7 +9,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
+import java.util.LinkedList;
 
 import com.github.rjeschke.weel.Variable.Type;
 
@@ -25,7 +25,7 @@ final class Compiler
     /** The Weel. */
     final Weel weel;
     /** Nested scopes. */
-    ArrayList<Scope> scopes = new ArrayList<Scope>();
+    LinkedList<Scope> scopes = new LinkedList<Scope>();
     /** The current CodeBlock. */
     CodeBlock block;
     /** The current Scope. */
@@ -106,7 +106,6 @@ final class Compiler
         final Scope s = new Scope(this.weel, ScopeType.STATIC);
         s.block = new CodeBlock(this.classWriter.createMethod("STATIC",
                 "(Lcom/github/rjeschke/weel/Runtime;)V"));
-        s.parent = null;
 
         this.addScope(s);
     }
@@ -125,6 +124,17 @@ final class Compiler
     }
 
     /**
+     * Removes a scope.
+     */
+    private void removeScope()
+    {
+        this.scopes.removeLast();
+        final Scope s = this.scopes.isEmpty() ? null : this.scopes.getLast();
+        this.scope = s;
+        this.block = s != null ? s.block : null;
+    }
+
+    /**
      * Compiles a token.
      */
     private void compileToken()
@@ -136,13 +146,48 @@ final class Compiler
             this.skipSemi();
             break;
         case RESERVED:
+            switch (this.tokenizer.reserved)
+            {
+            case IF:
+                this.openIf();
+                break;
+            case ELSEIF:
+                this.addElseIf();
+                break;
+            case ELSE:
+                this.addElse();
+                break;
+            case FOR:
+                this.openFor();
+                break;
+            case BREAK:
+                this.addBreak();
+                this.skipSemi();
+                break;
+            case CONTINUE:
+                this.addContinue();
+                this.skipSemi();
+                break;
+            case DO:
+                this.openDo();
+                break;
+            case UNTIL:
+                this.closeDoUntil();
+                this.skipSemi();
+                break;
+            case END:
+                this.closeScope();
+                break;
+            }
             break;
         }
-        // this.tokenizer.next();
     }
 
     /**
      * Parses an assign or a function call
+     * 
+     * @param getContext
+     *            Flag to indicate that we need a return value.
      */
     private void parseVarsAndFuncs(final boolean getContext)
     {
@@ -220,6 +265,7 @@ final class Compiler
                     case BRACE_OPEN:
                     case BRACKET_OPEN:
                     case DOT:
+                    case ARROW:
                         if (!func.returnsValue)
                         {
                             throw new WeelException(this.tokenizer.error("Sub "
@@ -232,12 +278,18 @@ final class Compiler
                         {
                             this.block.callRuntime("pop1");
                         }
+                        else if (!func.returnsValue && getContext)
+                        {
+                            throw new WeelException(this.tokenizer.error("Sub "
+                                    + func.name + "(" + func.arguments
+                                    + ") doesn't return a value"));
+                        }
                         break;
                     }
                 }
                 else
                 {
-                    boolean wantsValue = false;
+                    boolean wantsValue = getContext;
                     switch (this.tokenizer.token)
                     {
                     case BRACE_OPEN:
@@ -255,39 +307,58 @@ final class Compiler
                 break;
             }
             case DOT:
-                if(first)
+                if (first)
                 {
-                    if(var.type == Type.NONE)
+                    if (var.type == Type.NONE)
                     {
-                        throw new WeelException(this.tokenizer.error("Unknown variable '%s'", var.name));
+                        throw new WeelException(this.tokenizer.error(
+                                "Unknown variable '%s'", var.name));
                     }
                     this.writeGetVariable(var);
+                }
+                else
+                {
+                    if (expr == ExpressionType.ARRAY)
+                        this.block.callRuntime("getMap");
                 }
                 this.tokenizer.next();
                 this.checkToken(Token.NAME);
                 this.block.load(this.tokenizer.string);
                 this.tokenizer.next();
-                this.block.callRuntime("getMap");
                 oop = first = false;
                 expr = ExpressionType.ARRAY;
                 break;
             case BRACKET_OPEN:
-                if(first)
+                if (first)
                 {
-                    if(var.type == Type.NONE)
+                    if (var.type == Type.NONE)
                     {
-                        throw new WeelException(this.tokenizer.error("Unknown variable '%s'", var.name));
+                        throw new WeelException(this.tokenizer.error(
+                                "Unknown variable '%s'", var.name));
                     }
                     this.writeGetVariable(var);
+                }
+                else
+                {
+                    if (expr == ExpressionType.ARRAY)
+                        this.block.callRuntime("getMap");
                 }
                 this.tokenizer.next();
                 this.parseExpression();
                 this.checkToken(Token.BRACKET_CLOSE);
                 this.tokenizer.next();
-                this.block.callRuntime("getMap");
                 oop = first = false;
                 expr = ExpressionType.ARRAY;
                 break;
+            case ASSIGN_ADD:
+            case ASSIGN_DIV:
+            case ASSIGN_AND:
+            case ASSIGN_MODULO:
+            case ASSIGN_MUL:
+            case ASSIGN_OR:
+            case ASSIGN_SUB:
+            case ASSIGN_XOR:
+            case ASSIGN_STRCAT:
             case ASSIGN:
                 if (first)
                 {
@@ -311,17 +382,105 @@ final class Compiler
 
         switch (this.tokenizer.token)
         {
+        case ASSIGN_ADD:
+        case ASSIGN_DIV:
+        case ASSIGN_AND:
+        case ASSIGN_MODULO:
+        case ASSIGN_MUL:
+        case ASSIGN_OR:
+        case ASSIGN_SUB:
+        case ASSIGN_XOR:
+        case ASSIGN_STRCAT:
+        {
+            final Token op = this.tokenizer.token;
+            if (first && expr != ExpressionType.ARRAY && var.type == Type.NONE)
+                this.syntaxError();
+            if (expr == ExpressionType.ARRAY)
+            {
+                this.block.callRuntime("sdup2");
+                this.block.callRuntime("getMap");
+            }
+            else
+            {
+                this.writeGetVariable(var);
+            }
+            this.tokenizer.next();
+            this.parseExpression();
+            switch (op)
+            {
+            case ASSIGN_ADD:
+                this.block.callRuntime("add");
+                break;
+            case ASSIGN_DIV:
+                this.block.callRuntime("div");
+                break;
+            case ASSIGN_AND:
+                this.block.callRuntime("and");
+                break;
+            case ASSIGN_MODULO:
+                this.block.callRuntime("mod");
+                break;
+            case ASSIGN_MUL:
+                this.block.callRuntime("mul");
+                break;
+            case ASSIGN_OR:
+                this.block.callRuntime("or");
+                break;
+            case ASSIGN_SUB:
+                this.block.callRuntime("sub");
+                break;
+            case ASSIGN_XOR:
+                this.block.callRuntime("xor");
+                break;
+            case ASSIGN_STRCAT:
+                this.block.callRuntime("strcat");
+                break;
+            default:
+                break;
+            }
+            if (expr == ExpressionType.ARRAY)
+            {
+                if (getContext)
+                    this.block.callRuntime("sdups");
+                this.block.callRuntime("setMap");
+            }
+            else
+            {
+                if (getContext)
+                    this.block.callRuntime("sdup");
+                this.writeSetVariable(var);
+            }
+            break;
+        }
         case ASSIGN:
             this.tokenizer.next();
             this.parseExpression();
-            if(getContext)
-                this.block.callRuntime("sdup");
-            this.writeSetVariable(var);
+            if (expr == ExpressionType.ARRAY)
+            {
+                if (getContext)
+                    this.block.callRuntime("sdups");
+                this.block.callRuntime("setMap");
+            }
+            else if (expr == ExpressionType.VARIABLE)
+            {
+                if (getContext)
+                    this.block.callRuntime("sdup");
+                this.writeSetVariable(var);
+            }
+            else
+            {
+                this.syntaxError();
+            }
             break;
         default:
-            if (first && getContext)
+            if (first && getContext
+                    && (var.type != Type.NONE || var.function != null))
             {
                 this.writeGetVariable(var);
+            }
+            else if (getContext && expr == ExpressionType.ARRAY)
+            {
+                this.block.callRuntime("getMap");
             }
             else if (expr != ExpressionType.FUNCTION)
             {
@@ -608,6 +767,228 @@ final class Compiler
     }
 
     /**
+     * Closes a scope.
+     */
+    private void closeScope()
+    {
+        switch (this.scope.type)
+        {
+        case IF:
+            this.closeIf();
+            break;
+        case FOR:
+            this.closeFor();
+            break;
+        case DO:
+            this.closeDo();
+            break;
+        }
+        this.tokenizer.next();
+    }
+
+    /**
+     * Adds a 'break' to a scope.
+     */
+    private void addBreak()
+    {
+        final Scope s = this.scope.getBreakScope();
+        if(s == null)
+        {
+            throw new WeelException(this.tokenizer.error("BREAK without suitable scope"));
+        }
+        s.addBreak(s.block.writeJmp(JvmOp.GOTO, 0));
+        this.tokenizer.next();
+    }
+    
+    /**
+     * Adds a 'continue' to a scope.
+     */
+    private void addContinue()
+    {
+        final Scope s = this.scope.getBreakScope();
+        if(s == null)
+        {
+            throw new WeelException(this.tokenizer.error("CONTINUE without suitable scope"));
+        }
+        s.addContinue(s.block.writeJmp(JvmOp.GOTO, 0));
+        this.tokenizer.next();
+    }
+    
+    /**
+     * Opens a FOR scope.
+     */
+    private void openFor()
+    {
+        this.addScope(new Scope(this.scope, ScopeType.FOR));
+        this.tokenizer.next();
+        this.checkToken(Token.NAME);
+        final Variable var = this.scope.findVariable(new Variable(), this.tokenizer.string);
+        if(var.type != Type.LOCAL)
+        {
+            var.index = this.scope.addLocal(var.name);
+            var.type = Type.LOCAL;
+        }
+        this.tokenizer.next();
+        this.checkToken(Token.ASSIGN);
+        this.tokenizer.next();
+        this.parseExpression();
+        this.block.callRuntime("sloc", var.index);
+        this.checkToken(Token.COMMA);
+        this.tokenizer.next();
+        this.parseExpression();
+        if(this.tokenizer.token == Token.COMMA)
+        {
+            this.tokenizer.next();
+            this.parseExpression();
+        }
+        else
+        {
+            this.block.load(1);
+        }
+        this.checkReserved(ReservedWord.DO);
+        this.tokenizer.next();
+        this.block.callRuntime("beginForLoop", "(I)Z", var.index);
+        this.scope.addBreak(this.block.writeJmp(JvmOp.IFEQ, 0));
+        this.scope.startPc = this.block.getPc();
+        this.scope.localIndex = var.index;
+    }
+    
+    /**
+     * Closes a FOR scope.
+     */
+    private void closeFor()
+    {
+        for(final int pc : this.scope.continues)
+        {
+            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
+        }
+        this.block.callRuntime("endForLoop", "(I)Z", this.scope.localIndex);
+        this.block.writeJmp(JvmOp.IFNE, this.scope.startPc - this.block.getPc());
+        for(final int pc : this.scope.breaks)
+        {
+            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
+        }
+        this.block.callRuntime("pop", 2);
+        this.removeScope();
+        this.tokenizer.next();
+    }
+    
+    /**
+     * Opens a DO scope.
+     */
+    private void openDo()
+    {
+        this.addScope(new Scope(this.scope, ScopeType.DO));
+        this.tokenizer.next();
+        this.scope.startPc = this.block.getPc();
+    }
+
+    /**
+     * Closes a DO scope.
+     */
+    private void closeDo()
+    {
+        for(final int pc : this.scope.breaks)
+        {
+            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
+        }
+        if(!this.scope.continues.isEmpty())
+            throw new WeelException(this.tokenizer.error("Misplaced CONTINUE"));
+        this.removeScope();
+        this.tokenizer.next();
+    }
+
+    /**
+     * Closes a DO scope.
+     */
+    private void closeDoUntil()
+    {
+        for(final int pc : this.scope.continues)
+        {
+            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
+        }
+        this.tokenizer.next();
+        this.parseExpression();
+        this.block.callRuntime("popBoolean", "()Z");
+        this.block.writeJmp(JvmOp.IFEQ, this.scope.startPc - this.block.getPc());
+        
+        for(final int pc : this.scope.breaks)
+        {
+            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
+        }
+        this.removeScope();
+        this.tokenizer.next();
+    }
+
+    /**
+     * Opens an IF scope.
+     */
+    private void openIf()
+    {
+        this.tokenizer.next();
+        this.parseExpression();
+        this.checkReserved(ReservedWord.THEN);
+        this.tokenizer.next();
+        this.addScope(new Scope(this.scope, ScopeType.IF));
+        this.block.callRuntime("popBoolean", "()Z");
+        this.scope.addContinue(this.block.writeJmp(JvmOp.IFEQ, 0));
+    }
+
+    /**
+     * Adds an 'ELSEIF' to an IF scope.
+     */
+    private void addElseIf()
+    {
+        if(this.scope == null || this.scope.type != ScopeType.IF)
+            throw new WeelException(this.tokenizer.error("ELSE without IF"));
+        if(this.scope.hasElse)
+            throw new WeelException(this.tokenizer.error("ELSEIF after ELSE"));
+        this.scope.addBreak(this.block.writeJmp(JvmOp.GOTO, 0));
+        final int cont = this.scope.removeContinue();
+        this.block.writeShortAt(cont, this.block.getPc() - cont + 1);
+
+        this.tokenizer.next();
+        this.parseExpression();
+        this.checkReserved(ReservedWord.THEN);
+        this.tokenizer.next();
+        this.block.callRuntime("popBoolean", "()Z");
+        this.scope.addContinue(this.block.writeJmp(JvmOp.IFEQ, 0));
+    }
+
+    /**
+     * Adds an 'ELSE' to an IF scope.
+     */
+    private void addElse()
+    {
+        if(this.scope == null || this.scope.type != ScopeType.IF)
+            throw new WeelException(this.tokenizer.error("ELSE without IF"));
+        if(this.scope.hasElse)
+            throw new WeelException(this.tokenizer.error("Duplicate ELSE"));
+        
+        this.tokenizer.next();
+        this.scope.hasElse = true;
+        this.scope.addBreak(this.block.writeJmp(JvmOp.GOTO, 0));
+        final int cont = this.scope.removeContinue();
+        this.block.writeShortAt(cont, this.block.getPc() - cont + 1);
+    }
+    
+    /**
+     * Closes an IF scope.
+     */
+    private void closeIf()
+    {
+        for(final int pc : this.scope.continues)
+        {
+            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
+        }
+        for(final int pc : this.scope.breaks)
+        {
+            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
+        }
+        this.removeScope();
+    }
+
+    /**
      * Checks if there's an expression.
      * 
      * @throws WeelException
@@ -617,6 +998,22 @@ final class Compiler
     {
         if (!this.tokenizer.isExpression())
             throw new WeelException(this.tokenizer.error("Expression expected"));
+    }
+
+    /**
+     * Checks if there's the specified ReservedWord.
+     * 
+     * @param rw
+     *            The ReservedWord.
+     * @throws WeelException
+     *             if there's no ReservedWord.
+     */
+    private void checkReserved(final ReservedWord rw)
+    {
+        if (this.tokenizer.token != Token.RESERVED
+                || this.tokenizer.reserved != rw)
+            throw new WeelException(this.tokenizer.error("'%s' expected", rw
+                    .toString().toLowerCase()));
     }
 
     /**
@@ -712,7 +1109,7 @@ final class Compiler
         else if (var.type == Type.CVAR)
             this.block.callRuntime("linenv", var.index);
         else if (var.function != null)
-            this.block.callRuntime("loadFunc", var.index);
+            this.block.callRuntime("loadFunc", var.function.index);
     }
 
     /**

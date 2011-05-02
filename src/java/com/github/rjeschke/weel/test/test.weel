@@ -1,23 +1,9 @@
-a = 10.5 * 3 + 2
-b = 'Hello' .. ' world!' 
-e = 0 >= 0 
-f = {test = 1, 'hund' = 2, [4] = 3, {10, 100}}
-g = false
+f = print
+println(f)
+f("Hello world!")
+println()
+f = sqrt
+println(f(2))
 
-println(pow(2, 4))
-println(print)
-
-c = 1 || 0
-d = 1 && 0 
-
-println(true || false)
-println(true && false)
-
-println(false || true)
-println(false && true)
-
-a = b = c = d = 1.2
-
-println(a..", "..b..", "..c..", "..d)
-println(a = 10)
-println(a)
+funcs = {pow}
+println(funcs[0](2, 4))
