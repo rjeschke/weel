@@ -55,9 +55,9 @@ runtime class for its operation.
 
 ### Current development status
 
-*pre-alpha*
+*alpha*
 
-This is just a rough outline of the framework.
+Most of the stuff is working, still a lot missing though.
 
 ### How would Weel source code look like?
 
