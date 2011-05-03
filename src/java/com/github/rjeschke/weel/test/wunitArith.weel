@@ -1,0 +1,7 @@
+testArith = {}
+
+wunit("testArith", "Arithmetic tests.")
+
+sub testArith.basicTests()
+	wuAssert(1 + -1 == 0, "1 + -1 == 0")
+end

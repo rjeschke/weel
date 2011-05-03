@@ -1,9 +1,29 @@
-f = print
-println(f)
-f("Hello world!")
-println()
-f = sqrt
-println(f(2))
+a = 1
 
-funcs = {pow}
-println(funcs[0](2, 4))
+f = func()
+	if a == 1 then
+		println("Hund")
+		a = 2
+	end
+	return func()
+		rb = a
+		return rb * 2
+	end
+end
+
+println(f()())
+
+f = println
+f("Test")
+
+
+test = {}
+
+func test::test(a, b)
+	println(this->test)
+	return a + b;
+end
+
+println(test->test(1, 2))
+println(test->test)
+

@@ -34,7 +34,7 @@ public final class Weel
     final static WeelLoader classLoader = new WeelLoader();
     /** Compiled script classes. */
     final ArrayList<String> scriptClasses = new ArrayList<String>();
-    
+
     /** ThreadLocal variable for Weel Runtimes associated with this Weel class. */
     private final ThreadLocal<Runtime> runtime = new ThreadLocal<Runtime>()
     {
@@ -57,11 +57,14 @@ public final class Weel
         this.importFunctions(WeelLibrary.class);
     }
 
+    /**
+     * Runs the static part of all compiled scripts.
+     */
     public void runStatic()
     {
         final Runtime runtime = this.getRuntime();
-        
-        for(final String name : this.scriptClasses)
+
+        for (final String name : this.scriptClasses)
         {
             try
             {
@@ -94,7 +97,7 @@ public final class Weel
             }
         }
     }
-    
+
     /**
      * Gets a Runtime object local to the current Thread.
      * 
@@ -159,6 +162,21 @@ public final class Weel
     }
 
     /**
+     * Adds a global variable to this Weel.
+     * 
+     * @param name
+     *            The name.
+     * @return The index.
+     */
+    int addGlobal(final String name)
+    {
+        final int index = this.globals.size();
+        this.mapGlobals.put(name.toLowerCase(), index);
+        this.globals.add(new Value());
+        return index;
+    }
+
+    /**
      * Checks if a global variable with the given name exists.
      * 
      * @param name
@@ -207,13 +225,32 @@ public final class Weel
      * @param func
      *            The function.
      */
-    private void addFunction(final String iname, final WeelFunction func)
+    void addFunction(final String iname, final WeelFunction func)
+    {
+        this.addFunction(iname, func, true);
+    }
+
+    /**
+     * Adds the given function to this Weel's function list.
+     * 
+     * @param iname
+     *            The internal name.
+     * @param func
+     *            The function.
+     * @param addToHash
+     *            Add it to the function name hash map?
+     */
+    void addFunction(final String iname, final WeelFunction func,
+            final boolean addToHash)
     {
         final int index = this.functions.size();
         func.index = index;
         this.functions.add(func);
-        this.mapFunctions.put(func.name, index);
-        this.mapFunctionsExact.put(iname, index);
+        if (addToHash)
+        {
+            this.mapFunctions.put(func.name, index);
+            this.mapFunctionsExact.put(iname, index);
+        }
     }
 
     /**
@@ -236,6 +273,19 @@ public final class Weel
     public void importFunctions(Object object)
     {
         this.importFunctions(object.getClass(), object);
+    }
+
+    /**
+     * Initializes all invokers.
+     */
+    void initAllInvokers()
+    {
+        for (final WeelFunction func : this.functions)
+        {
+            if (func.invoker == null)
+                func.invoker = WeelInvokerFactory.create();
+            func.initialize();
+        }
     }
 
     /**

@@ -29,6 +29,16 @@ class Variable
     }
     
     /**
+     * Check if this Variable contains a function.
+     * 
+     * @return <code>true</code> if so.
+     */
+    public boolean isFunction()
+    {
+        return this.function != null;
+    }
+    
+    /**
      * Variable type enumeration.
      * 
      * @author René Jeschke <rene_jeschke@yahoo.de>

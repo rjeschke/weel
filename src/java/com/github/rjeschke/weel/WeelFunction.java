@@ -64,7 +64,7 @@ public class WeelFunction
             {
                 // We clone here ...
                 final int var = this.envLocals[i];
-                func.environment[i] = var < 0 ? runtime.ginenv(1 - var)
+                func.environment[i] = var < 0 ? runtime.ginenv(-var - 1)
                         : runtime.gloc(var);
             }
         }

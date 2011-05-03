@@ -150,10 +150,33 @@ This is just a rough outline of the framework.
 
 ### Current compiler state
 
-*   Parses expressions (assignments, calls, ...)
+##### Implemented
+
+*   expressions (assignments, calls, ...)
 *	if, elseif, else
-*   for loops
-*	do/end, do/until scopes/loops
+*   for-end, do-end, do-until, while-end
+*	break, continue
+*	func/sub
+*	exit, return
+*	anonymous functions
+*	closures
+*	local, global
+*	OOP (base) and array functions
+
+##### Missing / TODO / planned
+
+*	outer
+*	OOP (constructors, new, ...)
+*	lock/end
+*	switch, foreach
+*	interop nice methods
+*	most of the Weel library
+*	unit test framework
+*	refactor error messages
+*	expression optimization
+
+*REMARK:* The compiler and runtime still need full testing so everything
+might be a bit unstable at the moment. 
 
 ***
 

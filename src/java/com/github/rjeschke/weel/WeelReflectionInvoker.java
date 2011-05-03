@@ -18,11 +18,16 @@ final class WeelReflectionInvoker implements WeelInvoker
     private WeelFunction function;
     /** Method for invocation. */
     private Method method;
+    /** Are we initialized? */
+    private boolean initialized = false;
 
     /** @see com.github.rjeschke.weel.WeelInvoker#initialize(WeelFunction) */
     @Override
     public void initialize(WeelFunction function)
     {
+        if(this.initialized)
+            return;
+        
         this.function = function;
 
         try
@@ -43,6 +48,7 @@ final class WeelReflectionInvoker implements WeelInvoker
         {
             throw new WeelException(e);
         }
+        this.initialized = true;
     }
 
     /** @see com.github.rjeschke.weel.WeelInvoker#invoke(Runtime) */

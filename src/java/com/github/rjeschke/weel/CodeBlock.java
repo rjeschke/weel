@@ -7,6 +7,8 @@ package com.github.rjeschke.weel;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.github.rjeschke.weel.Variable.Type;
+
 /**
  * Main building block for the Weel compiler.
  * 
@@ -16,17 +18,19 @@ final class CodeBlock
 {
     /** List of used locals. */
     ArrayList<Boolean> locals = new ArrayList<Boolean>();
-    /** Closure variables get registered at block level. */
+    /** Closure variables indices. */
     ArrayList<Integer> cvarIndex = new ArrayList<Integer>();
+    /** Variable index to closure index mapping. */
+    HashMap<Integer, Integer> cvarMap = new HashMap<Integer, Integer>();
     /** Closure variable name to index mapping. */
-    HashMap<String, Integer> cvars = new HashMap<String, Integer>();
+    final HashMap<String, Integer> cvars = new HashMap<String, Integer>();
 
     /** The code. */
     ByteList code = new ByteList();
     /** The method writer. */
-    final JvmMethodWriter methodWriter;
+    JvmMethodWriter methodWriter;
     /** The class writer. */
-    final JvmClassWriter classWriter;
+    JvmClassWriter classWriter;
     /** Enclosing WeelFunction (if not STATIC). */
     WeelFunction function;
     /** Flag indicating that we're an anonymous function. */
@@ -39,6 +43,29 @@ final class CodeBlock
      *            The method writer.
      */
     public CodeBlock(final JvmMethodWriter methodWriter)
+    {
+        this.classWriter = methodWriter.classWriter;
+        this.methodWriter = methodWriter;
+    }
+
+    /**
+     * Constructor.
+     * 
+     * @param methodWriter
+     *            The method writer.
+     */
+    CodeBlock()
+    {
+        //
+    }
+
+    /**
+     * Sets the method writer.
+     * 
+     * @param methodWriter
+     *            The method writer.
+     */
+    void setMethodWriter(final JvmMethodWriter methodWriter)
     {
         this.classWriter = methodWriter.classWriter;
         this.methodWriter = methodWriter;
@@ -73,6 +100,27 @@ final class CodeBlock
     void unregisterLocal(final int index)
     {
         this.locals.set(index, false);
+    }
+
+    /**
+     * Registers or gets a closure variable.
+     * 
+     * @param var
+     *            The variable.
+     * @return The index or <code>-1</code>
+     */
+    int getCvar(final Variable var)
+    {
+        if (var.type == Type.NONE || var.type == Type.GLOBAL)
+            return -1;
+        final int vi = var.type == Type.LOCAL ? var.index : -var.index - 1;
+        final Integer idx = this.cvarMap.get(vi);
+        if (idx != null)
+            return idx;
+        final int num = this.cvarIndex.size();
+        this.cvarIndex.add(vi);
+        this.cvarMap.put(vi, num);
+        return num;
     }
 
     /**
@@ -338,8 +386,16 @@ final class CodeBlock
 
         // Write header
         this.code.add(JvmOp.ALOAD_0);
-        this.ldcInt(0);
-        this.ldcInt(this.locals.size());
+        if (this.function != null)
+        {
+            this.ldcInt(this.function.arguments);
+            this.ldcInt(this.locals.size() - this.function.arguments);
+        }
+        else
+        {
+            this.ldcInt(0);
+            this.ldcInt(this.locals.size());
+        }
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(cw.addMethodRefConstant(
                 "com.github.rjeschke.weel.Runtime", "openFrame", "(II)V"));
@@ -352,7 +408,9 @@ final class CodeBlock
         this.code.add(JvmOp.ALOAD_0);
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(cw.addMethodRefConstant(
-                "com.github.rjeschke.weel.Runtime", "closeFrame", "()V"));
+                "com.github.rjeschke.weel.Runtime", (this.function != null
+                        && this.function.returnsValue ? "closeFrameRet"
+                        : "closeFrame"), "()V"));
         this.code.add(JvmOp.RETURN);
     }
 }

@@ -35,7 +35,7 @@ public class Main
             System.out.println("Execute: " + (t1 / 1e9) + " sec");
 
             if(weel.getRuntime().getStackPointer() != -1)
-                System.err.println("Doh! You messed it up!");
+                System.err.println("Doh! You messed it up! (" + weel.getRuntime().getStackPointer() + ")");
         }
         catch (Exception e)
         {

@@ -4,7 +4,6 @@
  */
 package com.github.rjeschke.weel;
 
-import com.github.rjeschke.weel.annotations.WeelMethod;
 import com.github.rjeschke.weel.annotations.WeelRawMethod;
 
 /**
@@ -18,11 +17,6 @@ public final class WeelLibrary
      * *** Console functions ***
      */
 
-    @WeelMethod
-    public final static double test(double a, double b)
-    {
-        return a + b;
-    }
     /**
      * <code>println(v)</code>
      * <p>
@@ -69,6 +63,68 @@ public final class WeelLibrary
     public final static void println(final Runtime runtime)
     {
         System.out.println();
+    }
+
+    /**
+     * <code>size(a)</code>
+     * <p>
+     * Returns the size of a value.
+     * </p>
+     * 
+     * @param runtime
+     *            The Weel runtime.
+     */
+    @WeelRawMethod(args = 1, returnsValue = true)
+    public final static void size(final Runtime runtime)
+    {
+        final Value v = runtime.pop();
+        switch (v.type)
+        {
+        case NUMBER:
+            runtime.load(v.number);
+            break;
+        case STRING:
+            runtime.load(v.string.length());
+            break;
+        case MAP:
+            runtime.load(v.map.size());
+            break;
+        default:
+            runtime.load(0);
+            break;
+        }
+    }
+
+    /**
+     * <code>clock()</code>
+     * <p>
+     * Returns the current value of the most precise available system timer, in
+     * seconds.
+     * </p>
+     * 
+     * @param runtime
+     *            The Weel runtime.
+     * @see java.lang.System#nanoTime()
+     */
+    @WeelRawMethod(returnsValue = true)
+    public final static void clock(final Runtime runtime)
+    {
+        runtime.load(System.nanoTime() * 1e-9);
+    }
+
+    /**
+     * <code>array(a)</code>
+     * <p>
+     * Creates an array of the given size.
+     * </p>
+     * 
+     * @param runtime
+     *            The Weel runtime.
+     */
+    @WeelRawMethod(args = 1, returnsValue = true)
+    public final static void array(final Runtime runtime)
+    {
+        runtime.load(new ValueMap((int) runtime.pop().getNumber()));
     }
 
     /*

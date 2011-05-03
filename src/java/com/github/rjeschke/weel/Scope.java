@@ -36,6 +36,13 @@ class Scope
     int startPc;
     /** Local variable index for FOR loops. */
     int localIndex;
+    /** OOP variable for functions. */
+    Variable oopVariable;
+    /** OOP array index. */
+    String oopIndex;
+    /** Is this a 'real-oop' function. */
+    boolean isOop;
+    
     /**
      * Constructor.
      * 
@@ -128,8 +135,11 @@ class Scope
         Scope current = this;
         while (current != null)
         {
-            switch(current.type)
+            switch (current.type)
             {
+            case FUNC:
+            case SUB:
+                return null;
             case FOR:
             case FOREACH:
             case SWITCH:
@@ -143,7 +153,7 @@ class Scope
         }
         return null;
     }
-    
+
     /**
      * Gets a scope which accepts a 'continue'.
      * 
@@ -154,8 +164,11 @@ class Scope
         Scope current = this;
         while (current != null)
         {
-            switch(current.type)
+            switch (current.type)
             {
+            case FUNC:
+            case SUB:
+                return null;
             case FOR:
             case FOREACH:
             case DO:
@@ -224,9 +237,71 @@ class Scope
         {
             return this.locals.get(name);
         }
-        if (this.parent != null)
+        if (this.parent != null
+                && (this.type != ScopeType.SUB && this.type != ScopeType.FUNC))
         {
             return this.parent.findLocal(name);
+        }
+        return -1;
+    }
+
+    /**
+     * Finds a local variable, searches up to static scope.
+     * 
+     * @param name
+     *            The name.
+     * @return The index or <code>-1</code>
+     */
+    int findLocalFull(final String name)
+    {
+        if (this.locals.containsKey(name))
+        {
+            return this.locals.get(name);
+        }
+        if (this.parent != null)
+        {
+            return this.parent.findLocalFull(name);
+        }
+        return -1;
+    }
+
+    /**
+     * Finds a closure variable.
+     * 
+     * @param name
+     *            The name.
+     * @return The index or <code>-1</code>
+     */
+    int findCvar(final String name)
+    {
+        if (this.block.cvars.containsKey(name))
+        {
+            return this.block.cvars.get(name);
+        }
+        if (this.parent != null
+                && (this.type != ScopeType.SUB && this.type != ScopeType.FUNC))
+        {
+            return this.parent.findCvar(name);
+        }
+        return -1;
+    }
+
+    /**
+     * Finds a closure variable, searches up to top nested anonymous function.
+     * 
+     * @param name
+     *            The name.
+     * @return The index or <code>-1</code>
+     */
+    int findCvarFull(final String name)
+    {
+        if (this.block.cvars.containsKey(name))
+        {
+            return this.block.cvars.get(name);
+        }
+        if (this.parent != null && this.parent.block.isAnonymousFunction)
+        {
+            return this.parent.findCvarFull(name);
         }
         return -1;
     }
@@ -283,27 +358,89 @@ class Scope
                 var.index = loc;
                 var.type = Type.LOCAL;
             }
+            else if (this.block.isAnonymousFunction)
+            {
+                final int cv = this.findCvar(name);
+                if (cv != -1)
+                {
+                    var.index = cv;
+                    var.type = Type.CVAR;
+                }
+            }
         }
         var.function = this.weel.findFunction(name);
         return var;
     }
 
     /**
-     * Finds or adds a variable.
+     * Finds a variable, performs a full search. Used in closures.
      * 
      * @param var
      *            The Variable (out).
      * @param name
      *            The name.
+     * @return The supplied Variable.
      */
-    void findAddVariable(final Variable var, final String name)
+    private Variable findVariableFull(final Variable var, final String name)
     {
-        this.findVariable(var, name);
-        if (var.type == Type.NONE)
+        final Integer glob = this.weel.mapGlobals.get(name);
+        var.name = name;
+        var.type = Type.NONE;
+        if (glob != null)
         {
-            var.type = Type.LOCAL;
-            var.index = this.block.registerLocal();
-            this.locals.put(var.name, var.index);
+            var.index = glob;
+            var.type = Type.GLOBAL;
+        }
+        else
+        {
+            if (this.block.isAnonymousFunction)
+            {
+                final int cv = this.findCvarFull(name);
+                if (cv != -1)
+                {
+                    var.index = cv;
+                    var.type = Type.CVAR;
+                }
+            }
+            if(var.type == Type.NONE)
+            {
+                final int loc = this.findLocalFull(name);
+                if (loc != -1)
+                {
+                    var.index = loc;
+                    var.type = Type.LOCAL;
+                }
+            }
+        }
+        var.function = this.weel.findFunction(name);
+        return var;
+    }
+
+    /**
+     * Checks if we can create a CVAR and if so, creates it.
+     * 
+     * @param var
+     *            The variable (out).
+     */
+    void maybeCreateCvar(final Variable var)
+    {
+        final Scope s = this.getBorderScope();
+        if (s == null)
+            return;
+        final Variable v = s.findVariableFull(new Variable(), var.name);
+        if (v.type == Type.LOCAL || v.type == Type.CVAR)
+        {
+            var.index = this.block.getCvar(v);
+            if(var.index != -1)
+            {
+                this.block.cvars.put(var.name, var.index);
+                var.type = Type.CVAR;
+            }
+            else
+            {
+                var.type = Type.NONE;
+            }
+            
         }
     }
 }

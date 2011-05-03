@@ -213,19 +213,6 @@ public final class Runtime
     }
 
     /**
-     * Duplicates the second value on top of the Weel stack.
-     * 
-     * <p>
-     * <code>..., value1, value2 &rArr; ..., value1, value2, value1 </code>
-     * </p>
-     */
-    public void sdupx1()
-    {
-        this.stack[this.sp - 1].copyTo(this.stack[this.sp + 1]);
-        this.sp++;
-    }
-
-    /**
      * Duplicates two values on top of the Weel stack.
      * 
      * <p>
@@ -240,7 +227,7 @@ public final class Runtime
     }
 
     /**
-     * Duplicates the values on top of the Weel stack and moves it three places
+     * Duplicates the value on top of the Weel stack and moves it three places
      * up.
      * 
      * <p>
@@ -450,23 +437,6 @@ public final class Runtime
     }
 
     /**
-     * Ends a for loop.
-     * 
-     * @param var
-     *            For loop variable index.
-     * @return <code>true</code> if the loop must be continued.
-     * @throws WeelException
-     *             If the for variable is not a number.
-     */
-    public boolean endForLoop(final int var)
-    {
-        final double step = this.stack[this.sp].number;
-        final double value = this.stack[var + this.frameStart[this.fp]].number += step;
-        return step < 0 ? value >= this.stack[this.sp - 1].number
-                : value <= this.stack[this.sp - 1].number;
-    }
-
-    /**
      * Begins a for loop.
      * 
      * @param var
@@ -484,6 +454,23 @@ public final class Runtime
         if (value.type != ValueType.NUMBER)
             throw new WeelException("FOR variable must be a number.");
         return step < 0 ? value.number >= lim : value.number <= lim;
+    }
+
+    /**
+     * Ends a for loop.
+     * 
+     * @param var
+     *            For loop variable index.
+     * @return <code>true</code> if the loop must be continued.
+     * @throws WeelException
+     *             If the for variable is not a number.
+     */
+    public boolean endForLoop(final int var)
+    {
+        final double step = this.stack[this.sp].number;
+        final double value = this.stack[var + this.frameStart[this.fp]].number += step;
+        return step < 0 ? value >= this.stack[this.sp - 1].number
+                : value <= this.stack[this.sp - 1].number;
     }
 
     /**
@@ -836,7 +823,7 @@ public final class Runtime
     {
         // TODO maybe nullify stack values?
         // If no return value is given, NULL gets returned
-        if (this.sp - this.frameStart[this.fp] == this.frameSize[this.fp])
+        if (this.sp - this.frameStart[this.fp] < this.frameSize[this.fp])
             this.stack[++this.sp].setNull();
         this.stack[this.sp].copyTo(this.stack[this.frameStart[this.fp]]);
         this.sp -= this.frameSize[this.fp--];
@@ -872,11 +859,26 @@ public final class Runtime
      */
     public void stackCall(final int args, final boolean shouldReturn)
     {
-        final WeelFunction func = this.stack[this.sp - args].getFunction();
+        WeelFunction func = this.stack[this.sp - args].getFunction();
 
         if (func.arguments != args)
-            throw new WeelException("Argument count mismatch, expected " + args
-                    + " got " + func.arguments);
+        {
+            // Is there a valid overloaded function?
+            final WeelFunction overloaded = this.mother.findFunction(func.name,
+                    args);
+            if (overloaded != null)
+            {
+                // Yes, use it
+                func = this.stack[this.sp - args].function = overloaded;
+            }
+            else
+            {
+                // Nope, throw it
+                throw new WeelException(
+                        "Stackcall argument count mismatch, expected " + args
+                                + " got " + func.arguments);
+            }
+        }
 
         func.invoke(this);
         // Check return value
@@ -943,6 +945,24 @@ public final class Runtime
         final ValueMap map = this.stack[this.sp - 1].getMap();
         map.get(this.stack[this.sp], this.stack[this.sp - 1]);
         --this.sp;
+    }
+
+    /**
+     * Gets a value from a map prepared for OOP calls.
+     * 
+     * <p>
+     * <code>..., map, index &rArr; ..., value, map</code>
+     * </p>
+     * 
+     * @throws WeelException
+     *             If the 'map' is not a ValueMap.
+     */
+    public void getMapOop()
+    {
+        final ValueMap map = this.stack[this.sp - 1].getMap();
+        map.get(this.stack[this.sp], this.stack[this.sp - 1]);
+        this.stack[this.sp].type = ValueType.MAP;
+        this.stack[this.sp].map = map;
     }
 
     /**

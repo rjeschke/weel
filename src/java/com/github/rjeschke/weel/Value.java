@@ -23,7 +23,7 @@ public final class Value
     WeelFunction function;
     /** This Value's object. */
     Object object;
-
+    
     /**
      * Creates a Value of type NULL.
      */

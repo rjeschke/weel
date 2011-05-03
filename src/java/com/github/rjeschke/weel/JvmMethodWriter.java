@@ -14,10 +14,10 @@ import java.lang.reflect.Modifier;
 final class JvmMethodWriter
 {
     final JvmClassWriter classWriter;
-    final String methodName;
+    String methodName;
     final String descriptor;
     ByteList code = new ByteList();
-    int maxStack = 4, maxLocals = 1;
+    int maxStack = 3, maxLocals = 1;
     int nameIndex, descriptorIndex;
     int access = Modifier.PUBLIC | Modifier.FINAL | Modifier.STATIC;
     
