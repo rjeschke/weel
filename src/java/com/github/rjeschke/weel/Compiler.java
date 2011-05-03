@@ -5,7 +5,6 @@
 package com.github.rjeschke.weel;
 
 import java.io.BufferedReader;
-import java.io.EOFException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
@@ -87,6 +86,11 @@ final class Compiler
 
         while (this.tokenizer.token != Token.EOF)
             this.compileToken();
+
+        if (this.scope.type != ScopeType.STATIC)
+        {
+            throw new WeelException("Open block: " + this.scope.type.toString());
+        }
 
         this.scope.block.closeBlock();
 
@@ -768,7 +772,7 @@ final class Compiler
                 break;
             default:
             {
-                Token tok = this.tokenizer.token;
+                final Token tok = this.tokenizer.token;
                 this.tokenizer.next();
                 this.parseExpression(Tokenizer.UOPR_PRIORITY);
                 switch (tok)
@@ -782,8 +786,8 @@ final class Compiler
                 default:
                     break;
                 }
-            }
                 break;
+            }
             }
         }
         else
@@ -897,6 +901,8 @@ final class Compiler
         case FUNC:
             this.closeFunction();
             break;
+        default:
+            throw new WeelException(this.tokenizer.error("'end' without block"));
         }
     }
 
@@ -909,7 +915,7 @@ final class Compiler
         if (s == null)
         {
             throw new WeelException(this.tokenizer
-                    .error("BREAK without suitable scope"));
+                    .error("'break' without suitable scope"));
         }
         s.addBreak(s.block.writeJmp(JvmOp.GOTO, 0));
         this.tokenizer.next();
@@ -924,7 +930,7 @@ final class Compiler
         if (s == null)
         {
             throw new WeelException(this.tokenizer
-                    .error("CONTINUE without suitable scope"));
+                    .error("'continue' without suitable scope"));
         }
         s.addContinue(s.block.writeJmp(JvmOp.GOTO, 0));
         this.tokenizer.next();
@@ -1011,7 +1017,7 @@ final class Compiler
             this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
         }
         if (!this.scope.continues.isEmpty())
-            throw new WeelException(this.tokenizer.error("Misplaced CONTINUE"));
+            throw new WeelException(this.tokenizer.error("Misplaced 'continue'"));
         this.removeScope();
         this.tokenizer.next();
     }
@@ -1091,9 +1097,9 @@ final class Compiler
     private void addElseIf()
     {
         if (this.scope == null || this.scope.type != ScopeType.IF)
-            throw new WeelException(this.tokenizer.error("ELSE without IF"));
+            throw new WeelException(this.tokenizer.error("'elseif' without 'if'"));
         if (this.scope.hasElse)
-            throw new WeelException(this.tokenizer.error("ELSEIF after ELSE"));
+            throw new WeelException(this.tokenizer.error("'elseif' after 'else'"));
         this.scope.addBreak(this.block.writeJmp(JvmOp.GOTO, 0));
         final int cont = this.scope.removeContinue();
         this.block.writeShortAt(cont, this.block.getPc() - cont + 1);
@@ -1112,9 +1118,9 @@ final class Compiler
     private void addElse()
     {
         if (this.scope == null || this.scope.type != ScopeType.IF)
-            throw new WeelException(this.tokenizer.error("ELSE without IF"));
+            throw new WeelException(this.tokenizer.error("'else' without 'if'"));
         if (this.scope.hasElse)
-            throw new WeelException(this.tokenizer.error("Duplicate ELSE"));
+            throw new WeelException(this.tokenizer.error("Duplicate 'else'"));
 
         this.tokenizer.next();
         this.scope.hasElse = true;
@@ -1167,9 +1173,9 @@ final class Compiler
             this.tokenizer.next();
 
             if (this.tokenizer.token == Token.DOT
-                    || this.tokenizer.token == Token.DOUBLE_COLON)
+                    || this.tokenizer.token == Token.COLON)
             {
-                this.scope.isOop = this.tokenizer.token == Token.DOUBLE_COLON;
+                this.scope.isOop = this.tokenizer.token == Token.COLON;
                 // We use the scope parent here ... why?
                 // Because we want to support 'local classes' ... and the parent
                 // scope should always be valid here (static scope)
@@ -1287,9 +1293,9 @@ final class Compiler
         final Scope s = this.scope.findFunctionScope();
         if (s == null || s.type == ScopeType.FUNC)
         {
-            throw new WeelException(this.tokenizer.error("EXIT without SUB"));
+            throw new WeelException(this.tokenizer.error("'exit' without 'sub'"));
         }
-        // TODO exit pops
+        this.writeExitPops();
         this.scope.addBreak(this.block.writeJmp(JvmOp.GOTO, 0));
         this.tokenizer.next();
     }
@@ -1302,9 +1308,9 @@ final class Compiler
         final Scope s = this.scope.findFunctionScope();
         if (s == null || s.type == ScopeType.SUB)
         {
-            throw new WeelException(this.tokenizer.error("RETURN without FUNC"));
+            throw new WeelException(this.tokenizer.error("'return' without 'func'"));
         }
-        // TODO exit pops
+        this.writeExitPops();
         this.tokenizer.next();
         this.parseExpression();
         this.scope.addBreak(this.block.writeJmp(JvmOp.GOTO, 0));
@@ -1596,5 +1602,35 @@ final class Compiler
         this.block.code.addShort(this.classWriter.addMethodRefConstant(
                 func.clazz, func.javaName,
                 "(Lcom/github/rjeschke/weel/Runtime;)V"));
+    }
+
+    /**
+     * Calculates the number of pops needed to be placed before an 'exit' or a
+     * 'return'. Writes a 'pop(n)' instruction if number of pops > 0.
+     */
+    private void writeExitPops()
+    {
+        int pops = 0;
+        Scope s = this.scope;
+        while (s != null
+                && (s.type != ScopeType.SUB && s.type != ScopeType.FUNC))
+        {
+            switch (s.type)
+            {
+            case FOR:
+                pops += 2;
+                break;
+            case SWITCH:
+                pops++;
+                break;
+            default:
+                break;
+            }
+            s = s.parent;
+        }
+        if (pops > 0)
+        {
+            this.block.callRuntime("pop", pops);
+        }
     }
 }

@@ -4,6 +4,7 @@
  */
 package com.github.rjeschke.weel;
 
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -15,6 +16,15 @@ import com.github.rjeschke.weel.annotations.WeelMethod;
 
 /**
  * Main Weel class.
+ * <p>
+ * Example usage:
+ * </p>
+ * 
+ * <pre>
+ * <code>final Weel weel = new Weel();
+ * weel.compile("println('Hello world!')");
+ * weel.runStatic();</code>
+ * </pre>
  * 
  * @author René Jeschke <rene_jeschke@yahoo.de>
  */
@@ -55,6 +65,31 @@ public final class Weel
     public Weel()
     {
         this.importFunctions(WeelLibrary.class);
+        this.importFunctions(WeelUnit.class);
+    }
+
+    /**
+     * Compiles the given input String.
+     * 
+     * @param input
+     *            The input String.
+     */
+    public void compile(final String input)
+    {
+        final Compiler compiler = new Compiler(this);
+        compiler.compile(input);
+    }
+
+    /**
+     * Compiles the given input stream.
+     * 
+     * @param input
+     *            The input stream.
+     */
+    public void compile(final InputStream input)
+    {
+        final Compiler compiler = new Compiler(this);
+        compiler.compile(input);
     }
 
     /**

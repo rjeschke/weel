@@ -1,7 +1,11 @@
 testArith = {}
 
-wunit("testArith", "Arithmetic tests.")
+wUnitTestcase(testArith, "Arithmetic tests.")
 
-sub testArith.basicTests()
-	wuAssert(1 + -1 == 0, "1 + -1 == 0")
+sub testArith:basicTests()
+	this->assert(1 + -1 == 0, "1 + -1 == 0")
+	this->throws(sub()
+		var = null
+		println(var[0])
+	end, "No map should throw")
 end

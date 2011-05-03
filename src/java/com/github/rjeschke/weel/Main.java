@@ -13,22 +13,26 @@ public class Main
         try
         {
             final Weel weel = new Weel();
-            final Compiler compiler = new Compiler(weel);
             
             long t0 = System.nanoTime();
-            compiler.compile(Main.class.getResourceAsStream("/com/github/rjeschke/weel/test/test.weel"));
+            weel.compile(Main.class.getResourceAsStream("/com/github/rjeschke/weel/test/test.weel"));
+            weel.compile(Main.class.getResourceAsStream("/com/github/rjeschke/weel/test/wunitArith.weel"));
             t0 = System.nanoTime() - t0;
 
+            /*
             byte[] cdata = compiler.classWriter.build();
 
             FileOutputStream fos = new FileOutputStream(
                     "/home/rjeschke/Script0.class");
             fos.write(cdata);
             fos.close();
-
+             */
+            
             long t1 = System.nanoTime();
             weel.runStatic();
             t1 = System.nanoTime() - t1;
+            
+            WeelUnit.runTests(weel);
             
             System.out.println();
             System.out.println("Compile: " + (t0 / 1e9) + " sec");

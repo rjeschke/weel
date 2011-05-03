@@ -102,7 +102,7 @@ This is just a rough outline of the framework.
 	clazz = {}
 	clazz.var = "Hello world!"
 	
-	sub clazz::println()
+	sub clazz:println()
 		println(this->var)
 	end
 	

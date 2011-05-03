@@ -190,6 +190,36 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
      * @throws WeelException
      *             If the index is invalid.
      */
+    public void set(final String index, final Value value)
+    {
+        this.set(new Value(index), value);
+    }
+
+    /**
+     * Sets the value at the given index. Maps grow automatically.
+     * 
+     * @param index
+     *            The index.
+     * @param value
+     *            The value.
+     * @throws WeelException
+     *             If the index is invalid.
+     */
+    public void set(final int index, final Value value)
+    {
+        this.set(new Value(index), value);
+    }
+
+    /**
+     * Sets the value at the given index. Maps grow automatically.
+     * 
+     * @param index
+     *            The index.
+     * @param value
+     *            The value.
+     * @throws WeelException
+     *             If the index is invalid.
+     */
     public void set(final Value index, final Value value)
     {
         switch (index.type)

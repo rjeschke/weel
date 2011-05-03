@@ -521,16 +521,16 @@ final class Tokenizer
                     return this.token = Token.LOGICAL_NOT;
                 case ':':
                     this.read();
-                    if (this.current == ':')
-                    {
-                        this.read();
+//                    if (this.current == ':')
+//                    {
+//                        this.read();
 //                        if (this.current == ':')
 //                        {
 //                            this.read();
 //                            return this.token = Token.TRIPPLE_COLON;
 //                        }
-                        return this.token = Token.DOUBLE_COLON;
-                    }
+//                        return this.token = Token.DOUBLE_COLON;
+//                    }
                     return this.token = Token.COLON;
                 default:
                     if (Character.isLetter(this.current) || this.current == '_')
