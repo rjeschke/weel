@@ -16,32 +16,32 @@ end
 sub t:testBasics()
     this->assert(1 + -1 == 0, "1 + -1 == 0");
     this->throws(
-        @(
+        @{
             var = null;
             a = var[0];
-        ), "Indexing a non-map value should throw");
+        }, "Indexing a non-map value should throw");
     
     this->noThrow(
-        @(
+        @{
             var = 1;
             var += "One";
-        ), "Adding a String to a number is Ok.");
+        }, "Adding a String to a number is Ok.");
         
 end
 
 func t:createClosure(var)
-    return @(
+    return @{
         return var;
-    );
+    };
 end
 
 func t:createClosure2()
     local counter = 0;
-    return @(
+    return @{
         ret = counter;
         counter += 1;
         return ret;
-    );
+    };
 end
 
 sub t:testClosures()

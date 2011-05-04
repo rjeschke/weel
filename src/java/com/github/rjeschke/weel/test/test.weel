@@ -1,16 +1,16 @@
 /*
 a = 1
 
-f = @(
+f = @{
     if a == 1 then
         println("Hund")
         a = 2
     end
-    return @(
+    return @{
         rb = a
         return rb * 2
-    )
-)
+    }
+}
 
 println(f()())
 
@@ -57,11 +57,11 @@ end
 
 dump("config", config)
 
-f = @(println("Hello world!"))
+f = @{println("Hello world!")}
  
 f()
 
-f = @( (a, b) return a + b)
+f = @{ (a, b) return a + b}
 
 println(f(1, 2))
 
@@ -147,3 +147,35 @@ func clamp(x, min, max)
 end
 
 println(clamp(-1, 0, 2))
+
+map = {1, 2, 3, 4}
+
+ms = {
+	size = @{(m)
+		return size(m);
+	},
+	fold = @{(list, fc)
+		if size(list) == 0 then
+			return null
+		elseif size(list) == 1 then
+			return list[0]
+		else
+			ret = fc(list[0], list[1])
+			for i = 2, size(list) - 1 do
+				ret = fc(ret, list[i])
+		    end
+		    return ret
+		end
+	}
+}
+
+funcReg("map", ms);
+
+println(map::size())
+
+println("Result: "..map::fold(@{(a, b) return a + b}));
+
+{1, 2, 3}::size()
+println();
+println({1, 2, 3}::size())
+

@@ -151,7 +151,13 @@ final class Compiler
             this.parseVarsAndFuncs(false);
             this.skipSemi();
             break;
-        case BRACE_CLOSE:
+        case CURLY_BRACE_OPEN:
+        case STRING:
+        case BRACE_OPEN:
+            this.tryStaticSupport();
+            this.skipSemi();
+            break;
+        case CURLY_BRACE_CLOSE:
         {
             if ((this.scope.type == ScopeType.FUNC || this.scope.type == ScopeType.SUB)
                     && this.block.isAnonymousFunction
@@ -256,6 +262,23 @@ final class Compiler
     }
 
     /**
+     * Checks if the expression is a static support function call, e.g.
+     * <code>"Hello world!"::length()</code>
+     */
+    private void tryStaticSupport()
+    {
+        this.parseExpression(false);
+        if (this.tokenizer.token == Token.DOUBLE_COLON)
+        {
+            this.parseVarsAndFuncs(false);
+        }
+        else
+        {
+            this.syntaxError();
+        }
+    }
+
+    /**
      * Parses an assign or a function call
      * 
      * @param getContext
@@ -265,6 +288,7 @@ final class Compiler
     {
         boolean first = true, stackCall = false, end = false, oop = false;
         Variable var;
+
         if (this.tokenizer.token == Token.RESERVED
                 && this.tokenizer.reserved == ReservedWord.THIS)
         {
@@ -278,6 +302,10 @@ final class Compiler
             var.type = Type.LOCAL;
             var.index = 0;
         }
+        else if (this.tokenizer.token == Token.DOUBLE_COLON)
+        {
+            var = new Variable();
+        }
         else
         {
             var = this.scope
@@ -287,12 +315,69 @@ final class Compiler
         ExpressionType expr = var.type != Type.NONE ? ExpressionType.VARIABLE
                 : ExpressionType.NONE;
 
-        this.tokenizer.next();
+        if (this.tokenizer.token != Token.DOUBLE_COLON)
+            this.tokenizer.next();
 
         while (!end)
         {
             switch (this.tokenizer.token)
             {
+            case DOUBLE_COLON:
+            {
+                int paramc = 0;
+                this.tokenizer.next();
+                this.checkToken(Token.NAME);
+                final String name = this.tokenizer.string;
+                if (expr == ExpressionType.ARRAY)
+                {
+                    this.block.callRuntime("getMap");
+                }
+                else if (expr == ExpressionType.VARIABLE)
+                {
+                    this.needGetVariable(var);
+                    this.writeGetVariable(var);
+                }
+                this.tokenizer.next();
+                this.checkToken(Token.BRACE_OPEN);
+                this.tokenizer.next();
+                while (this.tokenizer.token != Token.BRACE_CLOSE)
+                {
+                    paramc++;
+                    this.parseExpression();
+                    if (this.tokenizer.token == Token.BRACE_CLOSE)
+                    {
+                        break;
+                    }
+                    if (this.tokenizer.token == Token.COMMA)
+                    {
+                        this.tokenizer.next();
+                        continue;
+                    }
+                    this.syntaxError();
+                }
+                this.checkToken(Token.BRACE_CLOSE);
+                this.tokenizer.next();
+
+                boolean needsReturn = getContext;
+                switch (this.tokenizer.token)
+                {
+                case BRACE_OPEN:
+                case BRACKET_OPEN:
+                case DOT:
+                case ARROW:
+                case DOUBLE_COLON:
+                    needsReturn = true;
+                    break;
+                default:
+                    break;
+                }
+
+                this.block.writeSpecialCall(name, paramc, needsReturn);
+
+                oop = first = false;
+                expr = ExpressionType.FUNCTION;
+                break;
+            }
             case BRACE_OPEN:
             {
                 int paramc = 0;
@@ -360,6 +445,7 @@ final class Compiler
                     case BRACKET_OPEN:
                     case DOT:
                     case ARROW:
+                    case DOUBLE_COLON:
                         if (!func.returnsValue)
                         {
                             throw new WeelException(this.tokenizer.error("Sub "
@@ -389,6 +475,7 @@ final class Compiler
                     case BRACE_OPEN:
                     case BRACKET_OPEN:
                     case DOT:
+                    case DOUBLE_COLON:
                         wantsValue = true;
                         break;
                     default:
@@ -620,36 +707,37 @@ final class Compiler
         case NUMBER:
             this.block.load(this.tokenizer.number);
             this.tokenizer.next();
-            return;
+            break;
         case STRING:
             this.block.load(this.tokenizer.string);
             this.tokenizer.next();
-            return;
+            break;
         case RESERVED:
             switch (this.tokenizer.reserved)
             {
             case TRUE:
                 this.block.load(-1);
                 this.tokenizer.next();
-                return;
+                break;
             case FALSE:
                 this.block.load(0);
                 this.tokenizer.next();
-                return;
+                break;
             case NULL:
                 this.block.callRuntime("load");
                 this.tokenizer.next();
-                return;
+                break;
             case THIS:
                 this.parseVarsAndFuncs(true);
-                return;
+                break;
             default:
                 this.syntaxError();
-                return;
+                break;
             }
+            break;
         case NAME:
             this.parseVarsAndFuncs(true);
-            return;
+            break;
         case CURLY_BRACE_OPEN:
         {
             int index = 0;
@@ -727,9 +815,9 @@ final class Compiler
                 }
                 this.syntaxError();
             }
-            this.checkToken(Token.CURLY_BRACE_CLOSE);
             this.tokenizer.next();
-            return;
+            System.out.println(this.tokenizer.token);
+            break;
         }
         default:
             this.syntaxError();
@@ -740,6 +828,17 @@ final class Compiler
      * Parses an expression.
      */
     private void parseExpression()
+    {
+        this.parseExpression(true);
+    }
+
+    /**
+     * Parses an expression.
+     * 
+     * @param allowDoubleColon
+     *            Flag indicating if we allow the parsing of <code>::</code>
+     */
+    private void parseExpression(final boolean allowDoubleColon)
     {
         if (this.tokenizer.token == Token.RESERVED
                 && (this.tokenizer.reserved == ReservedWord.FUNC || this.tokenizer.reserved == ReservedWord.SUB)
@@ -758,7 +857,7 @@ final class Compiler
         else
         {
             this.parseExpression(-1);
-            // recursion rules^^
+
             if (this.tokenizer.token == Token.TERNARY)
             {
                 this.block.callRuntime("popBoolean", "()Z");
@@ -773,7 +872,11 @@ final class Compiler
                 this.block
                         .writeShortAt(second, this.block.getPc() - second + 1);
             }
-            // this was easier than expected :D
+            else if (this.tokenizer.token == Token.DOUBLE_COLON
+                    && allowDoubleColon)
+            {
+                this.parseVarsAndFuncs(true);
+            }
         }
     }
 
@@ -1570,13 +1673,13 @@ final class Compiler
         }
     }
 
-//    /**
-//     * Parses the 'outer' keyword
-//     */
-//    private void parseOuter()
-//    {
-//        //
-//    }
+    // /**
+    // * Parses the 'outer' keyword
+    // */
+    // private void parseOuter()
+    // {
+    // //
+    // }
 
     /**
      * Parses the 'global' keyword

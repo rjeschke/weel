@@ -162,9 +162,10 @@ Most of the stuff is working, still a lot missing though.
 *	anonymous functions & closures
 *	local, global
 *	OOP (base) and array functions
-*   added alternate syntax for anonymous functions: e.g. `@(println("Hello world!"))`
-    or `@((a, b) return a + b)` or `@( (a, b) println(a.." + "..b.." = "..(a + b)))`
+*   changed alternate syntax for anonymous functions: e.g. `@{println("Hello world!")}`
+    or `@{(a, b) return a + b}` or `@{ (a, b) println(a.." + "..b.." = "..(a + b))}`
 *   ternary operator: `cond ? expr : expr`
+*	type bound functions: e.g. `map::size()`
 
 ##### Missing / TODO / planned
 
@@ -176,8 +177,6 @@ Most of the stuff is working, still a lot missing though.
 *	unit test framework
 *	refactor error messages
 *	expression optimization
-*   Maybe I'll add some special handling to supply methods for basic types, e.g.
-    `"Hello world!"::length()` or `{1, 2, 3}::fold(@((a, b) return a + b))`
 
 *REMARK:* The compiler and runtime still need full testing so everything
 might be a bit unstable at the moment. 

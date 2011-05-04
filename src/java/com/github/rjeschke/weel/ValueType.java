@@ -4,6 +4,8 @@
  */
 package com.github.rjeschke.weel;
 
+import java.util.HashMap;
+
 /**
  * Weel Value type enumeration.
  * 
@@ -22,5 +24,28 @@ public enum ValueType
     /** A function. */
     FUNCTION,
     /** An object. */
-    OBJECT
+    OBJECT;
+
+    /** Name to enum mapping. */
+    private final static HashMap<String, ValueType> map = new HashMap<String, ValueType>();
+
+    static
+    {
+        for (final ValueType v : ValueType.values())
+        {
+            map.put(v.toString(), v);
+        }
+    }
+
+    /**
+     * Returns an enum from a String.
+     * 
+     * @param value
+     *            The name.
+     * @return The enum or <code>null</code>.
+     */
+    public final static ValueType fromString(final String value)
+    {
+        return map.get(value);
+    }
 }

@@ -44,6 +44,8 @@ public final class Weel
     final static WeelLoader classLoader = new WeelLoader();
     /** Compiled script classes. */
     final ArrayList<String> scriptClasses = new ArrayList<String>();
+    /** Type bound support functions. */
+    final SupportFunctions[] supportFunctions = new SupportFunctions[5];
 
     /** ThreadLocal variable for Weel Runtimes associated with this Weel class. */
     private final ThreadLocal<Runtime> runtime = new ThreadLocal<Runtime>()
@@ -68,6 +70,11 @@ public final class Weel
         this.importFunctions(WeelLibMath.class);
         this.importFunctions(WeelLibSys.class);
         this.importFunctions(WeelUnit.class);
+
+        this.supportFunctions[ValueType.NULL.ordinal()] = new SupportFunctions();
+        this.supportFunctions[ValueType.STRING.ordinal()] = new SupportFunctions();
+        this.supportFunctions[ValueType.MAP.ordinal()] = new SupportFunctions();
+        this.supportFunctions[ValueType.FUNCTION.ordinal()] = new SupportFunctions();
     }
 
     /**
@@ -114,7 +121,7 @@ public final class Weel
         {
             throw new WeelException("Argument count mismatch");
         }
-        
+
         for (final Object o : args)
         {
             if (o == null)
@@ -330,7 +337,7 @@ public final class Weel
      * 
      * @param name
      *            The function's name.
-     * @return THe WeelFunction or <code>null</code> if none was found.
+     * @return The WeelFunction or <code>null</code> if none was found.
      */
     public WeelFunction findFunction(final String name)
     {
@@ -345,7 +352,7 @@ public final class Weel
      *            The function's name.
      * @param args
      *            The number of arguments.
-     * @return THe WeelFunction or <code>null</code> if none was found.
+     * @return The WeelFunction or <code>null</code> if none was found.
      */
     public WeelFunction findFunction(final String name, final int args)
     {

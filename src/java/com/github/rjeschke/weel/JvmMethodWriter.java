@@ -17,7 +17,7 @@ final class JvmMethodWriter
     String methodName;
     final String descriptor;
     ByteList code = new ByteList();
-    int maxStack = 3, maxLocals = 1;
+    int maxStack = 4, maxLocals = 1;
     int nameIndex, descriptorIndex;
     int access = Modifier.PUBLIC | Modifier.FINAL | Modifier.STATIC;
     

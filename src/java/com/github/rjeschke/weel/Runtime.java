@@ -52,6 +52,8 @@ public final class Runtime
     private final ArrayList<Value> globals;
     /** Function list. */
     private final ArrayList<WeelFunction> functions;
+    /** Type bound support functions. */
+    private final SupportFunctions[] supportFunctions;
 
     /**
      * Constructor.
@@ -64,6 +66,7 @@ public final class Runtime
         this.mother = weel;
         this.globals = weel.globals;
         this.functions = weel.functions;
+        this.supportFunctions = weel.supportFunctions;
         for (int i = 0; i < this.stack.length; i++)
             this.stack[i] = new Value();
     }
@@ -938,6 +941,51 @@ public final class Runtime
         else
         {
             --this.sp;
+        }
+    }
+
+    /**
+     * Performs a special call.
+     * 
+     * <p>
+     * <code>..., value, [arguments] &rArr; ..., [return value]</code>
+     * </p>
+     * 
+     * @param name
+     *            The name of the function.
+     * @param args
+     *            Thenumber of arguments.
+     * @param shouldReturn
+     *            Flags indicating that we need a return value.
+     */
+    public void specialCall(final String name, final int args,
+            final boolean shouldReturn)
+    {
+        final SupportFunctions funcs = this.supportFunctions[this.stack[this.sp
+                - args].type.ordinal()];
+        if (funcs == null)
+        {
+            throw new WeelException("No support functions specified for: "
+                    + this.stack[this.sp - args].type);
+        }
+
+        WeelFunction func = funcs.findFunction(name, args + 1);
+
+        if (func == null)
+        {
+            throw new WeelException("Unknown support function '" + name + "("
+                    + args + ")'");
+        }
+
+        func.invoke(this);
+        // Check return value
+        if (func.returnsValue && !shouldReturn)
+        {
+            this.sp--;
+        }
+        else if (!func.returnsValue && shouldReturn)
+        {
+            this.stack[++this.sp].setNull();
         }
     }
 

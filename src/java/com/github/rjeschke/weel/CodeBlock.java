@@ -39,6 +39,7 @@ final class CodeBlock
     boolean isAlternateSyntax;
     /** Flag indicating that our function has at least one return statement. */
     boolean hasReturn;
+
     /**
      * Constructor.
      * 
@@ -378,9 +379,33 @@ final class CodeBlock
     }
 
     /**
+     * Writes a specialCall instruction.
+     * 
+     * @param name
+     *            The name of the function.
+     * @param args
+     *            Thenumber of arguments.
+     * @param shouldReturn
+     *            Flags indicating that we need a return value.
+     */
+    void writeSpecialCall(final String name, final int args,
+            final boolean shouldReturn)
+    {
+        this.code.add(JvmOp.ALOAD_0);
+        this.ldc(this.classWriter.addConstant(new JvmConstant(
+                JvmConstant.CONSTANT_String, this.classWriter
+                        .addConstant(new JvmConstant(name)))));
+        this.ldcInt(args);
+        this.ldcInt(shouldReturn ? 1 : 0);
+        this.code.add(JvmOp.INVOKEVIRTUAL);
+        this.code.addShort(this.classWriter.addMethodRefConstant(
+                "com.github.rjeschke.weel.Runtime", "specialCall",
+                "(Ljava/lang/String;IZ)V"));
+    }
+
+    /**
      * Closes this code block, writing lead-in and lead-out.
      */
-    // TODO ... there's so much to do here
     void closeBlock()
     {
         final JvmClassWriter cw = this.methodWriter.classWriter;

@@ -522,7 +522,7 @@ final class Tokenizer
                     return this.token = Token.LOGICAL_NOT;
                 case '@':
                     this.read();
-                    if (this.current == '(')
+                    if (this.current == '{')
                     {
                         this.read();
                         return this.token = Token.ANON_OPEN;

@@ -4,6 +4,8 @@
  */
 package com.github.rjeschke.weel;
 
+import java.util.Map.Entry;
+
 import com.github.rjeschke.weel.annotations.WeelRawMethod;
 
 /**
@@ -238,5 +240,45 @@ public final class WeelLibSys
             runtime.load(func);
         else
             runtime.load();
+    }
+
+    /**
+     * <code>funcreg(type, map)</code>
+     * <p>
+     * Registers type support functions.
+     * </p>
+     * 
+     * @param runtime
+     *            The Weel runtime.
+     */
+    @WeelRawMethod(args = 2)
+    public final static void funcReg(final Runtime runtime)
+    {
+        final ValueMap map = runtime.pop().getMap();
+        final String typeName = runtime.pop().toString().toUpperCase();
+        final ValueType type = ValueType.fromString(typeName);
+
+        if (type == null)
+        {
+            throw new WeelException("Unknown type '" + typeName + "'");
+        }
+
+        final SupportFunctions funcs = runtime.mother.supportFunctions[type
+                .ordinal()];
+
+        if (funcs == null)
+        {
+            throw new WeelException("Unsupported type '" + type + "'");
+        }
+
+        for (final Entry<Value, Value> e : map)
+        {
+            final String key = e.getKey().toString().toLowerCase();
+            if (e.getValue().isFunction())
+            {
+                final WeelFunction func = e.getValue().function;
+                funcs.addFunction(key + "#" + func.arguments, func);
+            }
+        }
     }
 }
