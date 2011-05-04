@@ -64,8 +64,109 @@ public final class Weel
      */
     public Weel()
     {
-        this.importFunctions(WeelLibrary.class);
+        this.importFunctions(WeelLibCon.class);
+        this.importFunctions(WeelLibMath.class);
+        this.importFunctions(WeelLibSys.class);
         this.importFunctions(WeelUnit.class);
+    }
+
+    /**
+     * Invokes the Weel function with the given name and arguments.
+     * 
+     * @param functionName
+     *            The function name.
+     * @param args
+     *            The arguments.
+     * @return A Value if the functions returns a value, <code>null</code>
+     *         otherwise.
+     * @throws WeelException
+     *             if the function does not exist.
+     */
+    public Value invoke(final String functionName, Object... args)
+    {
+        final WeelFunction function = this.findFunction(functionName,
+                args.length);
+        if (function == null)
+        {
+            throw new WeelException("Unknown function '" + functionName + "'("
+                    + args.length + ")");
+        }
+        return this.invoke(function, args);
+    }
+
+    /**
+     * Invokes the Weel function with the given name and arguments.
+     * 
+     * @param function
+     *            The function.
+     * @param args
+     *            The arguments.
+     * @return A Value if the functions returns a value, <code>null</code>
+     *         otherwise.
+     * @throws WeelException
+     *             if the function argument count does not match the supplied
+     *             argument count.
+     */
+    public Value invoke(final WeelFunction function, Object... args)
+    {
+        final Runtime rt = this.getRuntime();
+        if (args.length != function.arguments)
+        {
+            throw new WeelException("Argument count mismatch");
+        }
+        
+        for (final Object o : args)
+        {
+            if (o == null)
+            {
+                rt.load();
+                continue;
+            }
+            final Class<?> oc = o.getClass();
+            if (oc == Double.class)
+            {
+                rt.load((double) ((Double) o));
+            }
+            else if (oc == Float.class)
+            {
+                rt.load((float) ((Float) o));
+            }
+            else if (oc == Integer.class)
+            {
+                rt.load((int) ((Integer) o));
+            }
+            else if (oc == Short.class)
+            {
+                rt.load((int) ((Short) o));
+            }
+            else if (oc == Byte.class)
+            {
+                rt.load((int) ((Byte) o));
+            }
+            else if (oc == Character.class)
+            {
+                rt.load((int) ((Character) o));
+            }
+            else if (oc == String.class)
+            {
+                rt.load((String) o);
+            }
+            else if (oc == ValueMap.class)
+            {
+                rt.load((ValueMap) o);
+            }
+            else
+            {
+                rt.load(o);
+            }
+        }
+
+        function.invoke(rt);
+
+        if (function.returnsValue)
+            return rt.pop();
+
+        return null;
     }
 
     /**
@@ -86,10 +187,11 @@ public final class Weel
      * @param input
      *            The input stream.
      */
-    public void compile(final InputStream input)
+    public byte[] compile(final InputStream input)
     {
         final Compiler compiler = new Compiler(this);
         compiler.compile(input);
+        return compiler.classWriter.build();
     }
 
     /**

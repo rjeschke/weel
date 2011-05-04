@@ -17,7 +17,7 @@ enum ReservedWord
 
     CASE, CONTINUE,
 
-    DO,
+    DEFAULT, DO,
 
     ELSE, ELSEIF, END, EXIT,
 
@@ -25,7 +25,7 @@ enum ReservedWord
 
     GLOBAL,
 
-    IF,
+    IF, IN,
 
     LOCAL, LOCK,
 

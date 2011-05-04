@@ -174,7 +174,11 @@ public final class Value
         case NULL:
             return "null";
         case NUMBER:
-            return Double.toString(this.number);
+        {
+            // Hack
+            final String str = Double.toString(this.number);
+            return str.endsWith(".0") ? str.substring(0, str.length() - 2) : str;
+        }
         case STRING:
             return this.string;
         case MAP:

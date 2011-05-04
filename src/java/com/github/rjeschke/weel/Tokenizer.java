@@ -284,14 +284,15 @@ final class Tokenizer
     /**
      * Ungets a token.
      * 
-     * @param t The token.
+     * @param t
+     *            The token.
      */
     public void ungetToken(final Token t)
     {
         this.ungot = this.token;
         this.token = t;
     }
-    
+
     /**
      * Reads the next token.
      * 
@@ -299,7 +300,7 @@ final class Tokenizer
      */
     public Token next()
     {
-        if(this.ungot != null)
+        if (this.ungot != null)
         {
             this.token = this.ungot;
             this.ungot = null;
@@ -327,7 +328,7 @@ final class Tokenizer
                     return this.token = Token.STRING;
                 case '+':
                     this.read();
-                    if(this.current == '=')
+                    if (this.current == '=')
                     {
                         this.read();
                         return this.token = Token.ASSIGN_ADD;
@@ -335,12 +336,12 @@ final class Tokenizer
                     return this.token = Token.ADD;
                 case '-':
                     this.read();
-                    if(this.current == '=')
+                    if (this.current == '=')
                     {
                         this.read();
                         return this.token = Token.ASSIGN_SUB;
-                    } 
-                    else if(this.current == '>')
+                    }
+                    else if (this.current == '>')
                     {
                         this.read();
                         return this.token = Token.ARROW;
@@ -348,7 +349,7 @@ final class Tokenizer
                     return this.token = Token.SUB;
                 case '*':
                     this.read();
-                    if(this.current == '=')
+                    if (this.current == '=')
                     {
                         this.read();
                         return this.token = Token.ASSIGN_MUL;
@@ -356,15 +357,15 @@ final class Tokenizer
                     return this.token = Token.MUL;
                 case '%':
                     this.read();
-                    if(this.current == '=')
+                    if (this.current == '=')
                     {
                         this.read();
                         return this.token = Token.ASSIGN_MODULO;
                     }
                     return this.token = Token.MODULO;
-                    // case '?':
-                    // this.read();
-                    // return this.token = Token.TERNARY;
+                case '?':
+                    this.read();
+                    return this.token = Token.TERNARY;
                 case '/':
                     this.read();
                     if (this.current == '/')
@@ -402,7 +403,7 @@ final class Tokenizer
                         }
                         continue;
                     }
-                    else if(this.current == '=')
+                    else if (this.current == '=')
                     {
                         this.read();
                         return this.token = Token.ASSIGN_DIV;
@@ -434,7 +435,7 @@ final class Tokenizer
                     if (this.current == '.')
                     {
                         this.read();
-                        if(this.current == '=')
+                        if (this.current == '=')
                         {
                             this.read();
                             return this.token = Token.ASSIGN_STRCAT;
@@ -455,7 +456,7 @@ final class Tokenizer
                     return this.token = Token.BINARY_NOT;
                 case '^':
                     this.read();
-                    if(this.current == '=')
+                    if (this.current == '=')
                     {
                         this.read();
                         return this.token = Token.ASSIGN_XOR;
@@ -492,7 +493,7 @@ final class Tokenizer
                         this.read();
                         return this.token = Token.LOGICAL_AND;
                     }
-                    else if(this.current == '=')
+                    else if (this.current == '=')
                     {
                         this.read();
                         return this.token = Token.ASSIGN_AND;
@@ -505,7 +506,7 @@ final class Tokenizer
                         this.read();
                         return this.token = Token.LOGICAL_OR;
                     }
-                    else if(this.current == '=')
+                    else if (this.current == '=')
                     {
                         this.read();
                         return this.token = Token.ASSIGN_OR;
@@ -519,18 +520,21 @@ final class Tokenizer
                         return this.token = Token.NOT_EQUAL;
                     }
                     return this.token = Token.LOGICAL_NOT;
+                case '@':
+                    this.read();
+                    if (this.current == '(')
+                    {
+                        this.read();
+                        return this.token = Token.ANON_OPEN;
+                    }
+                    return this.token = Token.AT;
                 case ':':
                     this.read();
-//                    if (this.current == ':')
-//                    {
-//                        this.read();
-//                        if (this.current == ':')
-//                        {
-//                            this.read();
-//                            return this.token = Token.TRIPPLE_COLON;
-//                        }
-//                        return this.token = Token.DOUBLE_COLON;
-//                    }
+                    if (this.current == ':')
+                    {
+                        this.read();
+                        return this.token = Token.DOUBLE_COLON;
+                    }
                     return this.token = Token.COLON;
                 default:
                     if (Character.isLetter(this.current) || this.current == '_')

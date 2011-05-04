@@ -7,129 +7,16 @@ package com.github.rjeschke.weel;
 import com.github.rjeschke.weel.annotations.WeelRawMethod;
 
 /**
- * Weel standard library.
+ * Weel math library.
  * 
  * @author René Jeschke <rene_jeschke@yahoo.de>
  */
-public final class WeelLibrary
+public final class WeelLibMath
 {
-    /*
-     * *** Console functions ***
-     */
-
-    /**
-     * <code>println(v)</code>
-     * <p>
-     * Prints the given value with a trailing new line.
-     * </p>
-     * 
-     * @param runtime
-     *            The Weel Runtime.
-     * @see java.io.PrintStream#println(String)
-     */
-    @WeelRawMethod(name = "println", args = 1)
-    public final static void println1(final Runtime runtime)
+    private WeelLibMath()
     {
-        System.out.println(runtime.pop());
+        // empty
     }
-
-    /**
-     * <code>print(v)</code>
-     * <p>
-     * Prints the given value.
-     * </p>
-     * 
-     * @param runtime
-     *            The Weel Runtime.
-     * @see java.io.PrintStream#print(String)
-     */
-    @WeelRawMethod(args = 1)
-    public final static void print(final Runtime runtime)
-    {
-        System.out.print(runtime.pop());
-    }
-
-    /**
-     * <code>println()</code>
-     * <p>
-     * Prints a new line.
-     * </p>
-     * 
-     * @param runtime
-     *            The Weel Runtime.
-     * @see java.io.PrintStream#println()
-     */
-    @WeelRawMethod()
-    public final static void println(final Runtime runtime)
-    {
-        System.out.println();
-    }
-
-    /**
-     * <code>size(a)</code>
-     * <p>
-     * Returns the size of a value.
-     * </p>
-     * 
-     * @param runtime
-     *            The Weel runtime.
-     */
-    @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void size(final Runtime runtime)
-    {
-        final Value v = runtime.pop();
-        switch (v.type)
-        {
-        case NUMBER:
-            runtime.load(v.number);
-            break;
-        case STRING:
-            runtime.load(v.string.length());
-            break;
-        case MAP:
-            runtime.load(v.map.size());
-            break;
-        default:
-            runtime.load(0);
-            break;
-        }
-    }
-
-    /**
-     * <code>clock()</code>
-     * <p>
-     * Returns the current value of the most precise available system timer, in
-     * seconds.
-     * </p>
-     * 
-     * @param runtime
-     *            The Weel runtime.
-     * @see java.lang.System#nanoTime()
-     */
-    @WeelRawMethod(returnsValue = true)
-    public final static void clock(final Runtime runtime)
-    {
-        runtime.load(System.nanoTime() * 1e-9);
-    }
-
-    /**
-     * <code>array(a)</code>
-     * <p>
-     * Creates an array of the given size.
-     * </p>
-     * 
-     * @param runtime
-     *            The Weel runtime.
-     */
-    @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void array(final Runtime runtime)
-    {
-        runtime.load(new ValueMap((int) runtime.pop().getNumber()));
-    }
-
-    /*
-     * *** Math functions ***
-     */
 
     /**
      * <code>pow(a, b)</code>
@@ -199,6 +86,19 @@ public final class WeelLibrary
     }
 
     /**
+     * <code>tan(a)</code>
+     * 
+     * @param runtime
+     *            The Weel runtime.
+     * @see java.lang.Math#tan(double)
+     */
+    @WeelRawMethod(args = 1, returnsValue = true)
+    public final static void tan(final Runtime runtime)
+    {
+        runtime.load(Math.tan(runtime.pop().getNumber()));
+    }
+
+    /**
      * <code>exp(a)</code>
      * 
      * @param runtime
@@ -235,5 +135,44 @@ public final class WeelLibrary
     public final static void log10(final Runtime runtime)
     {
         runtime.load(Math.log10(runtime.pop().getNumber()));
+    }
+
+    /**
+     * <code>floor(a)</code>
+     * 
+     * @param runtime
+     *            The Weel runtime.
+     * @see java.lang.Math#floor(double)
+     */
+    @WeelRawMethod(args = 1, returnsValue = true)
+    public final static void floor(final Runtime runtime)
+    {
+        runtime.load(Math.floor(runtime.pop().getNumber()));
+    }
+
+    /**
+     * <code>ceil(a)</code>
+     * 
+     * @param runtime
+     *            The Weel runtime.
+     * @see java.lang.Math#ceil(double)
+     */
+    @WeelRawMethod(args = 1, returnsValue = true)
+    public final static void ceil(final Runtime runtime)
+    {
+        runtime.load(Math.ceil(runtime.pop().getNumber()));
+    }
+
+    /**
+     * <code>round(a)</code>
+     * 
+     * @param runtime
+     *            The Weel runtime.
+     * @see java.lang.Math#round(double)
+     */
+    @WeelRawMethod(args = 1, returnsValue = true)
+    public final static void round(final Runtime runtime)
+    {
+        runtime.load(Math.round(runtime.pop().getNumber()));
     }
 }

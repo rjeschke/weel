@@ -49,33 +49,47 @@ public class WeelUnit
      */
     public static boolean runTests(final Weel weel)
     {
+        final int sp = weel.getRuntime().getStackPointer();
         int passed = 0, failed = 0, error = 0;
         System.out.println();
         System.out.println("[WeelUnit]");
         System.out.println("==========");
-        for (final WeelUnitTest wut : unitTests)
+
+        if(unitTests.size() > 0)
         {
-            try
+            for (final WeelUnitTest wut : unitTests)
             {
-                final boolean result = wut.runTests(weel);
-                if (result)
-                    passed++;
-                else
-                    failed++;
+                try
+                {
+                    final boolean result = wut.runTests(weel);
+                    if (result)
+                        passed++;
+                    else
+                        failed++;
+                }
+                catch (Exception e)
+                {
+                    error++;
+                    System.out.println(String.format("[WeelUnit]: ERROR '%s'", e
+                            .toString()));
+                    e.printStackTrace();
+                }
             }
-            catch (Exception e)
-            {
-                error++;
-                System.out.println(String.format("[WeelUnit]: ERROR '%s'", e
-                        .toString()));
-            }
+        
+            System.out.println("==========");
+            System.out
+                    .println(String
+                            .format(
+                                    "[WeelUnit]: Performed %d testcase(s), %d passed, %d failed, %d total failure(s)",
+                                    unitTests.size(), passed, failed, error));
         }
-        System.out.println("==========");
-        System.out
-                .println(String
-                        .format(
-                                "[WeelUnit]: Performed %d testcase(s), %d passed, %d failed, %d total failure(s)",
-                                unitTests.size(), passed, failed, error));
+        else
+        {
+            System.out.println("[WeelUnit]: Nothing to do.");
+        }
+        
+        weel.getRuntime().pop(weel.getRuntime().getStackPointer() - sp);
+
         return failed == 0 && error == 0;
     }
 

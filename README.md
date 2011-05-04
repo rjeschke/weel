@@ -39,7 +39,9 @@ than 40 opcodes) and got interpreted by a *VirtualMachine* which was
 in fact a `for`-loop and a `switch`.
 
 This version compiles directly to Java byte code using only a simple 
-runtime class for its operation. 
+runtime class for its operation. *(Which decreases the execution time
+by a factor of 6 to 10 compared to Yjasl4, and now Weel doesn't need
+to hide from other dynamically typed languages running on the JVM.)*
 
 ### Features
 
@@ -153,27 +155,29 @@ Most of the stuff is working, still a lot missing though.
 ##### Implemented
 
 *   expressions (assignments, calls, ...)
-*	if, elseif, else
-*   for-end, do-end, do-until, while-end
+*	if-elseif-else-end, switch-case-default-end
+*   for-end, foreach-end, do-end, do-until, while-end
 *	break, continue
-*	func/sub
-*	exit, return
-*	anonymous functions
-*	closures
+*	func/sub, exit & return
+*	anonymous functions & closures
 *	local, global
 *	OOP (base) and array functions
+*   added alternate syntax for anonymous functions: e.g. `@(println("Hello world!"))`
+    or `@((a, b) return a + b)` or `@( (a, b) println(a.." + "..b.." = "..(a + b)))`
+*   ternary operator: `cond ? expr : expr`
 
 ##### Missing / TODO / planned
 
 *	outer
 *	OOP (constructors, new, ...)
 *	lock/end
-*	switch, foreach
 *	interop nice methods
 *	most of the Weel library
 *	unit test framework
 *	refactor error messages
 *	expression optimization
+*   Maybe I'll add some special handling to supply methods for basic types, e.g.
+    `"Hello world!"::length()` or `{1, 2, 3}::fold(@((a, b) return a + b))`
 
 *REMARK:* The compiler and runtime still need full testing so everything
 might be a bit unstable at the moment. 

@@ -14,30 +14,18 @@ public class Main
         {
             final Weel weel = new Weel();
             
-            long t0 = System.nanoTime();
-            weel.compile(Main.class.getResourceAsStream("/com/github/rjeschke/weel/test/test.weel"));
+            byte[] cdata = weel.compile(Main.class.getResourceAsStream("/com/github/rjeschke/weel/test/test.weel"));
             weel.compile(Main.class.getResourceAsStream("/com/github/rjeschke/weel/test/wunitArith.weel"));
-            t0 = System.nanoTime() - t0;
-
-            /*
-            byte[] cdata = compiler.classWriter.build();
 
             FileOutputStream fos = new FileOutputStream(
                     "/home/rjeschke/Script0.class");
             fos.write(cdata);
             fos.close();
-             */
             
-            long t1 = System.nanoTime();
             weel.runStatic();
-            t1 = System.nanoTime() - t1;
             
-            WeelUnit.runTests(weel);
+            //WeelUnit.runTests(weel);
             
-            System.out.println();
-            System.out.println("Compile: " + (t0 / 1e9) + " sec");
-            System.out.println("Execute: " + (t1 / 1e9) + " sec");
-
             if(weel.getRuntime().getStackPointer() != -1)
                 System.err.println("Doh! You messed it up! (" + weel.getRuntime().getStackPointer() + ")");
         }

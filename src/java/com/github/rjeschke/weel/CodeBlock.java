@@ -35,7 +35,10 @@ final class CodeBlock
     WeelFunction function;
     /** Flag indicating that we're an anonymous function. */
     boolean isAnonymousFunction;
-
+    /** Flag indicating that we're an anonymous function using alternate syntax. */
+    boolean isAlternateSyntax;
+    /** Flag indicating that our function has at least one return statement. */
+    boolean hasReturn;
     /**
      * Constructor.
      * 

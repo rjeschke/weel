@@ -31,7 +31,7 @@ class Scope
     /** List of break jumps. */
     final LinkedList<Integer> breaks = new LinkedList<Integer>();
     /** Various flags. */
-    boolean hasElse, hasDefault, hasCase, hasReturn;
+    boolean hasElse, hasDefault, hasCase;
     /** Starting pc for loops. */
     int startPc;
     /** Local variable index for FOR loops. */
@@ -345,28 +345,25 @@ class Scope
         final Integer glob = this.weel.mapGlobals.get(name);
         var.name = name;
         var.type = Type.NONE;
-        if (glob != null)
+        final int loc = this.findLocal(name);
+        if (loc != -1)
+        {
+            var.index = loc;
+            var.type = Type.LOCAL;
+        }
+        else if (this.block.isAnonymousFunction)
+        {
+            final int cv = this.findCvar(name);
+            if (cv != -1)
+            {
+                var.index = cv;
+                var.type = Type.CVAR;
+            }
+        }
+        if (var.type == Type.NONE && glob != null)
         {
             var.index = glob;
             var.type = Type.GLOBAL;
-        }
-        else
-        {
-            final int loc = this.findLocal(name);
-            if (loc != -1)
-            {
-                var.index = loc;
-                var.type = Type.LOCAL;
-            }
-            else if (this.block.isAnonymousFunction)
-            {
-                final int cv = this.findCvar(name);
-                if (cv != -1)
-                {
-                    var.index = cv;
-                    var.type = Type.CVAR;
-                }
-            }
         }
         var.function = this.weel.findFunction(name);
         return var;
@@ -386,31 +383,28 @@ class Scope
         final Integer glob = this.weel.mapGlobals.get(name);
         var.name = name;
         var.type = Type.NONE;
-        if (glob != null)
+        if (this.block.isAnonymousFunction)
+        {
+            final int cv = this.findCvarFull(name);
+            if (cv != -1)
+            {
+                var.index = cv;
+                var.type = Type.CVAR;
+            }
+        }
+        if(var.type == Type.NONE)
+        {
+            final int loc = this.findLocalFull(name);
+            if (loc != -1)
+            {
+                var.index = loc;
+                var.type = Type.LOCAL;
+            }
+        }
+        if(var.type == Type.NONE && glob != null)
         {
             var.index = glob;
             var.type = Type.GLOBAL;
-        }
-        else
-        {
-            if (this.block.isAnonymousFunction)
-            {
-                final int cv = this.findCvarFull(name);
-                if (cv != -1)
-                {
-                    var.index = cv;
-                    var.type = Type.CVAR;
-                }
-            }
-            if(var.type == Type.NONE)
-            {
-                final int loc = this.findLocalFull(name);
-                if (loc != -1)
-                {
-                    var.index = loc;
-                    var.type = Type.LOCAL;
-                }
-            }
         }
         var.function = this.weel.findFunction(name);
         return var;

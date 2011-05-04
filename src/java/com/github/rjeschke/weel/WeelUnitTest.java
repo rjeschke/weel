@@ -44,29 +44,73 @@ public class WeelUnitTest
     public boolean runTests(final Weel weel)
     {
         final Runtime rt = weel.getRuntime();
-        System.out.println("[testcase]: " + this.title);
+        boolean ranTest = false;
+        System.out.println("[TestCase]: " + this.title);
+        System.out.println("----------");
+        final Value before = this.me.get("before");
+        final Value after = this.me.get("after");
+        
+        if(before.isFunction())
+        {
+            System.out.println("  [before]");
+            this.invoke(before.getFunction(), rt);
+        }
+        
         for (Entry<Value, Value> e : this.me)
         {
+            final String key = e.getKey().toString();
             final Value val = e.getValue();
             if (val.isFunction())
             {
                 final WeelFunction func = val.getFunction();
                 if (!func.name.startsWith("weelunit$$")
-                        && func.name.contains("$$"))
+                        && func.name.contains("$$") && key.startsWith("test")
+                        && key.length() > 4)
                 {
-                    rt.load(this.me);
-                    func.invoke(rt);
-                    if (func.returnsValue)
-                        rt.pop1();
+                    if (ranTest)
+                        System.out.println();
+                    System.out.println("    [test]: " + key.substring(4));
+                    this.invoke(func, rt);
+                    ranTest = true;
                 }
             }
         }
+        
+        if(after.isFunction())
+        {
+            System.out.println("   [after]");
+            this.invoke(after.getFunction(), rt);
+        }
+
         System.out.println("----------");
-        System.out.println(String.format(
-                "  [result]: %d passed, %d failed, %d error(s)", this.passed,
-                this.failed, this.error));
+        if(ranTest)
+        {
+            System.out.println(String.format(
+                    "  [result]: %d passed, %d failed, %d error(s)", this.passed,
+                    this.failed, this.error));
+        }
+        else
+        {
+            System.out.println("[TestCase]: Nothing to do.");
+        }
         System.out.println();
         return this.failed == 0 && this.error == 0;
+    }
+
+    /**
+     * Invokes a test, takes care of stack cleanup.
+     * 
+     * @param func
+     *            The function.
+     * @param runtime
+     *            The runtime.
+     */
+    private void invoke(final WeelFunction func, final Runtime runtime)
+    {
+        final int sp = runtime.getStackPointer();
+        runtime.load(this.me);
+        func.invoke(runtime);
+        runtime.pop(runtime.getStackPointer() - sp);
     }
 
     /**
@@ -120,7 +164,6 @@ public class WeelUnitTest
         System.out.print("  [throws]");
         if (title != null)
             System.out.print(": " + title);
-        final int sp = runtime.getStackPointer();
         boolean result;
         try
         {
@@ -130,10 +173,10 @@ public class WeelUnitTest
         }
         catch (Exception e)
         {
+            runtime.closeFrame();
             this.passed++;
             result = true;
         }
-        runtime.pop(runtime.getStackPointer() - sp);
         System.out.println(" => " + (result ? "PASS" : "FAIL"));
     }
 
@@ -153,7 +196,6 @@ public class WeelUnitTest
         System.out.print(" [nothrow]");
         if (title != null)
             System.out.print(": " + title);
-        final int sp = runtime.getStackPointer();
         boolean result;
         try
         {
@@ -163,10 +205,10 @@ public class WeelUnitTest
         }
         catch (Exception e)
         {
+            runtime.closeFrame();
             this.failed++;
             result = false;
         }
-        runtime.pop(runtime.getStackPointer() - sp);
         System.out.println(" => " + (result ? "PASS" : "FAIL"));
     }
 }

@@ -5,6 +5,8 @@
 package com.github.rjeschke.weel;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 /**
  * Weel runtime.
@@ -411,7 +413,7 @@ public final class Runtime
      * 
      * @return <code>true</code> if the values are equal.
      */
-    boolean cmpEqual()
+    public boolean cmpEqual()
     {
         final Value a = this.stack[this.sp - 1];
         final Value b = this.stack[this.sp];
@@ -462,8 +464,6 @@ public final class Runtime
      * @param var
      *            For loop variable index.
      * @return <code>true</code> if the loop must be continued.
-     * @throws WeelException
-     *             If the for variable is not a number.
      */
     public boolean endForLoop(final int var)
     {
@@ -471,6 +471,43 @@ public final class Runtime
         final double value = this.stack[var + this.frameStart[this.fp]].number += step;
         return step < 0 ? value >= this.stack[this.sp - 1].number
                 : value <= this.stack[this.sp - 1].number;
+    }
+
+    /**
+     * Prepares a foreach loop.
+     * 
+     * <p>
+     * <code>..., map &rArr; ..., iterator </code>
+     * </p>
+     */
+    public void prepareForEach()
+    {
+        final ValueMap map = this.stack[this.sp].getMap();
+        this.stack[this.sp].type = ValueType.OBJECT;
+        this.stack[this.sp].object = map.iterator();
+    }
+
+    /**
+     * Performs a foreach loop interation.
+     * 
+     * <p>
+     * <code>..., iterator &rArr; ..., iterator, key, value </code>
+     * </p>
+     * 
+     * @return <code>false</code> if there are no more elements.
+     */
+    @SuppressWarnings("unchecked")
+    public boolean doForEach()
+    {
+        final Iterator<Entry<Value, Value>> iterator = (Iterator<Entry<Value, Value>>) this.stack[this.sp]
+                .getObject();
+        if (!iterator.hasNext())
+            return false;
+        final Entry<Value, Value> e = iterator.next();
+        e.getKey().copyTo(this.stack[this.sp + 1]);
+        e.getValue().copyTo(this.stack[this.sp + 2]);
+        this.sp += 2;
+        return true;
     }
 
     /**
@@ -1147,6 +1184,17 @@ public final class Runtime
         this.stack[++this.sp].type = ValueType.FUNCTION;
         this.stack[this.sp].function = this.mother.functions.get(index)
                 .cloneVirtual(this);
+    }
+
+    /**
+     * Cleans the stack up to the current stack pointer.
+     */
+    public void wipeStack()
+    {
+        for (int i = this.stack.length - 1; i > this.sp; i--)
+        {
+            this.stack[i].setNull();
+        }
     }
 
     /**
