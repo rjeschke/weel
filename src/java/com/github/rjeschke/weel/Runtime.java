@@ -1080,6 +1080,114 @@ public final class Runtime
     }
 
     /**
+     * Pops a number from the stack.
+     * 
+     * <p>
+     * <code>..., value &rArr; ...</code>
+     * </p>
+     * 
+     * @return The number.
+     * @throws WeelException
+     *             if the type of the value is incorrect.
+     */
+    public double popNumber()
+    {
+        return this.stack[this.sp--].getNumber();
+    }
+
+    /**
+     * Pops a string from the stack.
+     * 
+     * <p>
+     * <code>..., value &rArr; ...</code>
+     * </p>
+     * 
+     * @return The string.
+     * @throws WeelException
+     *             if the type of the value is incorrect.
+     */
+    public String popString()
+    {
+        return this.stack[this.sp--].getString();
+    }
+
+    /**
+     * Pops a value from the stack and returns its type.
+     * 
+     * <p>
+     * <code>..., value &rArr; ...</code>
+     * </p>
+     * 
+     * @return The type.
+     */
+    public ValueType popType()
+    {
+        return this.stack[this.sp--].type;
+    }
+
+    /**
+     * Pops a value from the stack and returns its size.
+     * 
+     * <p>
+     * <code>..., value &rArr; ...</code>
+     * </p>
+     * 
+     * @return The size.
+     */
+    public double popSize()
+    {
+        return this.stack[this.sp--].size();
+    }
+
+    /**
+     * Pops a map from the stack.
+     * 
+     * <p>
+     * <code>..., value &rArr; ...</code>
+     * </p>
+     * 
+     * @return The ValueMap.
+     * @throws WeelException
+     *             if the type of the value is incorrect.
+     */
+    public ValueMap popMap()
+    {
+        return this.stack[this.sp--].getMap();
+    }
+
+    /**
+     * Pops a function from the stack.
+     * 
+     * <p>
+     * <code>..., value &rArr; ...</code>
+     * </p>
+     * 
+     * @return The function.
+     * @throws WeelException
+     *             if the type of the value is incorrect.
+     */
+    public WeelFunction popFunction()
+    {
+        return this.stack[this.sp--].getFunction();
+    }
+
+    /**
+     * Pops an object from the stack.
+     * 
+     * <p>
+     * <code>..., value &rArr; ...</code>
+     * </p>
+     * 
+     * @return The object.
+     * @throws WeelException
+     *             if the type of the value is incorrect.
+     */
+    public Object popObject()
+    {
+        return this.stack[this.sp--].getObject();
+    }
+
+    /**
      * Gets a number value from the stack.
      * <p>
      * Only used in wrapper methods.

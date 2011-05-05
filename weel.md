@@ -119,7 +119,7 @@ in the library)*.
     Internally Weel differentiates between 'list' and 'map', lists are
     generally much faster than maps. A list is an ordered map which 
     contains only consecutive integer keys starting from `0 `. So only 
-    the second map in the code example above is a 'real' map, the others
+    the third map in the code example above is a 'real' map, the others
     are lists. 
 
 *   Functions: (`function`)
@@ -130,6 +130,18 @@ in the library)*.
     A special type representing a Java Object. This type can't be
     directly manipulated from Weel code. 
     
+*	Booleans:
+
+	Weel does not have a real boolean type. `true` evaluates to `-1` and
+	`false` evaluates to `0`. See below to see how different types and
+	values map to `true` and `false`:
+	
+	+	Null: is always `false`
+	+	Numbers: `0.0` is `false`, everything else is `true`
+	+	Strings: "" is `false`, everything else is `true`
+	+	Map: A map with a size of `0` is `false`, everything else is `true`
+	+	Function: is always `true`
+	+	Object: a Java(TM) `null` value is `false`, everything else is `true`
 
 #### Names                          {#names}
 
@@ -222,6 +234,7 @@ block.
         [break]
         ...
         [continue]
+        ...
     end
     
 `<var>` must be a local variable, if you try to use anything else, a new local
@@ -236,6 +249,7 @@ step (`<step-expr>`).
         [break]
         ...
         [continue]
+        ...
     end
 
 Iterates over the given map.  
@@ -282,6 +296,8 @@ Loops while `<expr>` evaluates to `true`.
 Weel differentiates between `functions` *(which return a value)* and `subs`
 *(which don't return a value)*:
 
+#### Static global functions
+
     func <name>([<arg-name>[,<arg-name>...]])
         ...
         return <expr>
@@ -294,6 +310,11 @@ Weel differentiates between `functions` *(which return a value)* and `subs`
         ...
     end
 
+Weel supports function overloading for static, array and OOP functions. 
+The correct function is determined by name and number of arguments. So it
+is possible to have an overloaded function taking a differing number of
+arguments that returns a value, even if all others don't.
+ 
 #### Anonymous functions
 
     <expr> = func([<arg-name>[,<arg-name>...]])
@@ -503,4 +524,4 @@ any arguments, and the syntax for functions and subs is identically.
 *****************************************************************************
 
 [Lua]: http://www.lua.org/ "The Programming Language Lua"
-Project link: <https://github.com/rjeschke/weel>
+Git repository: <https://github.com/rjeschke/weel>

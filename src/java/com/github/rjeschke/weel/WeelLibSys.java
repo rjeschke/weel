@@ -32,25 +32,7 @@ public final class WeelLibSys
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void size(final Runtime runtime)
     {
-        final Value v = runtime.pop();
-        switch (v.type)
-        {
-        case NUMBER:
-            runtime.load(v.number);
-            break;
-        case STRING:
-            runtime.load(v.string.length());
-            break;
-        case MAP:
-            runtime.load(v.map.size());
-            break;
-        case FUNCTION:
-            runtime.load(v.function.arguments);
-            break;
-        default:
-            runtime.load(0);
-            break;
-        }
+        runtime.load(runtime.popSize());
     }
 
     /**
@@ -82,7 +64,7 @@ public final class WeelLibSys
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void array(final Runtime runtime)
     {
-        runtime.load(new ValueMap((int) runtime.pop().getNumber()));
+        runtime.load(new ValueMap((int) runtime.popNumber()));
     }
 
     /**
@@ -97,7 +79,7 @@ public final class WeelLibSys
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void isNull(final Runtime runtime)
     {
-        runtime.load(runtime.pop().type == ValueType.NULL ? -1 : 0);
+        runtime.load(runtime.popType() == ValueType.NULL ? -1 : 0);
     }
 
     /**
@@ -112,7 +94,7 @@ public final class WeelLibSys
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void isNumber(final Runtime runtime)
     {
-        runtime.load(runtime.pop().type == ValueType.NUMBER ? -1 : 0);
+        runtime.load(runtime.popType() == ValueType.NUMBER ? -1 : 0);
     }
 
     /**
@@ -127,7 +109,7 @@ public final class WeelLibSys
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void isString(final Runtime runtime)
     {
-        runtime.load(runtime.pop().type == ValueType.STRING ? -1 : 0);
+        runtime.load(runtime.popType() == ValueType.STRING ? -1 : 0);
     }
 
     /**
@@ -142,7 +124,7 @@ public final class WeelLibSys
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void isMap(final Runtime runtime)
     {
-        runtime.load(runtime.pop().type == ValueType.MAP ? -1 : 0);
+        runtime.load(runtime.popType() == ValueType.MAP ? -1 : 0);
     }
 
     /**
@@ -157,7 +139,7 @@ public final class WeelLibSys
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void isFunc(final Runtime runtime)
     {
-        runtime.load(runtime.pop().type == ValueType.FUNCTION ? -1 : 0);
+        runtime.load(runtime.popType() == ValueType.FUNCTION ? -1 : 0);
     }
 
     /**
@@ -172,7 +154,7 @@ public final class WeelLibSys
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void isObject(final Runtime runtime)
     {
-        runtime.load(runtime.pop().type == ValueType.OBJECT ? -1 : 0);
+        runtime.load(runtime.popType() == ValueType.OBJECT ? -1 : 0);
     }
 
     /**
@@ -187,7 +169,7 @@ public final class WeelLibSys
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void funcName(final Runtime runtime)
     {
-        runtime.load(runtime.pop().getFunction().name);
+        runtime.load(runtime.popFunction().name);
     }
 
     /**
@@ -202,7 +184,7 @@ public final class WeelLibSys
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void funcArgs(final Runtime runtime)
     {
-        runtime.load(runtime.pop().getFunction().arguments);
+        runtime.load(runtime.popFunction().arguments);
     }
 
     /**
@@ -217,7 +199,7 @@ public final class WeelLibSys
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void funcReturns(final Runtime runtime)
     {
-        runtime.load(runtime.pop().getFunction().returnsValue ? -1 : 0);
+        runtime.load(runtime.popFunction().returnsValue ? -1 : 0);
     }
 
     /**
@@ -233,8 +215,8 @@ public final class WeelLibSys
     @WeelRawMethod(args = 2, returnsValue = true)
     public final static void funcFind(final Runtime runtime)
     {
-        final int args = (int) runtime.pop().getNumber();
-        final String name = runtime.pop().toString();
+        final int args = (int) runtime.popNumber();
+        final String name = runtime.popString();
         final WeelFunction func = runtime.getMother().findFunction(name, args);
         if (func != null)
             runtime.load(func);
@@ -254,8 +236,8 @@ public final class WeelLibSys
     @WeelRawMethod(args = 2)
     public final static void funcReg(final Runtime runtime)
     {
-        final ValueMap map = runtime.pop().getMap();
-        final String typeName = runtime.pop().toString().toUpperCase();
+        final ValueMap map = runtime.popMap();
+        final String typeName = runtime.popString().toUpperCase();
         final ValueType type = ValueType.fromString(typeName);
 
         if (type == null)

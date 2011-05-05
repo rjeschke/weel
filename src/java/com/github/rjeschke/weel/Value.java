@@ -23,7 +23,7 @@ public final class Value
     WeelFunction function;
     /** This Value's object. */
     Object object;
-    
+
     /**
      * Creates a Value of type NULL.
      */
@@ -31,11 +31,12 @@ public final class Value
     {
         this.type = ValueType.NULL;
     }
-    
+
     /**
      * Creates a Value of type NUMBER.
      * 
-     * @param value The value.
+     * @param value
+     *            The value.
      */
     public Value(final int value)
     {
@@ -46,7 +47,8 @@ public final class Value
     /**
      * Creates a Value of type NUMBER.
      * 
-     * @param value The value.
+     * @param value
+     *            The value.
      */
     public Value(final double value)
     {
@@ -57,47 +59,51 @@ public final class Value
     /**
      * Creates a Value of type STRING.
      * 
-     * @param value The value.
+     * @param value
+     *            The value.
      */
     public Value(final String value)
     {
         this.type = ValueType.STRING;
         this.string = value;
     }
-    
+
     /**
      * Creates a Value of type MAP.
      * 
-     * @param value The value.
+     * @param value
+     *            The value.
      */
     public Value(final ValueMap value)
     {
         this.type = ValueType.MAP;
         this.map = value;
     }
-    
+
     /**
      * Creates a Value of type FUNCTION.
      * 
-     * @param value The value.
+     * @param value
+     *            The value.
      */
     public Value(final WeelFunction value)
     {
         this.type = ValueType.FUNCTION;
         this.function = value;
     }
-    
+
     /**
      * Creates a Value of type OBJECT.
      * 
-     * @param value The value.
+     * @param value
+     *            The value.
      */
     public Value(final Object value)
     {
         this.type = ValueType.OBJECT;
         this.object = value;
     }
-    
+
     /**
      * Changes the type of this Value to <code>NULL</code>, clears references.
      */
@@ -118,6 +124,8 @@ public final class Value
      * <li>A <code>NUMBER</code> equal to 0 returns <code>false</code></li>
      * <li>A <code>STRING</code> with a length of 0 returns <code>false</code></li>
      * <li>A <code>MAP</code> with a length of 0 returns <code>false</code></li>
+     * <li>A <code>OBJECT</code> with a value of null returns <code>false</code>
+     * </li>
      * <li>Everything else returns <code>true</code></li>
      * </ul>
      * 
@@ -135,6 +143,8 @@ public final class Value
             return this.number != 0;
         case MAP:
             return this.map.size != 0;
+        case OBJECT:
+            return this.object != null;
         default:
             return true;
         }
@@ -177,7 +187,8 @@ public final class Value
         {
             // Hack
             final String str = Double.toString(this.number);
-            return str.endsWith(".0") ? str.substring(0, str.length() - 2) : str;
+            return str.endsWith(".0") ? str.substring(0, str.length() - 2)
+                    : str;
         }
         case STRING:
             return this.string;
@@ -319,5 +330,27 @@ public final class Value
         if (this.type != ValueType.OBJECT)
             throw new WeelException("Value is not an OBJECT");
         return this.object;
+    }
+
+    /**
+     * Returns the size of this value.
+     * 
+     * @return The size as a double.
+     */
+    public double size()
+    {
+        switch (this.type)
+        {
+        case NUMBER:
+            return this.number;
+        case STRING:
+            return this.string.length();
+        case MAP:
+            return this.map.size();
+        case FUNCTION:
+            return this.function.arguments;
+        default:
+            return 0;
+        }
     }
 }

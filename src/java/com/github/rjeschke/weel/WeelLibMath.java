@@ -28,8 +28,8 @@ public final class WeelLibMath
     @WeelRawMethod(args = 2, returnsValue = true)
     public final static void pow(final Runtime runtime)
     {
-        final double b = runtime.pop().getNumber();
-        final double a = runtime.pop().getNumber();
+        final double b = runtime.popNumber();
+        final double a = runtime.popNumber();
         runtime.load(Math.pow(a, b));
     }
 
@@ -43,7 +43,7 @@ public final class WeelLibMath
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void abs(final Runtime runtime)
     {
-        runtime.load(Math.abs(runtime.pop().getNumber()));
+        runtime.load(Math.abs(runtime.popNumber()));
     }
 
     /**
@@ -56,7 +56,7 @@ public final class WeelLibMath
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void sqrt(final Runtime runtime)
     {
-        runtime.load(Math.sqrt(runtime.pop().getNumber()));
+        runtime.load(Math.sqrt(runtime.popNumber()));
     }
 
     /**
@@ -69,7 +69,7 @@ public final class WeelLibMath
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void sin(final Runtime runtime)
     {
-        runtime.load(Math.sin(runtime.pop().getNumber()));
+        runtime.load(Math.sin(runtime.popNumber()));
     }
 
     /**
@@ -82,7 +82,7 @@ public final class WeelLibMath
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void cos(final Runtime runtime)
     {
-        runtime.load(Math.cos(runtime.pop().getNumber()));
+        runtime.load(Math.cos(runtime.popNumber()));
     }
 
     /**
@@ -95,7 +95,7 @@ public final class WeelLibMath
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void tan(final Runtime runtime)
     {
-        runtime.load(Math.tan(runtime.pop().getNumber()));
+        runtime.load(Math.tan(runtime.popNumber()));
     }
 
     /**
@@ -108,7 +108,7 @@ public final class WeelLibMath
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void exp(final Runtime runtime)
     {
-        runtime.load(Math.exp(runtime.pop().getNumber()));
+        runtime.load(Math.exp(runtime.popNumber()));
     }
 
     /**
@@ -121,7 +121,7 @@ public final class WeelLibMath
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void log(final Runtime runtime)
     {
-        runtime.load(Math.log(runtime.pop().getNumber()));
+        runtime.load(Math.log(runtime.popNumber()));
     }
 
     /**
@@ -134,7 +134,7 @@ public final class WeelLibMath
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void log10(final Runtime runtime)
     {
-        runtime.load(Math.log10(runtime.pop().getNumber()));
+        runtime.load(Math.log10(runtime.popNumber()));
     }
 
     /**
@@ -147,7 +147,7 @@ public final class WeelLibMath
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void floor(final Runtime runtime)
     {
-        runtime.load(Math.floor(runtime.pop().getNumber()));
+        runtime.load(Math.floor(runtime.popNumber()));
     }
 
     /**
@@ -160,7 +160,7 @@ public final class WeelLibMath
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void ceil(final Runtime runtime)
     {
-        runtime.load(Math.ceil(runtime.pop().getNumber()));
+        runtime.load(Math.ceil(runtime.popNumber()));
     }
 
     /**
@@ -173,6 +173,6 @@ public final class WeelLibMath
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void round(final Runtime runtime)
     {
-        runtime.load(Math.round(runtime.pop().getNumber()));
+        runtime.load(Math.round(runtime.popNumber()));
     }
 }
