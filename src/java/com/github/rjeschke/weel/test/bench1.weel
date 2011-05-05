@@ -47,7 +47,7 @@ end
 
 println("Matmul:");
 println("=======");
-local n = 500;
+local n = 1000;
 n &= ~1;
 local t = clock();
 a = matrix.mul(matgen(n), matgen(n));

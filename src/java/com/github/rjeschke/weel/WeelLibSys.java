@@ -245,8 +245,7 @@ public final class WeelLibSys
             throw new WeelException("Unknown type '" + typeName + "'");
         }
 
-        final TypeFunctions funcs = runtime.mother.typeFunctions[type
-                .ordinal()];
+        final TypeFunctions funcs = runtime.mother.typeFunctions[type.ordinal()];
 
         if (funcs == null)
         {
@@ -281,5 +280,48 @@ public final class WeelLibSys
                 funcs.addFunction(name, func);
             }
         }
+    }
+
+    /**
+     * <code>toNum(s)</code>
+     * <p>
+     * Returns the string argument as a number.
+     * </p>
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(args = 1, returnsValue = true)
+    public final static void toNum(final Runtime runtime)
+    {
+        final String str = runtime.popString().toLowerCase();
+        if (str.length() > 2)
+        {
+            if (str.startsWith("0b"))
+                runtime.load(Integer.parseInt(str.substring(2), 2));
+            else if (str.startsWith("0o"))
+                runtime.load(Integer.parseInt(str.substring(2), 8));
+            else if (str.startsWith("0x"))
+                runtime.load(Integer.parseInt(str.substring(2), 16));
+            else
+                runtime.load(Double.parseDouble(str));
+        }
+        else
+            runtime.load(Double.parseDouble(str));
+    }
+
+    /**
+     * <code>toStr(v)</code>
+     * <p>
+     * Returns the argument as a string.
+     * </p>
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(args = 1, returnsValue = true)
+    public final static void toStr(final Runtime runtime)
+    {
+        runtime.load(runtime.pop().toString());
     }
 }
