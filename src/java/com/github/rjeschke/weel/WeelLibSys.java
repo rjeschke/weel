@@ -245,7 +245,7 @@ public final class WeelLibSys
     /**
      * <code>funcreg(type, map)</code>
      * <p>
-     * Registers type support functions.
+     * Registers type bound functions.
      * </p>
      * 
      * @param runtime
@@ -263,7 +263,7 @@ public final class WeelLibSys
             throw new WeelException("Unknown type '" + typeName + "'");
         }
 
-        final SupportFunctions funcs = runtime.mother.supportFunctions[type
+        final TypeFunctions funcs = runtime.mother.typeFunctions[type
                 .ordinal()];
 
         if (funcs == null)
@@ -276,8 +276,27 @@ public final class WeelLibSys
             final String key = e.getKey().toString().toLowerCase();
             if (e.getValue().isFunction())
             {
+                final String name;
                 final WeelFunction func = e.getValue().function;
-                funcs.addFunction(key + "#" + func.arguments, func);
+                if (key.endsWith("_"))
+                {
+                    int i = key.length() - 2;
+                    while (i > 0 && key.charAt(i) == '_')
+                    {
+                        --i;
+                    }
+                    name = key.substring(0, i + 1) + "#" + func.arguments;
+                }
+                else
+                {
+                    name = key + "#" + func.arguments;
+                }
+                if (funcs.findFunction(name) != null)
+                {
+                    throw new WeelException("Duplicate function '" + key + "("
+                            + func.arguments + ")' for type '" + type + "'");
+                }
+                funcs.addFunction(name, func);
             }
         }
     }

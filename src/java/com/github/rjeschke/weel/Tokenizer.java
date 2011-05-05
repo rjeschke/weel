@@ -43,10 +43,13 @@ final class Tokenizer
      * 
      * @param reader
      *            Input stream.
+     * @param filename
+     *            The filename.
      */
-    public Tokenizer(Reader reader)
+    public Tokenizer(final Reader reader, final String filename)
     {
         this.reader = reader;
+        this.filename = filename;
     }
 
     /**
@@ -61,13 +64,11 @@ final class Tokenizer
      */
     public String error(String message, Object... args)
     {
-        final String m = (args.length > 0) ? String.format(message, args)
-                : message;
+        String m = (args.length > 0) ? String.format(message, args) : message;
 
-        return m
-                + (this.filename != null ? " at line " + this.lineNumber
-                        + " in " + this.filename : " at line "
-                        + this.lineNumber);
+        if (this.filename != null)
+            m += " in '" + this.filename + "'";
+        return m + " around line " + this.lineNumber;
     }
 
     /**
@@ -265,6 +266,7 @@ final class Tokenizer
                                 "Unsupported or illegal escape character '%c'",
                                 (char) this.current));
                     }
+                    this.read();
                     break;
                 default:
                     this.builder.append((char) this.current);

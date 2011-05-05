@@ -14,8 +14,9 @@ public class Main
         {
             final Weel weel = new Weel();
             
-            byte[] cdata = weel.compile(Main.class.getResourceAsStream("/com/github/rjeschke/weel/test/test.weel"));
-            weel.compile(Main.class.getResourceAsStream("/com/github/rjeschke/weel/test/wunitArith.weel"));
+            byte[] cdata = weel.compile(Main.class.getResourceAsStream("/com/github/rjeschke/weel/test/test.weel"), "test.weel");
+            //weel.compile(Main.class.getResourceAsStream("/com/github/rjeschke/weel/test/bench1.weel"), "bench1.weel");
+            //weel.compile(Main.class.getResourceAsStream("/com/github/rjeschke/weel/test/wunitArith.weel"), "wunitArith.weel");
 
             FileOutputStream fos = new FileOutputStream(
                     "/home/rjeschke/Script0.class");
@@ -23,8 +24,8 @@ public class Main
             fos.close();
             
             weel.runStatic();
-            
-            //WeelUnit.runTests(weel);
+            //weel.getRuntime().wipeStack();
+            // WeelUnit.runTests(weel);
             
             if(weel.getRuntime().getStackPointer() != -1)
                 System.err.println("Doh! You messed it up! (" + weel.getRuntime().getStackPointer() + ")");

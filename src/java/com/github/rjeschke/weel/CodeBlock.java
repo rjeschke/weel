@@ -281,9 +281,7 @@ final class CodeBlock
     void load(final String value)
     {
         this.code.add(JvmOp.ALOAD_0);
-        this.ldc(this.classWriter.addConstant(new JvmConstant(
-                JvmConstant.CONSTANT_String, this.classWriter
-                        .addConstant(new JvmConstant(value)))));
+        this.ldcStr(value);
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(this.classWriter.addMethodRefConstant(
                 "com.github.rjeschke.weel.Runtime", "load",
@@ -324,6 +322,19 @@ final class CodeBlock
                         "com.github.rjeschke.weel.Runtime", "load", "(D)V"));
             }
         }
+    }
+
+    /**
+     * Loads a String (as a constant).
+     * 
+     * @param value
+     *            The value.
+     */
+    void ldcStr(final String value)
+    {
+        this.ldc(this.classWriter.addConstant(new JvmConstant(
+                JvmConstant.CONSTANT_String, this.classWriter
+                        .addConstant(new JvmConstant(value)))));
     }
 
     /**
@@ -392,9 +403,7 @@ final class CodeBlock
             final boolean shouldReturn)
     {
         this.code.add(JvmOp.ALOAD_0);
-        this.ldc(this.classWriter.addConstant(new JvmConstant(
-                JvmConstant.CONSTANT_String, this.classWriter
-                        .addConstant(new JvmConstant(name)))));
+        this.ldcStr(name + "#" + (args + 1));
         this.ldcInt(args);
         this.ldcInt(shouldReturn ? 1 : 0);
         this.code.add(JvmOp.INVOKEVIRTUAL);

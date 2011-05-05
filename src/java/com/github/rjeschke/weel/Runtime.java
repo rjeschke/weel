@@ -53,7 +53,7 @@ public final class Runtime
     /** Function list. */
     private final ArrayList<WeelFunction> functions;
     /** Type bound support functions. */
-    private final SupportFunctions[] supportFunctions;
+    private final TypeFunctions[] typeFunctions;
 
     /**
      * Constructor.
@@ -66,7 +66,7 @@ public final class Runtime
         this.mother = weel;
         this.globals = weel.globals;
         this.functions = weel.functions;
-        this.supportFunctions = weel.supportFunctions;
+        this.typeFunctions = weel.typeFunctions;
         for (int i = 0; i < this.stack.length; i++)
             this.stack[i] = new Value();
     }
@@ -961,7 +961,7 @@ public final class Runtime
     public void specialCall(final String name, final int args,
             final boolean shouldReturn)
     {
-        final SupportFunctions funcs = this.supportFunctions[this.stack[this.sp
+        final TypeFunctions funcs = this.typeFunctions[this.stack[this.sp
                 - args].type.ordinal()];
         if (funcs == null)
         {
@@ -969,12 +969,13 @@ public final class Runtime
                     + this.stack[this.sp - args].type);
         }
 
-        WeelFunction func = funcs.findFunction(name, args + 1);
+        final WeelFunction func = funcs.findFunction(name);
 
         if (func == null)
         {
-            throw new WeelException("Unknown support function '" + name + "("
-                    + args + ")'");
+            throw new WeelException("Unknown support function '"
+                    + name.substring(0, name.lastIndexOf('#')) + "(" + args
+                    + ")'");
         }
 
         func.invoke(this);
@@ -1236,12 +1237,34 @@ public final class Runtime
 
     /**
      * Cleans the stack up to the current stack pointer.
+     * 
+     * <p>
+     * You may use this function to clean up unused references on the Weel
+     * stack.
+     * </p>
      */
     public void wipeStack()
     {
         for (int i = this.stack.length - 1; i > this.sp; i--)
         {
             this.stack[i].setNull();
+        }
+    }
+
+    /**
+     * <code>assert(expr)</code>
+     * <p>
+     * Weel assert.
+     * </p>
+     * 
+     * @param err
+     *            The error message if the assert fails.
+     */
+    public void weelAssert(final String err)
+    {
+        if (!this.popBoolean())
+        {
+            throw new WeelException(err);
         }
     }
 
@@ -1287,5 +1310,26 @@ public final class Runtime
     Value ginenv(final int var)
     {
         return this.virtualFunctions[this.vp].environment[var];
+    }
+
+    /**
+     * Pops 'amount' values from the stack and nullifies them (to let the GC do
+     * its work).
+     * <p>
+     * Maybe I'll sacrifice some speed to reduce Weel's memory usage. At the
+     * moment the stack may contain a lot of unused Objects which can't be
+     * garbage collected until a 'wipeStack()' is called.
+     * </p>
+     * 
+     * @param amount
+     *            Number of pops.
+     */
+    void nullifyPop(final int amount)
+    {
+        for (int i = 0; i < amount; i++)
+        {
+            this.stack[this.sp - i].setNull();
+        }
+        this.sp -= amount;
     }
 }

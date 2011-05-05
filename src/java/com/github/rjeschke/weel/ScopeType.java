@@ -11,5 +11,5 @@ package com.github.rjeschke.weel;
  */
 enum ScopeType
 {
-    IF, SWITCH, DO, WHILE, FOR, FOREACH, FUNC, SUB, SCOPE, STATIC, BORDER
+    IF, SWITCH, DO, WHILE, FOR, FOREACH, FUNC, SUB, SCOPE, STATIC, BORDER, ASSERT
 }

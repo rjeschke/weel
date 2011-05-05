@@ -1,43 +1,41 @@
+/*
+ * Copyright (C) 2011 René Jeschke <rene_jeschke@yahoo.de>
+ * See LICENSE.txt for licensing information.
+ */
 package com.github.rjeschke.weel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-class SupportFunctions
+/**
+ * Container for type bound functions.
+ * 
+ * @author René Jeschke <rene_jeschke@yahoo.de>
+ */
+class TypeFunctions
 {
     /** Function list. */
     ArrayList<WeelFunction> functions = new ArrayList<WeelFunction>();
     /** Name to function index mapping. */
     HashMap<String, Integer> mapFunctions = new HashMap<String, Integer>();
-    /** Name to exact function index mapping. */
-    HashMap<String, Integer> mapFunctionsExact = new HashMap<String, Integer>();
 
+    /**
+     * Constructor.
+     */
+    TypeFunctions()
+    {
+        // empty
+    }
     /**
      * Finds the given function.
      * 
      * @param name
-     *            The function's name.
+     *            The function's internal name.
      * @return The WeelFunction or <code>null</code> if none was found.
      */
     public WeelFunction findFunction(final String name)
     {
         final Integer index = this.mapFunctions.get(name.toLowerCase());
-        return index != null ? this.functions.get(index) : null;
-    }
-
-    /**
-     * Finds the given function.
-     * 
-     * @param name
-     *            The function's name.
-     * @param args
-     *            The number of arguments.
-     * @return The WeelFunction or <code>null</code> if none was found.
-     */
-    public WeelFunction findFunction(final String name, final int args)
-    {
-        final Integer index = this.mapFunctionsExact.get(name.toLowerCase()
-                + "#" + args);
         return index != null ? this.functions.get(index) : null;
     }
 
@@ -72,8 +70,7 @@ class SupportFunctions
         this.functions.add(func);
         if (addToHash)
         {
-            this.mapFunctions.put(func.name, index);
-            this.mapFunctionsExact.put(iname, index);
+            this.mapFunctions.put(iname, index);
         }
     }
 }

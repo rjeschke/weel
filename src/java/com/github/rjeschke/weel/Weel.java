@@ -45,7 +45,7 @@ public final class Weel
     /** Compiled script classes. */
     final ArrayList<String> scriptClasses = new ArrayList<String>();
     /** Type bound support functions. */
-    final SupportFunctions[] supportFunctions = new SupportFunctions[5];
+    final TypeFunctions[] typeFunctions = new TypeFunctions[5];
 
     /** ThreadLocal variable for Weel Runtimes associated with this Weel class. */
     private final ThreadLocal<Runtime> runtime = new ThreadLocal<Runtime>()
@@ -71,10 +71,10 @@ public final class Weel
         this.importFunctions(WeelLibSys.class);
         this.importFunctions(WeelUnit.class);
 
-        this.supportFunctions[ValueType.NULL.ordinal()] = new SupportFunctions();
-        this.supportFunctions[ValueType.STRING.ordinal()] = new SupportFunctions();
-        this.supportFunctions[ValueType.MAP.ordinal()] = new SupportFunctions();
-        this.supportFunctions[ValueType.FUNCTION.ordinal()] = new SupportFunctions();
+        this.typeFunctions[ValueType.NULL.ordinal()] = new TypeFunctions();
+        this.typeFunctions[ValueType.STRING.ordinal()] = new TypeFunctions();
+        this.typeFunctions[ValueType.MAP.ordinal()] = new TypeFunctions();
+        this.typeFunctions[ValueType.FUNCTION.ordinal()] = new TypeFunctions();
     }
 
     /**
@@ -185,7 +185,21 @@ public final class Weel
     public void compile(final String input)
     {
         final Compiler compiler = new Compiler(this);
-        compiler.compile(input);
+        compiler.compile(input, null);
+    }
+
+    /**
+     * Compiles the given input String.
+     * 
+     * @param input
+     *            The input String.
+     * @param filename
+     *            The filename used in error messages.
+     */
+    public void compile(final String input, final String filename)
+    {
+        final Compiler compiler = new Compiler(this);
+        compiler.compile(input, filename);
     }
 
     /**
@@ -193,11 +207,28 @@ public final class Weel
      * 
      * @param input
      *            The input stream.
+     * @return DEBUG purpose only. Will get removed.
      */
     public byte[] compile(final InputStream input)
     {
         final Compiler compiler = new Compiler(this);
-        compiler.compile(input);
+        compiler.compile(input, null);
+        return compiler.classWriter.build();
+    }
+
+    /**
+     * Compiles the given input stream.
+     * 
+     * @param input
+     *            The input stream.
+     * @param filename
+     *            The filename used in error messages.
+     * @return DEBUG purpose only. Will get removed.
+     */
+    public byte[] compile(final InputStream input, final String filename)
+    {
+        final Compiler compiler = new Compiler(this);
+        compiler.compile(input, filename);
         return compiler.classWriter.build();
     }
 

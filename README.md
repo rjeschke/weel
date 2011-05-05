@@ -11,9 +11,9 @@ was created somewhere around 2005 (in C#). A lot of minor and
 major changes followed. Versions 2 and 3 where also done in
 C#, 2.5 was an attempt to translate Yjasl to C.
 
-In 2009 I rediscovered Java (the last Java version I worked on
-was 1.4.x) and finally started to say goodbye to Microsoft only
-solutions. Some time later Yjasl4 was born. 
+In 2008 I rediscovered Java (the last Java versions I worked with
+were 1.3.x and 1.4.x) and finally started to say goodbye to Microsoft-only
+solutions. Some time later Yjasl4 was born.
 
 The current version might be called Yjasl5 because it is again
 a major revision, but as it is said that I'm always reinventing
@@ -29,10 +29,10 @@ get an overview of Weel's features.
 
 ### Architecture
 
-Weel is a stack based, dynamically typed language with a syntax similar 
-to [Lua] and Basic. (At the time I wrote Yjasl1 I worked heavily 
-with [Lua] for creating [Enigma] levels. That's why there's so many
-syntax similarities.)
+Weel is a stack based, dynamically typed language with a base syntax 
+similar to [Lua] and using elements from various other languages. (At 
+the time I wrote Yjasl1 I worked heavily with [Lua] for creating [Enigma] 
+levels. That's why there's so many syntax similarities.)
 
 All previous versions compiled to a very simple byte code (less
 than 40 opcodes) and got interpreted by a *VirtualMachine* which was
@@ -41,7 +41,7 @@ in fact a `for`-loop and a `switch`.
 This version compiles directly to Java byte code using only a simple 
 runtime class for its operation. *(Which decreases the execution time
 by a factor of 6 to 10 compared to Yjasl4, and now Weel doesn't need
-to hide from other dynamically typed languages running on the JVM.)*
+to hide away from other dynamically typed languages.)*
 
 ### Features
 
@@ -54,6 +54,7 @@ to hide from other dynamically typed languages running on the JVM.)*
 *   Closures and anonymous functions
 *   Possibility to export the compiled scripts to avoid making
     your script sources publicly viewable  
+*   ... and much more
 
 ### Current development status
 
@@ -174,12 +175,13 @@ Most of the stuff is working, still a lot missing though.
 *	lock/end
 *	interop nice methods
 *	most of the Weel library
-*	unit test framework
+*	unit test framework (started but not finished yet)
 *	refactor error messages
-*	expression optimization
+*	expression optimization (will be one of the last things)
 
 *REMARK:* The compiler and runtime still need full testing so everything
-might be a bit unstable at the moment. 
+might be a bit unstable at the moment (Especially the compiler is very
+fragile right now). 
 
 ***
 

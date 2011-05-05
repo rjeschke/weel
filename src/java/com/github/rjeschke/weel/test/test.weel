@@ -1,31 +1,31 @@
-/*
-a = 1
+a = 1;
 
 f = @{
     if a == 1 then
-        println("Hund")
-        a = 2
+        println("Hund");
+        a = 2;
     end
     return @{
-        rb = a
-        return rb * 2
+        rb = a;
+        return rb * 2;
     }
 }
 
 println(f()())
 
-f = println
-f("Test")
+// Dynamic overloading
+f = funcFind("println", 0);
+f("Test");
 
 
-test = {}
+test = {};
 
 func test:test(a, b)
     return a + b;
 end
 
-println(test->test(1, 2))
-println(test->test)
+println(test->test(1, 2));
+println(test->test);
 
 config = {
     user = {
@@ -37,7 +37,7 @@ config = {
         shell = "/bin/bash"
     },
     flags = { 0, 3, -2, 1 }
-}
+};
 
 sub dump(s, m)
     foreach k, v in m do
@@ -50,74 +50,34 @@ sub dump(s, m)
         lead ..= "]";
         println(lead.." = "..v)
         if isMap(v) then
-            dump(lead, v)
+            dump(lead, v);
         end
     end
 end
 
-dump("config", config)
+dump("config", config);
 
-f = @{println("Hello world!")}
+f = @{println("Hello world!")};
  
-f()
+f();
 
-f = @{ (a, b) return a + b}
+f = @{ (a, b) return a + b};
 
-println(f(1, 2))
+println(f(1, 2));
 
 func invoke(a, b)
-    return a + b
+    return a + b;
 end
 
 
-sub iterat(width, height, imax)
-    local x, y, vx, vy, i, zx, zy, tx, ty, tx1, ty1, col, cnum
-
-    par = {-2.5, 1.5, -1.5, 1.5}
-    
-    x_min = par[0]
-    x_max = par[1]
-    y_min = par[2]
-    y_max = par[3]
-    x_step = (x_max - x_min) / width
-    y_step = (y_max - y_min) / height
-        
-    for y = 0, height - 1 do
-        vy = y_max + y * y_step
-        for x = 0, width - 1 do
-            vx = x_min + x * x_step
-            zx = 0
-            zy = 0
-
-            for i = 0, imax do
-                tx = zx + vx
-                ty = zy + vy
-                tx1 = tx * tx
-                ty1 = ty * ty
-                zx = tx1 - ty1
-                zy = 2 * tx * ty
-                
-                if (tx1 + ty1) > 4 then
-                    break;
-                end
-            end
-        end
-    end
-end
-
-
-t = clock()
-iterat(4096, 4096, 4096)
-t = clock() - t
-println("Mandel: "..t.." sec. ("..(13.6 / t)..")");
 
 
 println("Hello
-world!")
+world!");
 
-a0 = b0 = c0 = null
-*/
-a = "Test"
+a0 = b0 = c0 = null;
+
+a = "Test";
 switch(a)
     case 1:
         println("One");
@@ -139,43 +99,73 @@ end
 do
     println("Goto replacement");
     break;
-    println("Never comes here.")
+    println("Never comes here.");
 end
 
 func clamp(x, min, max)
     return x < min ? min : x > max ? max : x;
 end
 
-println(clamp(-1, 0, 2))
+println(clamp(-1, 0, 2));
 
-map = {1, 2, 3, 4}
-
+// Define our functions (anonymous functions inside an array)
 ms = {
-	size = @{(m)
+    // size()
+	size = 
+	@{ (m)
 		return size(m);
 	},
-	fold = @{(list, fc)
-		if size(list) == 0 then
-			return null
+	// fold(f)
+	// a generic fold function
+	fold = 
+	@{ (list, fc)
+		if list == null || size(list) == 0 then
+			return null;
 		elseif size(list) == 1 then
-			return list[0]
+			return list[0];
 		else
-			ret = fc(list[0], list[1])
+			ret = fc(list[0], list[1]);
 			for i = 2, size(list) - 1 do
-				ret = fc(ret, list[i])
+				ret = fc(ret, list[i]);
 		    end
-		    return ret
+		    return ret;
 		end
 	}
 }
-
+// Register our functions for type 'map'
 funcReg("map", ms);
-
-println(map::size())
-
+// Create a map
+map = {1, 2, 3, 4};
+// Test them ;)
+println(map::size());
+// Outputs: 4
 println("Result: "..map::fold(@{(a, b) return a + b}));
+// Outputs: Result: 10
+println({1, 2, 3}::fold(@{(a, b) return a..b}));
+// Outputs: 123
+println({1, 2, 3}::size());
+// Outputs: 3
 
-{1, 2, 3}::size()
-println();
-println({1, 2, 3}::size())
-
+    clazz = {
+        var = "Hello Jim!"
+    }
+    
+    sub clazz:print()
+        println(this->var)
+    end
+    
+    clazz->print();
+    
+    // The above could also be written as:
+    clazz.print(clazz);
+    // or:
+    funcFind("clazz$$print", 1)(clazz)
+    // or:
+    createCaller = @{ (var)
+        return @{
+            var->print()
+        }
+    }
+    caller = createCaller(clazz);
+    caller();
+    // *cough*

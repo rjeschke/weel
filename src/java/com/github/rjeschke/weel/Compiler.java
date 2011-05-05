@@ -38,9 +38,32 @@ final class Compiler
     /** The class writer. */
     JvmClassWriter classWriter;
 
+    /** Flag indicating that we're in debug mode. */
+    private boolean debugMode = true;
+
+    /**
+     * Constructor.
+     * 
+     * @param weel
+     *            The Weel.
+     */
     public Compiler(final Weel weel)
     {
         this.weel = weel;
+    }
+
+    /**
+     * Constructor.
+     * 
+     * @param weel
+     *            The Weel.
+     * @param debug
+     *            Flag indicating that we're in debug mode.
+     */
+    public Compiler(final Weel weel, final boolean debug)
+    {
+        this.weel = weel;
+        this.debugMode = debug;
     }
 
     /**
@@ -49,9 +72,9 @@ final class Compiler
      * @param input
      *            The input String.
      */
-    public void compile(final String input)
+    public void compile(final String input, final String filename)
     {
-        this.tokenizer = new Tokenizer(new StringReader(input));
+        this.tokenizer = new Tokenizer(new StringReader(input), filename);
         this.compile();
     }
 
@@ -61,12 +84,12 @@ final class Compiler
      * @param input
      *            The input stream.
      */
-    public void compile(final InputStream input)
+    public void compile(final InputStream input, final String filename)
     {
         try
         {
             this.tokenizer = new Tokenizer(new BufferedReader(
-                    new InputStreamReader(input, "UTF-8")));
+                    new InputStreamReader(input, "UTF-8")), filename);
         }
         catch (UnsupportedEncodingException e)
         {
@@ -279,6 +302,41 @@ final class Compiler
     }
 
     /**
+     * Checks if the current expression continues with a token that indicates
+     * that it needs a return value. Only used in variables and function parsing
+     * for non-first expressions.
+     * 
+     * @return <code>true</code> if so.
+     */
+    private boolean wouldNeedReturnValue()
+    {
+        switch (this.tokenizer.token)
+        {
+        case BRACE_OPEN:
+        case BRACKET_OPEN:
+        case DOT:
+        case ARROW:
+        case DOUBLE_COLON:
+            // as this is only used for non-first expressions
+            // we will need a return value for all kinds of
+            // assigns
+        case ASSIGN:
+        case ASSIGN_ADD:
+        case ASSIGN_DIV:
+        case ASSIGN_AND:
+        case ASSIGN_MODULO:
+        case ASSIGN_MUL:
+        case ASSIGN_OR:
+        case ASSIGN_SUB:
+        case ASSIGN_XOR:
+        case ASSIGN_STRCAT:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    /**
      * Parses an assign or a function call
      * 
      * @param getContext
@@ -332,10 +390,18 @@ final class Compiler
                 {
                     this.block.callRuntime("getMap");
                 }
-                else if (expr == ExpressionType.VARIABLE)
+                else if (first && expr == ExpressionType.VARIABLE)
                 {
                     this.needGetVariable(var);
                     this.writeGetVariable(var);
+                }
+                else if (first && var.function != null)
+                {
+                    this.writeGetVariable(var);
+                }
+                else if (expr != ExpressionType.FUNCTION)
+                {
+                    this.syntaxError();
                 }
                 this.tokenizer.next();
                 this.checkToken(Token.BRACE_OPEN);
@@ -358,21 +424,8 @@ final class Compiler
                 this.checkToken(Token.BRACE_CLOSE);
                 this.tokenizer.next();
 
-                boolean needsReturn = getContext;
-                switch (this.tokenizer.token)
-                {
-                case BRACE_OPEN:
-                case BRACKET_OPEN:
-                case DOT:
-                case ARROW:
-                case DOUBLE_COLON:
-                    needsReturn = true;
-                    break;
-                default:
-                    break;
-                }
-
-                this.block.writeSpecialCall(name, paramc, needsReturn);
+                this.block.writeSpecialCall(name, paramc, getContext
+                        || this.wouldNeedReturnValue());
 
                 oop = first = false;
                 expr = ExpressionType.FUNCTION;
@@ -381,13 +434,15 @@ final class Compiler
             case BRACE_OPEN:
             {
                 int paramc = 0;
+                final boolean isAssert;
                 this.tokenizer.next();
 
                 if (first)
                 {
-                    if (!var.isFunction())
+                    isAssert = var.name.equals("assert");
+                    if (!isAssert && !var.isFunction())
                     {
-                        this.needGetVariable(var);
+                        this.needGetVariable(var, true);
                         this.writeGetVariable(var);
                         stackCall = true;
                     }
@@ -407,8 +462,14 @@ final class Compiler
                         }
                         stackCall = true;
                     }
+                    isAssert = false;
                 }
 
+                if (isAssert)
+                {
+                    this.parseAssert();
+                    return;
+                }
                 while (this.tokenizer.token != Token.BRACE_CLOSE)
                 {
                     paramc++;
@@ -439,49 +500,27 @@ final class Compiler
 
                     this.writeCallFunction(func);
 
-                    switch (this.tokenizer.token)
+                    if (getContext || this.wouldNeedReturnValue())
                     {
-                    case BRACE_OPEN:
-                    case BRACKET_OPEN:
-                    case DOT:
-                    case ARROW:
-                    case DOUBLE_COLON:
                         if (!func.returnsValue)
                         {
                             throw new WeelException(this.tokenizer.error("Sub "
                                     + func.name + "(" + func.arguments
                                     + ") doesn't return a value"));
                         }
-                        break;
-                    default:
-                        if (func.returnsValue && !getContext)
+                    }
+                    else
+                    {
+                        if (func.returnsValue)
                         {
                             this.block.callRuntime("pop1");
                         }
-                        else if (!func.returnsValue && getContext)
-                        {
-                            throw new WeelException(this.tokenizer.error("Sub "
-                                    + func.name + "(" + func.arguments
-                                    + ") doesn't return a value"));
-                        }
-                        break;
                     }
                 }
                 else
                 {
-                    boolean wantsValue = getContext;
-                    switch (this.tokenizer.token)
-                    {
-                    case BRACE_OPEN:
-                    case BRACKET_OPEN:
-                    case DOT:
-                    case DOUBLE_COLON:
-                        wantsValue = true;
-                        break;
-                    default:
-                        break;
-                    }
-                    this.block.doStackcall(paramc, wantsValue);
+                    this.block.doStackcall(paramc, getContext
+                            | this.wouldNeedReturnValue());
                 }
                 oop = first = false;
                 expr = ExpressionType.FUNCTION;
@@ -816,7 +855,6 @@ final class Compiler
                 this.syntaxError();
             }
             this.tokenizer.next();
-            System.out.println(this.tokenizer.token);
             break;
         }
         default:
@@ -1770,7 +1808,8 @@ final class Compiler
      */
     private void syntaxError()
     {
-        throw new WeelException(this.tokenizer.error("Syntax error"));
+        throw new WeelException(this.tokenizer.error("Syntax error ("
+                + this.tokenizer.token.toString().toLowerCase() + ")"));
     }
 
     /**
@@ -1846,6 +1885,20 @@ final class Compiler
      */
     private void needGetVariable(final Variable var)
     {
+        this.needGetVariable(var, false);
+    }
+
+    /**
+     * Makes sure we get a variable to read from.
+     * 
+     * @param var
+     *            The Variable.
+     * @param maybeFunction
+     *            Flag indicating that the may be a function. (Only affects
+     *            error generation.)
+     */
+    private void needGetVariable(final Variable var, final boolean maybeFunction)
+    {
         if (var.type != Type.NONE)
             return;
         if (this.block.isAnonymousFunction)
@@ -1855,7 +1908,8 @@ final class Compiler
         if (var.type == Type.NONE)
         {
             throw new WeelException(this.tokenizer.error(
-                    "Unknown variable '%s'", var.name));
+                    maybeFunction ? "Unknown function '%s'"
+                            : "Unknown variable '%s'", var.name));
         }
     }
 
@@ -1959,6 +2013,57 @@ final class Compiler
         else if (pops > 1)
         {
             this.block.callRuntime("pop", pops);
+        }
+    }
+
+    /**
+     * Parses a Weel assert.
+     */
+    private void parseAssert()
+    {
+        CodeBlock old = this.block;
+        if (!this.debugMode)
+        {
+            final JvmClassWriter temp = new JvmClassWriter(
+                    "com.github.rjeschke.weel.scripts.Assert");
+
+            this.block = this.scope.block = new CodeBlock(temp.createMethod(
+                    "STATIC", "(Lcom/github/rjeschke/weel/Runtime;)V"));
+        }
+        int paramc = 0;
+        while (this.tokenizer.token != Token.BRACE_CLOSE)
+        {
+            paramc++;
+            this.parseExpression();
+            if (this.tokenizer.token == Token.BRACE_CLOSE)
+            {
+                break;
+            }
+            if (this.tokenizer.token == Token.COMMA)
+            {
+                this.tokenizer.next();
+                continue;
+            }
+            this.syntaxError();
+        }
+        if (paramc != 1)
+        {
+            throw new WeelException(this.tokenizer
+                    .error("assert needs only one argument"));
+        }
+        this.tokenizer.next();
+        if (!this.debugMode)
+        {
+            this.block = this.scope.block = old;
+        }
+        else
+        {
+            this.block.code.add(JvmOp.ALOAD_0);
+            this.block.ldcStr(this.tokenizer.error("Assert failed"));
+            this.block.code.add(JvmOp.INVOKEVIRTUAL);
+            this.block.code.addShort(this.classWriter.addMethodRefConstant(
+                    "com.github.rjeschke.weel.Runtime", "weelAssert",
+                    "(Ljava/lang/String;)V"));
         }
     }
 }
