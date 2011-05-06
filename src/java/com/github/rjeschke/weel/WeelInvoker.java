@@ -33,8 +33,10 @@ interface WeelInvoker
     /**
      * Initializes this invoker.
      * 
+     * @param weel
+     *            The Weel.
      * @param function
      *            The Weel function.
      */
-    public void initialize(final WeelFunction function);
+    public void initialize(final Weel weel, final WeelFunction function);
 }

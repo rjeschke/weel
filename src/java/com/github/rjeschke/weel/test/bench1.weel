@@ -3,7 +3,7 @@
 
 global matrix = {}
 
-func matrix.t(a)
+func matrix:t(a)
     local m = size(a), n = size(a[1]), x = {};
     for i = 0, n - 1 do
         x[i] = {};
@@ -14,10 +14,10 @@ func matrix.t(a)
     return x;
 end
 
-func matrix.mul(a, b)
+func matrix:mul(a, b)
     local m = size(a), n = size(a[0]), p = size(b[0]), x = {};
     assert(n == p);
-    local c = matrix.t(b); // transpose for efficiency
+    local c = this->t(b); // transpose for efficiency
     
     for i = 0, m - 1 do
         local xi = x[i] = {};
@@ -44,16 +44,6 @@ func matgen(n)
     end
     return a;
 end
-
-println("Matmul:");
-println("=======");
-local n = 1000;
-n &= ~1;
-local t = clock();
-a = matrix.mul(matgen(n), matgen(n));
-t = clock() - t;
-println("C: "..a[n/2][n/2]);
-println(t.." sec.");
 
 // Madelbrot
 
@@ -93,9 +83,22 @@ sub iterat(width, height, imax)
 end
 
 
-println("\nMandelbrot:");
-println("===========");
-t = clock()
-iterat(4096, 4096, 4096)
-t = clock() - t
-println(t.." sec.");
+sub main(args)
+    println("Matmul:");
+    println("=======");
+    local n = size(args) > 0 ? toNum(args[0]) : 100;
+    n &= ~1;
+    local t = clock();
+    a = matrix->mul(matgen(n), matgen(n));
+    t = clock() - t;
+    println("C: "..a[n/2][n/2]);
+    println(t.." sec.");
+
+    println("\nMandelbrot:");
+    println("===========");
+    t = clock()
+    n = size(args) > 1 ? toNum(args[1]) : 1000;
+    iterat(n, n, n)
+    t = clock() - t
+    println(t.." sec.");
+end

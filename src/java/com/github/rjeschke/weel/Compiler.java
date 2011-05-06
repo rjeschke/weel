@@ -117,7 +117,7 @@ final class Compiler
 
         this.scope.block.closeBlock();
 
-        Weel.classLoader.addClass(this.classWriter);
+        this.weel.classLoader.addClass(this.classWriter);
 
         this.weel.initAllInvokers();
     }
@@ -344,7 +344,7 @@ final class Compiler
      */
     private void parseVarsAndFuncs(final boolean getContext)
     {
-        boolean first = true, stackCall = false, end = false, oop = false;
+        boolean first = true, stackCall = false, end = false, oop = false, append = false;
         Variable var;
 
         if (this.tokenizer.token == Token.RESERVED
@@ -575,9 +575,19 @@ final class Compiler
                         this.block.callRuntime("getMap");
                 }
                 this.tokenizer.next();
-                this.parseExpression();
-                this.checkToken(Token.BRACKET_CLOSE);
-                this.tokenizer.next();
+                if (!getContext && this.tokenizer.token == Token.BRACKET_CLOSE)
+                {
+                    this.tokenizer.next();
+                    if (this.tokenizer.token != Token.ASSIGN)
+                        this.syntaxError();
+                    append = true;
+                }
+                else
+                {
+                    this.parseExpression();
+                    this.checkToken(Token.BRACKET_CLOSE);
+                    this.tokenizer.next();
+                }
                 oop = first = false;
                 expr = ExpressionType.ARRAY;
                 break;
@@ -700,7 +710,11 @@ final class Compiler
             {
                 if (getContext)
                     this.block.callRuntime("sdups");
-                this.block.callRuntime("setMap");
+
+                if (append)
+                    this.block.callRuntime("appendMap");
+                else
+                    this.block.callRuntime("setMap");
             }
             else if (expr == ExpressionType.VARIABLE)
             {
@@ -779,7 +793,6 @@ final class Compiler
             break;
         case CURLY_BRACE_OPEN:
         {
-            int index = 0;
             this.block.callRuntime("createMap");
             this.tokenizer.next();
             while (this.tokenizer.token != Token.CURLY_BRACE_CLOSE)
@@ -808,7 +821,6 @@ final class Compiler
                     this.block.callRuntime("setMap");
                     break;
                 case NAME:
-                case STRING:
                 {
                     final Token prev = this.tokenizer.token;
                     final String name = this.tokenizer.string;
@@ -821,6 +833,7 @@ final class Compiler
                     }
                     else
                     {
+                        // FIXME is this really correct?
                         switch (this.tokenizer.token)
                         {
                         case NAME:
@@ -833,16 +846,14 @@ final class Compiler
                             break;
                         }
                         this.tokenizer.ungetToken(prev);
-                        this.block.load(index++);
                         this.parseExpression();
-                        this.block.callRuntime("setMap");
+                        this.block.callRuntime("appendMap");
                     }
                     break;
                 }
                 default:
-                    this.block.load(index++);
                     this.parseExpression();
-                    this.block.callRuntime("setMap");
+                    this.block.callRuntime("appendMap");
                     break;
                 }
                 if (this.tokenizer.token == Token.CURLY_BRACE_CLOSE)
@@ -1037,6 +1048,9 @@ final class Compiler
                 break;
             case STRING_CONCAT:
                 this.block.callRuntime("strcat");
+                break;
+            case MAP_CONCAT:
+                this.block.callRuntime("mapcat");
                 break;
             case MODULO:
                 this.block.callRuntime("mod");
@@ -1649,11 +1663,12 @@ final class Compiler
     private void addExit()
     {
         final Scope s = this.scope.findFunctionScope();
-        if (s == null || s.type == ScopeType.FUNC)
+        if (s == null || s.type == ScopeType.FUNC || this.block.hasReturn)
         {
             throw new WeelException(this.tokenizer
                     .error("'exit' without 'sub'"));
         }
+        this.block.hasExit = true;
         this.writeExitPops();
         this.scope.addBreak(this.block.writeJmp(JvmOp.GOTO, 0));
         this.tokenizer.next();
@@ -1665,7 +1680,7 @@ final class Compiler
     private void addReturn()
     {
         final Scope s = this.scope.findFunctionScope();
-        if (s == null || s.type == ScopeType.SUB)
+        if (s == null || s.type == ScopeType.SUB || this.block.hasExit)
         {
             throw new WeelException(this.tokenizer
                     .error("'return' without 'func'"));
@@ -2046,6 +2061,8 @@ final class Compiler
             }
             this.syntaxError();
         }
+        // Maybe I'll add an overloaded assert, so this stays
+        // as it is at the moment
         if (paramc != 1)
         {
             throw new WeelException(this.tokenizer

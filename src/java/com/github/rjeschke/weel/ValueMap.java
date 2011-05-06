@@ -15,6 +15,7 @@ import java.util.Map.Entry;
  * 
  * @author René Jeschke <rene_jeschke@yahoo.de>
  */
+// FIXME this class needs improvement!
 public final class ValueMap implements Iterable<Entry<Value, Value>>
 {
     /** Integer keys. */
@@ -24,11 +25,13 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
     /** The size. */
     int size;
     /** Is this map ordered? */
-    private boolean ordered = true;
+    boolean ordered = true;
     /** The data. */
     ArrayList<Value> data;
     /** The keys. */
     ArrayList<Value> keys;
+    /** The highest integer key value for unordered maps. */
+    int highestIntKey;
 
     /**
      * Creates a new ValueMap.
@@ -37,32 +40,6 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
     {
         this.data = new ArrayList<Value>();
         this.keys = new ArrayList<Value>();
-    }
-
-    /**
-     * Creates an ordered ValueMap with the given size.
-     * 
-     * @param size
-     *            The size.
-     */
-    public ValueMap(final int size)
-    {
-        if (size > 0)
-        {
-            this.data = new ArrayList<Value>(size);
-            this.keys = new ArrayList<Value>(size);
-            for (int i = 0; i < size; i++)
-            {
-                this.data.add(new Value());
-                this.keys.add(new Value(i));
-            }
-            this.size = size;
-        }
-        else
-        {
-            this.data = new ArrayList<Value>();
-            this.keys = new ArrayList<Value>();
-        }
     }
 
     /**
@@ -102,7 +79,39 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
      */
     public Value get(final int index)
     {
+        if (this.ordered)
+        {
+            return index >= 0 && index < this.size ? this.data.get(index)
+                    .clone() : new Value();
+        }
         return this.get(new Value(index));
+    }
+
+    /**
+     * Get the value at the given index.
+     * 
+     * @param index
+     *            The index.
+     * @param out
+     *            The output Value.
+     * @throws WeelException
+     *             If the index is invalid.
+     * @return out.
+     */
+    public Value get(final int index, final Value out)
+    {
+        if (this.ordered)
+        {
+            if (index >= 0 && index < this.size)
+                this.data.get(index).copyTo(out);
+            else
+                out.setNull();
+        }
+        else
+        {
+            this.get(new Value(index), out);
+        }
+        return out;
     }
 
     /**
@@ -173,11 +182,13 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
      */
     private void unorder()
     {
+        this.ordered = false;
         // There can only be integer keys inside the map right now
         for (int i = 0; i < this.size; i++)
         {
             this.intKeys.put((int) this.keys.get(i).number, i);
         }
+        this.highestIntKey = this.size - 1;
     }
 
     /**
@@ -244,7 +255,6 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
             {
                 if (this.ordered)
                 {
-                    this.ordered = false;
                     this.unorder();
                 }
                 final Integer idx2 = this.intKeys.get(idx);
@@ -257,6 +267,7 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
                     this.intKeys.put(idx, this.size);
                     this.keys.add(new Value(idx));
                     this.data.add(value.clone());
+                    this.highestIntKey = idx;
                     this.size++;
                 }
             }
@@ -266,7 +277,6 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
         {
             if (this.ordered)
             {
-                this.ordered = false;
                 this.unorder();
             }
             final Integer idx = this.strKeys.get(index.string);
@@ -286,6 +296,28 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
         default:
             throw new WeelException("Illegal map index type: " + index.type);
         }
+    }
+
+    /**
+     * Appends the given value to this map using an auto generated integer key.
+     * 
+     * @param value
+     *            The value to append.
+     */
+    public void append(final Value value)
+    {
+        if (this.ordered)
+        {
+            this.keys.add(new Value(this.size));
+            this.data.add(value.clone());
+        }
+        else
+        {
+            this.keys.add(new Value(++this.highestIntKey));
+            this.intKeys.put(this.highestIntKey, this.size);
+            this.data.add(value.clone());
+        }
+        this.size++;
     }
 
     /** @see java.lang.Iterable#iterator() */

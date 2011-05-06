@@ -39,6 +39,11 @@ final class CodeBlock
     boolean isAlternateSyntax;
     /** Flag indicating that our function has at least one return statement. */
     boolean hasReturn;
+    /**
+     * Flag indicating that our function has at least one exit statement.
+     * Relevant only for automatically typed anonymous functions.
+     */
+    boolean hasExit;
 
     /**
      * Constructor.

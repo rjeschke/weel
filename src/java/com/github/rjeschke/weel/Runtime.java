@@ -529,6 +529,50 @@ public final class Runtime
     }
 
     /**
+     * Map concatenation.
+     * <p>
+     * When both maps are 'lists' then the result is a 'real' concatenation,
+     * else a merge will be performed.
+     * </p>
+     * 
+     * <p>
+     * <code>..., map1, map2 &rArr; ..., map1 ++ map2 </code>
+     * </p>
+     */
+    public void mapcat()
+    {
+        final ValueMap b = this.popMap();
+        final ValueMap a = this.popMap();
+        final ValueMap c = new ValueMap();
+        
+        if (a.ordered && b.ordered)
+        {
+            final Value v = new Value();
+            for (int i = 0; i < a.size; i++)
+            {
+                c.append(a.get(i, v));
+            }
+            for (int i = 0; i < b.size; i++)
+            {
+                c.append(b.get(i, v));
+            }
+        }
+        else
+        {
+            for (final Entry<Value, Value> e : a)
+            {
+                c.set(e.getKey(), e.getValue());
+            }
+            for (final Entry<Value, Value> e : b)
+            {
+                c.set(e.getKey(), e.getValue());
+            }
+        }
+        this.stack[++this.sp].type = ValueType.MAP;
+        this.stack[this.sp].map = c;
+    }
+
+    /**
      * Addition.
      * 
      * <p>
@@ -1004,19 +1048,6 @@ public final class Runtime
     }
 
     /**
-     * Creates an ordered map of the given size.
-     * 
-     * <p>
-     * <code>... &rArr; ..., map</code>
-     * </p>
-     */
-    public void createMap(final int size)
-    {
-        this.stack[++this.sp].type = ValueType.MAP;
-        this.stack[this.sp].map = new ValueMap(size);
-    }
-
-    /**
      * Gets a value from a map.
      * 
      * <p>
@@ -1066,6 +1097,22 @@ public final class Runtime
         final ValueMap map = this.stack[this.sp - 2].getMap();
         map.set(this.stack[this.sp - 1], this.stack[this.sp]);
         this.sp -= 3;
+    }
+
+    /**
+     * Appends a value to a map.
+     * 
+     * <p>
+     * <code>..., map, value &rArr; ...</code>
+     * </p>
+     * 
+     * @throws WeelException
+     *             If the 'map' is not a ValueMap.
+     */
+    public void appendMap()
+    {
+        this.stack[this.sp - 1].getMap().append(this.stack[this.sp]);
+        this.sp -= 2;
     }
 
     /**

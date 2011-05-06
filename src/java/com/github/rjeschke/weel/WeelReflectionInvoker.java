@@ -23,7 +23,7 @@ final class WeelReflectionInvoker implements WeelInvoker
 
     /** @see com.github.rjeschke.weel.WeelInvoker#initialize(WeelFunction) */
     @Override
-    public void initialize(WeelFunction function)
+    public void initialize(Weel weel, WeelFunction function)
     {
         if(this.initialized)
             return;
@@ -32,7 +32,7 @@ final class WeelReflectionInvoker implements WeelInvoker
 
         try
         {
-            final Class<?> clazz = Weel.classLoader.loadClass(function.clazz);
+            final Class<?> clazz = weel.classLoader.loadClass(function.clazz);
             this.method = clazz.getDeclaredMethod(function.javaName,
                     Runtime.class);
         }

@@ -41,7 +41,7 @@ public final class Weel
     /** Name to exact function index mapping. */
     HashMap<String, Integer> mapFunctionsExact = new HashMap<String, Integer>();
     /** Weel class loader. */
-    final static WeelLoader classLoader = new WeelLoader();
+    final WeelLoader classLoader = new WeelLoader();
     /** Compiled script classes. */
     final ArrayList<String> scriptClasses = new ArrayList<String>();
     /** Type bound support functions. */
@@ -69,9 +69,9 @@ public final class Weel
         this.importFunctions(WeelLibCon.class);
         this.importFunctions(WeelLibMath.class);
         this.importFunctions(WeelLibSys.class);
+        this.importFunctions(WeelLibString.class);
         this.importFunctions(WeelUnit.class);
 
-        this.typeFunctions[ValueType.NULL.ordinal()] = new TypeFunctions();
         this.typeFunctions[ValueType.STRING.ordinal()] = new TypeFunctions();
         this.typeFunctions[ValueType.MAP.ordinal()] = new TypeFunctions();
         this.typeFunctions[ValueType.FUNCTION.ordinal()] = new TypeFunctions();
@@ -243,7 +243,7 @@ public final class Weel
         {
             try
             {
-                final Class<?> clazz = classLoader.findClass(name);
+                final Class<?> clazz = this.classLoader.findClass(name);
                 clazz.getMethod("STATIC", Runtime.class).invoke(null, runtime);
             }
             catch (ClassNotFoundException e)
@@ -459,7 +459,7 @@ public final class Weel
         {
             if (func.invoker == null)
                 func.invoker = WeelInvokerFactory.create();
-            func.initialize();
+            func.initialize(this);
         }
     }
 
@@ -518,7 +518,7 @@ public final class Weel
 
                 this.addFunction(iname, func);
                 func.invoker = WeelInvokerFactory.create();
-                func.initialize();
+                func.initialize(this);
             }
             else if (nice != null)
             {

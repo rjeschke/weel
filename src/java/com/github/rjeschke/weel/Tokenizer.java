@@ -335,6 +335,11 @@ final class Tokenizer
                         this.read();
                         return this.token = Token.ASSIGN_ADD;
                     }
+                    else if(this.current == '+')
+                    {
+                        this.read();
+                        return this.token = Token.MAP_CONCAT;
+                    }
                     return this.token = Token.ADD;
                 case '-':
                     this.read();
@@ -601,6 +606,7 @@ final class Tokenizer
         case DIV:
         case MODULO:
         case STRING_CONCAT:
+        case MAP_CONCAT:
         case EQUAL:
         case NOT_EQUAL:
         case LESS:
@@ -665,6 +671,7 @@ final class Tokenizer
     {
         switch (t)
         {
+        case MAP_CONCAT:
         case STRING_CONCAT:
             return 13;
         case MUL:

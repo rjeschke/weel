@@ -53,7 +53,7 @@ public final class WeelLibSys
     }
 
     /**
-     * <code>array(a)</code>
+     * <code>array(size)</code>
      * <p>
      * Creates an array of the given size.
      * </p>
@@ -64,7 +64,32 @@ public final class WeelLibSys
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void array(final Runtime runtime)
     {
-        runtime.load(new ValueMap((int) runtime.popNumber()));
+        final int size = (int) runtime.popNumber();
+        final ValueMap ret = new ValueMap();
+        final Value val = new Value();
+        for (int i = 0; i < size; i++)
+            ret.append(val);
+        runtime.load(ret);
+    }
+
+    /**
+     * <code>array(size, val)</code>
+     * <p>
+     * Creates an array of the given size and fills it with val.
+     * </p>
+     * 
+     * @param runtime
+     *            The Weel runtime.
+     */
+    @WeelRawMethod(args = 2, returnsValue = true)
+    public final static void array2(final Runtime runtime)
+    {
+        final Value val = runtime.pop();
+        final int size = (int) runtime.popNumber();
+        final ValueMap ret = new ValueMap();
+        for (int i = 0; i < size; i++)
+            ret.append(val);
+        runtime.load(ret);
     }
 
     /**

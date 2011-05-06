@@ -77,9 +77,9 @@ public class WeelFunction
      * 
      * @see com.github.rjeschke.weel.WeelInvoker#initialize(WeelFunction)
      */
-    void initialize()
+    void initialize(final Weel weel)
     {
-        this.invoker.initialize(this);
+        this.invoker.initialize(weel, this);
     }
 
     /**

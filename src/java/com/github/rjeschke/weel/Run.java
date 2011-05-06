@@ -41,7 +41,7 @@ public class Run
                     vargs = new ValueMap();
                     for (int n = i + 1, t = 0; n < args.length; n++, t++)
                     {
-                        vargs.set(t, new Value(args[n]));
+                        vargs.append(new Value(args[n]));
                     }
                     break;
                 }

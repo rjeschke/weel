@@ -1,171 +1,33 @@
-a = 1;
 
-f = @{
-    if a == 1 then
-        println("Hund");
-        a = 2;
-    end
-    return @{
-        rb = a;
-        return rb * 2;
-    }
-}
+a = {1, 2, 3};
+b = {9, 8, 7};
+c = a ++ b ++ {null};
 
-println(f()())
-
-// Dynamic overloading
-f = funcFind("println", 0);
-f("Test");
-
-
-test = {};
-
-func test:test(a, b)
-    return a + b;
+foreach k, v in c do
+    println(k.." = "..v);
 end
 
-println(test->test(1, 2));
-println(test->test);
+c[] = 10;
+println();
 
-config = {
-    user = {
-        name = "John Doe"
-    },
-    prefs = {
-        nocolors = false,
-        verbose = true,
-        shell = "/bin/bash"
-    },
-    flags = { 0, 3, -2, 1 }
-};
-
-sub dump(s, m)
-    foreach k, v in m do
-        lead = s.."[";
-        if isNumber(k) then
-            lead ..= k;
-        else
-            lead ..='"'..k..'"';
-        end
-        lead ..= "]";
-        println(lead.." = "..v)
-        if isMap(v) then
-            dump(lead, v);
-        end
-    end
+foreach k, v in c do
+    println(k.." = "..v);
 end
 
-dump("config", config);
+c.ro = "fl"
 
-f = @{println("Hello world!")};
- 
-f();
+println();
 
-f = @{ (a, b) return a + b};
+foreach k, v in c do
+    println(k.." = "..v);
+end
+c[] = 42;
 
-println(f(1, 2));
+println();
 
-func invoke(a, b)
-    return a + b;
+foreach k, v in c do
+    println(k.." = "..v);
 end
 
+println(funcName(@{ println("Muaha!");}));
 
-
-
-println("Hello
-world!");
-
-a0 = b0 = c0 = null;
-
-a = "Test";
-switch(a)
-    case 1:
-        println("One");
-        break;
-    case 2:
-        println("Two");
-        break;
-    case 3:
-    case 4:
-        println("Three & Four");
-        break;
-    case "Test":
-        println("Nine");
-        break;
-    default:
-        println("Other");
-end
-
-do
-    println("Goto replacement");
-    break;
-    println("Never comes here.");
-end
-
-func clamp(x, min, max)
-    return x < min ? min : x > max ? max : x;
-end
-
-println(clamp(-1, 0, 2));
-
-// Define our functions (anonymous functions inside an array)
-ms = {
-    // size()
-	size = 
-	@{ (m)
-		return size(m);
-	},
-	// fold(f)
-	// a generic fold function
-	fold = 
-	@{ (list, fc)
-		if list == null || size(list) == 0 then
-			return null;
-		elseif size(list) == 1 then
-			return list[0];
-		else
-			ret = fc(list[0], list[1]);
-			for i = 2, size(list) - 1 do
-				ret = fc(ret, list[i]);
-		    end
-		    return ret;
-		end
-	}
-}
-// Register our functions for type 'map'
-funcReg("map", ms);
-// Create a map
-map = {1, 2, 3, 4};
-// Test them ;)
-println(map::size());
-// Outputs: 4
-println("Result: "..map::fold(@{(a, b) return a + b}));
-// Outputs: Result: 10
-println({1, 2, 3}::fold(@{(a, b) return a..b}));
-// Outputs: 123
-println({1, 2, 3}::size());
-// Outputs: 3
-
-    clazz = {
-        var = "Hello Jim!"
-    }
-    
-    sub clazz:print()
-        println(this->var)
-    end
-    
-    clazz->print();
-    
-    // The above could also be written as:
-    clazz.print(clazz);
-    // or:
-    funcFind("clazz$$print", 1)(clazz)
-    // or:
-    createCaller = @{ (var)
-        return @{
-            var->print()
-        }
-    }
-    caller = createCaller(clazz);
-    caller();
-    // *cough*

@@ -21,6 +21,13 @@ See LICENSE.txt for licensing information.
     +   [do, until](#dountil)
     +   [while, end](#while)
 *   [Functions](#functions)
+*   [Technical details](#technical)
+    +   [Performance](#perft)
+    +   [Weel stacks](#stacks)
+    +   [Function calling](#funccall)
+    +   [Anonymous functions](#anonfuncst)
+    +   [Internal function naming](#intnames)
+    +   [Compilation](#compilation)
 *   [Performance hints](#performance)
 
 *****************************************************************************
@@ -156,6 +163,7 @@ in the library)*.
 *   `/` : Division
 *   `%` : Modulo
 *   `..` : String concatenation
+*   `++` : Map concatenation
 *   `=` : Assign
 *   `==` : Equal
 *   `!=` : Not equal
@@ -496,27 +504,164 @@ any arguments, and the syntax for functions and subs is identically.
 
 *****************************************************************************
 
+### Technical details               {#technical}
+
+#### Performance                    {#perft}
+
+The reason why I rewrote Yjasl4 was **speed**. After some days of thinking
+about the new Weel VM I decided to give direct JVM bytecode generation a try.
+The first test, compiling Weel source code by 'hand' as calls to the runtime
+in a Java(TM) method showed the potential this approach offered. The speed
+increase compared to Yjasl4 is about a factor of 5 to 10, depending on the
+code used.
+
+Another benefit of the new compilation method is that I have more freedom to
+develop new language features. In Yjasl4 adding a new bytecode could result in
+large decrease in performance, so I had to choose wisely which bytecode I *really*
+needed.
+
+In Weel, I can add as many 'bytecodes' as I want, without sacrificing speed (which
+already resulted in lots of new features and possibilities).
+
+The main design goals for Weel were/are:
+*   Lots of small runtime methods
+*   Minimized number constants storage in class files (not everything gets
+    really stored as a `double`)
+*   Avoid object creations wherever possible
+*   Having an API for Java(TM) Weel libraries which also makes it possible
+    to retrieve the needed value in raw methods without object creations
+*   Multithreading support
+
+If you have a look at the runtime class, you won't see many `new` operators.
+Values on the stack get 'copied', not cloned, except for the case when the user
+really needs a `Value`, then I have to clone it. This gives a large speed benefit
+but hinders the garbage collector to do its job (because references don't get
+removed when changing the type of a value). You can always use `Runtime.wipeStack()`
+to clean unsused references and maybe I'll sacrifice some performance to clean
+values when they get 'popped', to minimize the memory footprint.
+
+
+#### Weel stacks                    {#stacks}
+
+1.  The `Value` stack:
+
+    The Value stack is used for all Weel operations. The Runtime avoids costly 
+    Object creations by copying the values inside the stack and only cloning 
+    values if they need to leave the safe space inside the Runtime (e.g. when 
+    calling `Runtime.pop()`). The Runtime offers also various methods for
+    library programmers to avoid value cloning by querying a direct value (e.g.
+    `double Runtime.popNumber()` or `String Runtime.popString()`.
+
+2.  The *'Frame'* stack:
+
+    This is used for function frames to prepare function arguments and reserve
+    space for local variables. In fact it only holds the position of the first
+    argument or local variable and a frame size.
+    
+3.  The *'Virtual Function'* stack:
+
+    This one is used by anonymous functions containing closure variables and
+    holds a reference to the currently executed function and its closure
+    variables.
+
+#### Function calling               {#funccall}
+
+There are four different types of function calls:
+
+1.  Static calls:
+
+    Every call to a static Weel function or a Java function is a static call
+    which gets directly compiled into bytecode.
+    
+2.  Dynamic calls (aka stack call):
+
+    The function to call resides on the stack and has to be called using an 
+    *invoker* which at the moment uses Reflection to perform its task. As a
+    dynamic call has every information about the call that it need (name, 
+    number of arguments, and returns-value flag) it can resolve overloaded
+    functions and prepares the stack to match the situation (e.g. if a 
+    function returns a value and the context doesn't need one the return 
+    value gets discarded).
+    
+    A stack call only tries to resolve an overloaded function if the expected
+    argument count does not match the amount defined by the function on the
+    stack.
+    
+3.  Anonymous closure function calls:
+
+    These work exactly like stack calls (because they are stack calls) but a
+    different invoker method is used which registes the function on the 
+    virtual function stack.
+    
+4.  Type bound functions:
+
+    This is a special type of a stack call, which is always dynamic. The 
+    runtime examines the stack to determine the type to call the function on.
+    Then it resolves the correct function to call by looking it up using the
+    type, the name (which is supplied as a String on the JVM stack) and the 
+    number of arguments.
+ 
+#### Anonymous functions            {#anonfuncst}
+
+Anonymous functions are nameless static functions which don't get registered
+in the Weel (that's why you can't uses overloading on anonymous functions).
+
+Declaring an anonymous function without closure variables only results in a
+Runtime.load(...) operation, loading the anonymous function (which is already
+compiled) by its function index.
+
+This behavious changes when closure variables are needed. Here every expression
+which creates such a function also creates a new object with a snapshot of its
+used outer variables.
+
+#### Internal function naming       {#intnames}
+
+To differentiate between different kinds of functions, three types of function
+names are used:
+
+1.  Static functions are named as you specified it, so `func test(a, b)` will
+    be named `test`.
+2.  Array functions use the name of the array and the function's name 
+    concatenated by `$`, so `func arr.test(a, b)` will be named `arr$test`.
+3.  OOP functions use the name of the array and the function's name 
+    concatenated by `$$`, so `func arr:test(a, b)` will be named `arr$$test`.
+
+Anonymous functions all use the same static name `ANON`.
+    
+#### Compilation                    {#compilation}
+
+The Weel compiler does not do any Voodoo, it mostly chains calls to runtime
+methods, generates method calls and some IFEQs, IFNEs and GOTOs. It seems
+that weel performes so well because of the JIT compiler loving small methods. 
+
+So it's all a little bit cheating ... but it works ... and it's fast. 
+
+*****************************************************************************
+
 ### Performance hints               {#performance}
 
-*   At the moment static expressions won't result in a static value,
-    so `a = 1 + 2` evaluates to `a = 1 + 2` and not `a = 3`.
+*   At the moment static expressions won't result in a static value, so
+    `a = 1 + 2` evaluates to `a = 1 + 2` and not `a = 3`.
 *   local and closure variables are faster than global variables.
 *   `a = 2 * b` is faster than `a = b + b`.
-*   `a += 1` is exactly the same as writing `a = a + 1`, it just is
-    less characters to type.
-*   a `switch` is not faster than doing the same with `if`, `elseif` 
-    and `else`. It just looks better.
-*   A Java implementation of a library function might not always be
-    faster than a pure Weel function when called from Weel code.
+*   `a += 1` is exactly the same as writing `a = a + 1`, it just is less 
+    characters to type.
+*   a `switch` is not faster than doing the same with `if`, `elseif` and `else`,
+    it just looks better.
+*   A Java implementation of a library function might not always be faster than
+    a pure Weel function when called from Weel code.
+*   If you use overloading with array or OOP functions try to define the 
+    overloaded type you will probably use the most after all other overloading
+    variations. This will save you some costly runtime overload resolving 
+    operations.
 *   Function calling speed (decreasing from top to bottom):
     
     +   Static Weel/Java function calls
     +   Static Java nice function calls
     +   Dynamic calls
-    +   Dynamic calls with overload resolving
     +   Type bound functions
+    +   Dynamic calls with overload resolving
     +   Dynamic calls to closure functions
-    +   Dynamic calls to closure functions with overload resolving
     
     This is currently a good guess, I'll benchmark this as soon as the
     rest is stable.
