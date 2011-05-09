@@ -110,6 +110,7 @@ public final class Value
     public void setNull()
     {
         this.type = ValueType.NULL;
+        this.number = 0;
         this.string = null;
         this.map = null;
         this.function = null;

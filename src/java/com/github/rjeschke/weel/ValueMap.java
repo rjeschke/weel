@@ -140,9 +140,7 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
      */
     public void get(final Value index, final Value out)
     {
-        switch (index.type)
-        {
-        case NUMBER:
+        if(index.type == ValueType.NUMBER)
         {
             final int idx = (int) index.number;
             if (this.ordered)
@@ -161,18 +159,17 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
                 else
                     out.setNull();
             }
-            break;
         }
-        case STRING:
+        else if(index.type == ValueType.STRING)
         {
             final Integer idx = this.strKeys.get(index.string);
             if (idx != null)
                 this.data.get(idx).copyTo(out);
             else
                 out.setNull();
-            break;
         }
-        default:
+        else
+        {
             throw new WeelException("Illegal map index type: " + index.type);
         }
     }
@@ -233,9 +230,7 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
      */
     public void set(final Value index, final Value value)
     {
-        switch (index.type)
-        {
-        case NUMBER:
+        if(index.type == ValueType.NUMBER)
         {
             final int idx = (int) index.number;
             if (this.ordered && idx >= 0 && idx <= this.size)
@@ -271,9 +266,8 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
                     this.size++;
                 }
             }
-            break;
         }
-        case STRING:
+        else if(index.type == ValueType.STRING)
         {
             if (this.ordered)
             {
@@ -291,9 +285,9 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
                 this.data.add(value.clone());
                 this.size++;
             }
-            break;
         }
-        default:
+        else
+        {
             throw new WeelException("Illegal map index type: " + index.type);
         }
     }
@@ -318,6 +312,19 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
             this.data.add(value.clone());
         }
         this.size++;
+    }
+
+    /** @see java.lang.Object#clone() */
+    @Override
+    public ValueMap clone()
+    {
+        final ValueMap ret = new ValueMap();
+        for (final Entry<Value, Value> e : this)
+        {
+            ret.set(e.getKey(), e.getValue().isMap() ? new Value(e.getValue()
+                    .getMap().clone()) : e.getValue());
+        }
+        return ret;
     }
 
     /** @see java.lang.Iterable#iterator() */

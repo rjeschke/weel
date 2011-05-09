@@ -173,7 +173,7 @@ public class WeelUnitTest
         }
         catch (Exception e)
         {
-            runtime.closeFrame();
+            runtime.closeFrame(0);
             this.passed++;
             result = true;
         }
@@ -205,7 +205,7 @@ public class WeelUnitTest
         }
         catch (Exception e)
         {
-            runtime.closeFrame();
+            runtime.closeFrame(0);
             this.failed++;
             result = false;
         }

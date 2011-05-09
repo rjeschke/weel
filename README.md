@@ -40,7 +40,7 @@ in fact a `for`-loop and a `switch`.
 
 This version compiles directly to Java byte code using only a simple 
 runtime class for its operation. *(Which decreases the execution time
-by a factor of 6 to 10 compared to Yjasl4, and now Weel doesn't need
+by a factor of 3 to 6 compared to Yjasl4, and now Weel doesn't need
 to hide away from other dynamically typed languages.)*
 
 ### Features

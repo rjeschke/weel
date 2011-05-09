@@ -44,6 +44,10 @@ final class CodeBlock
      * Relevant only for automatically typed anonymous functions.
      */
     boolean hasExit;
+    /** Current stack position. */
+    int currentStack;
+    /** Maximum stack depth. */
+    int maxStack;
 
     /**
      * Constructor.
@@ -205,6 +209,7 @@ final class CodeBlock
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(this.classWriter.addMethodRefConstant(
                 "com.github.rjeschke.weel.Runtime", name, "()V"));
+        this.autoStack(name, 0);
     }
 
     /**
@@ -221,6 +226,7 @@ final class CodeBlock
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(this.classWriter.addMethodRefConstant(
                 "com.github.rjeschke.weel.Runtime", name, descriptor));
+        this.autoStack(name, 0);
     }
 
     /**
@@ -240,6 +246,7 @@ final class CodeBlock
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(this.classWriter.addMethodRefConstant(
                 "com.github.rjeschke.weel.Runtime", name, descriptor));
+        this.autoStack(name, arg0);
     }
 
     /**
@@ -257,6 +264,7 @@ final class CodeBlock
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(this.classWriter.addMethodRefConstant(
                 "com.github.rjeschke.weel.Runtime", name, "(I)V"));
+        this.autoStack(name, arg0);
     }
 
     /**
@@ -275,6 +283,9 @@ final class CodeBlock
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(this.classWriter.addMethodRefConstant(
                 "com.github.rjeschke.weel.Runtime", "stackCall", "(IZ)V"));
+        if (wantsValue)
+            this.push();
+        this.pop(arguments);
     }
 
     /**
@@ -291,6 +302,7 @@ final class CodeBlock
         this.code.addShort(this.classWriter.addMethodRefConstant(
                 "com.github.rjeschke.weel.Runtime", "load",
                 "(Ljava/lang/String;)V"));
+        this.push();
     }
 
     /**
@@ -326,6 +338,7 @@ final class CodeBlock
                 this.code.addShort(this.classWriter.addMethodRefConstant(
                         "com.github.rjeschke.weel.Runtime", "load", "(D)V"));
             }
+            this.push();
         }
     }
 
@@ -392,6 +405,7 @@ final class CodeBlock
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(this.classWriter.addMethodRefConstant(
                 "com.github.rjeschke.weel.Runtime", "load", "(I)V"));
+        this.push();
     }
 
     /**
@@ -415,6 +429,9 @@ final class CodeBlock
         this.code.addShort(this.classWriter.addMethodRefConstant(
                 "com.github.rjeschke.weel.Runtime", "specialCall",
                 "(Ljava/lang/String;IZ)V"));
+        if (shouldReturn)
+            this.push();
+        this.pop(args + 1);
     }
 
     /**
@@ -448,11 +465,158 @@ final class CodeBlock
 
         // Write footer
         this.code.add(JvmOp.ALOAD_0);
+        this.ldcInt(this.maxStack);
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(cw.addMethodRefConstant(
                 "com.github.rjeschke.weel.Runtime", (this.function != null
                         && this.function.returnsValue ? "closeFrameRet"
-                        : "closeFrame"), "()V"));
+                        : "closeFrame"), "(I)V"));
         this.code.add(JvmOp.RETURN);
+        if (this.function != null && this.function.returnsValue)
+            this.pop();
+    }
+
+    /**
+     * Pushes the stack counter.
+     */
+    public void push()
+    {
+        this.push(1);
+    }
+
+    /**
+     * Pushes the stack counter.
+     * 
+     * @param num
+     *            Number of pushes.
+     */
+    public void push(final int num)
+    {
+        this.maxStack = Math.max(this.currentStack += num, this.maxStack);
+    }
+
+    /**
+     * Pops the stack counter.
+     */
+    public void pop()
+    {
+        this.pop(1);
+    }
+
+    /**
+     * Pops the stack counter.
+     * 
+     * @param num
+     *            Number of pops.
+     */
+    public void pop(final int num)
+    {
+        this.currentStack = Math.max(0, this.currentStack - num);
+    }
+
+    /**
+     * Performs auto stack depth evaluation.
+     * 
+     * @param ins
+     *            The runtime instruction.
+     * @param val
+     *            The argument for pop(int).
+     */
+    void autoStack(final String ins, int val)
+    {
+        final RuntimeOp op = RuntimeOp.fromValue(ins);
+        if (op != RuntimeOp.NONE)
+        {
+            if (op == RuntimeOp.pop)
+            {
+                this.pop(val);
+            }
+            else
+            {
+                if (op.getAmount() < 0)
+                    this.pop(-op.getAmount());
+                else
+                    this.push(op.getAmount());
+            }
+        }
+    }
+
+    /**
+     * Enumeration for auto stack checking.
+     * 
+     * @author René Jeschke <rene_jeschke@yahoo.de>
+     */
+    static enum RuntimeOp
+    {
+        NONE(0),
+
+        load(1), loadfunc(1), lloc(1), lglob(1), linenv(1),
+
+        sloc(-1), sglob(-1), sinenv(-1),
+
+        pop1(-1), pop(0), sdup(1), sdup2(2), sdups(1),
+
+        testpoptrue(-1), testpopfalse(-1), popboolean(-1),
+
+        cmp(-2), cmpequal(-2),
+
+        cmpeq(-1), cmpne(-1), cmple(-1), cmplt(-1), cmpge(-1), cmpgt(-1),
+
+        doforeach(2), strcat(-1), mapcat(-1),
+
+        add(-1), sub(-1), mul(-1), mod(-1), div(-1), and(-1),
+
+        or(-1), xor(-1),
+
+        createmap(1), getmap(-2), setmap(-3), appendmap(-2),
+
+        createvirtual(1);
+
+        /** Amount to push or pop. */
+        private final int amount;
+        /** String to enum mapping. */
+        private final static HashMap<String, RuntimeOp> map = new HashMap<String, RuntimeOp>();
+
+        /**
+         * Ctor.
+         * 
+         * @param a
+         *            Amount to pop of push.
+         */
+        private RuntimeOp(final int a)
+        {
+            this.amount = a;
+        }
+
+        static
+        {
+            for (final RuntimeOp o : RuntimeOp.values())
+            {
+                map.put(o.toString(), o);
+            }
+        }
+
+        /**
+         * Returns an enum for a String.
+         * 
+         * @param value
+         *            The String.
+         * @return The enum.
+         */
+        public static RuntimeOp fromValue(final String value)
+        {
+            final RuntimeOp r = map.get(value.toLowerCase());
+            return r != null ? r : NONE;
+        }
+
+        /**
+         * Gets the amount to pop or push.
+         * 
+         * @return The amount.
+         */
+        public int getAmount()
+        {
+            return this.amount;
+        }
     }
 }

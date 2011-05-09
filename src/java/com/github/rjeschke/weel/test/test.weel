@@ -31,3 +31,13 @@ end
 
 println(funcName(@{ println("Muaha!");}));
 
+println();
+
+c = mapFlat(c)
+
+foreach k, v in c do
+    println(k.." = "..v);
+end
+
+println(strsplit("Hello world!", " "))
+

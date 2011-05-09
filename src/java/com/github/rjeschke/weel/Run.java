@@ -11,7 +11,7 @@ import java.io.FileInputStream;
  * 
  * @author René Jeschke <rene_jeschke@yahoo.de>
  */
-public class Run
+public final class Run
 {
     /**
      * Main.

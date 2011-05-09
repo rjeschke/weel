@@ -69,6 +69,7 @@ public final class Weel
         this.importFunctions(WeelLibCon.class);
         this.importFunctions(WeelLibMath.class);
         this.importFunctions(WeelLibSys.class);
+        this.importFunctions(WeelLibMap.class);
         this.importFunctions(WeelLibString.class);
         this.importFunctions(WeelUnit.class);
 

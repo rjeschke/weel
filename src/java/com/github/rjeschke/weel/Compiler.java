@@ -1994,6 +1994,9 @@ final class Compiler
         this.block.code.addShort(this.classWriter.addMethodRefConstant(
                 func.clazz, func.javaName,
                 "(Lcom/github/rjeschke/weel/Runtime;)V"));
+        if(func.returnsValue)
+            this.block.push();
+        this.block.pop(func.arguments);
     }
 
     /**
@@ -2081,6 +2084,7 @@ final class Compiler
             this.block.code.addShort(this.classWriter.addMethodRefConstant(
                     "com.github.rjeschke.weel.Runtime", "weelAssert",
                     "(Ljava/lang/String;)V"));
+            this.block.pop();
         }
     }
 }

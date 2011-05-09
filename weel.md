@@ -512,7 +512,7 @@ The reason why I rewrote Yjasl4 was **speed**. After some days of thinking
 about the new Weel VM I decided to give direct JVM bytecode generation a try.
 The first test, compiling Weel source code by 'hand' as calls to the runtime
 in a Java(TM) method showed the potential this approach offered. The speed
-increase compared to Yjasl4 is about a factor of 5 to 10, depending on the
+increase compared to Yjasl4 is about a factor of 3 to 6, depending on the
 code used.
 
 Another benefit of the new compilation method is that I have more freedom to
@@ -534,12 +534,7 @@ The main design goals for Weel were/are:
 
 If you have a look at the runtime class, you won't see many `new` operators.
 Values on the stack get 'copied', not cloned, except for the case when the user
-really needs a `Value`, then I have to clone it. This gives a large speed benefit
-but hinders the garbage collector to do its job (because references don't get
-removed when changing the type of a value). You can always use `Runtime.wipeStack()`
-to clean unsused references and maybe I'll sacrifice some performance to clean
-values when they get 'popped', to minimize the memory footprint.
-
+really needs a `Value`, then I have to clone it.
 
 #### Weel stacks                    {#stacks}
 

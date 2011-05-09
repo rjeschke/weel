@@ -544,7 +544,7 @@ public final class Runtime
         final ValueMap b = this.popMap();
         final ValueMap a = this.popMap();
         final ValueMap c = new ValueMap();
-        
+
         if (a.ordered && b.ordered)
         {
             final Value v = new Value();
@@ -893,24 +893,37 @@ public final class Runtime
 
     /**
      * Closes a function frame.
+     * 
+     * @param depth
+     *            Maximum stack depth the function used.
      */
-    public void closeFrame()
+    public void closeFrame(final int depth)
     {
-        // TODO maybe nullify stack values?
-        this.sp -= this.frameSize[this.fp--];
+        final int pops = this.frameSize[this.fp--];
+        for (int i = -depth; i < pops; i++)
+        {
+            this.stack[this.sp - i].setNull();
+        }
+        this.sp -= pops;
     }
 
     /**
      * Closes a function frame taking care of the return value.
+     * 
+     * @param depth
+     *            Maximum stack depth the function used.
      */
-    public void closeFrameRet()
+    public void closeFrameRet(final int depth)
     {
-        // TODO maybe nullify stack values?
-        // If no return value is given, NULL gets returned
         if (this.sp - this.frameStart[this.fp] < this.frameSize[this.fp])
             this.stack[++this.sp].setNull();
         this.stack[this.sp].copyTo(this.stack[this.frameStart[this.fp]]);
-        this.sp -= this.frameSize[this.fp--];
+        final int pops = this.frameSize[this.fp--];
+        for (int i = -depth; i < pops; i++)
+        {
+            this.stack[this.sp - i].setNull();
+        }
+        this.sp -= pops;
     }
 
     /**
@@ -998,7 +1011,7 @@ public final class Runtime
      * @param name
      *            The name of the function.
      * @param args
-     *            Thenumber of arguments.
+     *            The number of arguments.
      * @param shouldReturn
      *            Flags indicating that we need a return value.
      */
@@ -1464,27 +1477,6 @@ public final class Runtime
      */
     Value ginenv(final int var)
     {
-        return this.virtualFunctions[this.vp].environment[var];
-    }
-
-    /**
-     * Pops 'amount' values from the stack and nullifies them (to let the GC do
-     * its work).
-     * <p>
-     * Maybe I'll sacrifice some speed to reduce Weel's memory usage. At the
-     * moment the stack may contain a lot of unused Objects which can't be
-     * garbage collected until a 'wipeStack()' is called.
-     * </p>
-     * 
-     * @param amount
-     *            Number of pops.
-     */
-    void nullifyPop(final int amount)
-    {
-        for (int i = 0; i < amount; i++)
-        {
-            this.stack[this.sp - i].setNull();
-        }
-        this.sp -= amount;
+        return this.virtualFunctions[this.vp].environment[var].clone();
     }
 }
