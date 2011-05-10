@@ -38,7 +38,7 @@ final class Compiler
     /** The class writer. */
     JvmClassWriter classWriter;
 
-    /** Flag indicating that we're in debug mode. */
+    /** Flag indicating that we're in debug mode. (Used for assert(cond)).*/
     private boolean debugMode = true;
 
     /**
@@ -201,6 +201,10 @@ final class Compiler
                 break;
             case LOCAL:
                 this.parseLocal();
+                this.skipSemi();
+                break;
+            case OUTER:
+                this.parseOuter();
                 this.skipSemi();
                 break;
             case GLOBAL:
@@ -1726,13 +1730,57 @@ final class Compiler
         }
     }
 
-    // /**
-    // * Parses the 'outer' keyword
-    // */
-    // private void parseOuter()
-    // {
-    // //
-    // }
+     /**
+     * Parses the 'outer' keyword
+     */
+     private void parseOuter()
+     {
+         final Scope outer = this.scope.getBorderScope();
+         if(outer == null)
+         {
+             throw new WeelException(this.tokenizer.error("'outer' without anonymous function"));
+         }
+         this.tokenizer.next();
+
+         while (this.tokenizer.token != Token.EOF)
+         {
+             this.checkToken(Token.NAME);
+             final String name = this.tokenizer.string;
+             int lidx = outer.findLocal(name);
+             if(this.scope.findCvar(name) != -1 || lidx != -1)
+             {
+                 throw new WeelException(this.tokenizer.error("Duplicate explicit cvar '%s'", name));
+             }
+             lidx = outer.addLocal(name);
+             Variable var = new Variable();
+             var.type = Type.NONE;
+             var.name = name;
+             this.scope.maybeCreateCvar(var);
+
+             this.tokenizer.next();
+             this.checkToken(Token.ASSIGN);
+             this.tokenizer.next();
+             
+             final Scope old = this.scope;
+             // We have to switch scopes to compile the
+             // initialize expression into the border scope.
+             this.scope = outer;
+             this.block = outer.block;
+             
+             this.parseExpression();
+             this.block.callRuntime("sloc", lidx);
+
+             this.scope = old;
+             this.block = old.block;
+             
+             if (this.tokenizer.token == Token.COMMA)
+             {
+                 this.tokenizer.next();
+                 continue;
+             }
+             break;
+         }
+     }
 
     /**
      * Parses the 'global' keyword
@@ -1976,21 +2024,10 @@ final class Compiler
     // TODO nice functions (static wrapper may hide object instance)
     private void writeCallFunction(final WeelFunction func)
     {
-        if (func.instance != null)
-        {
-            this.block.callRuntime("getFunctionInstance", func.index);
-        }
-
         this.block.code.add(JvmOp.ALOAD_0);
 
-        if (func.instance == null)
-        {
-            this.block.code.add(JvmOp.INVOKESTATIC);
-        }
-        else
-        {
-            this.block.code.add(JvmOp.INVOKEVIRTUAL);
-        }
+        this.block.code.add(JvmOp.INVOKESTATIC);
+
         this.block.code.addShort(this.classWriter.addMethodRefConstant(
                 func.clazz, func.javaName,
                 "(Lcom/github/rjeschke/weel/Runtime;)V"));

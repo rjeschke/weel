@@ -12,6 +12,7 @@ See LICENSE.txt for licensing information.
     +   [Names](#names)
     +   [Reserved words](#reservedwords)
     +   [Operators](#operators)
+*   [Storage and lifetime](#storage)
 *   [Program flow control](#flow)
     +   [if, elseif, else, end](#ifelse)
     +   [switch, end](#switch)
@@ -50,7 +51,7 @@ Weel ...
 *   ... has built-in OOP functionality
 *   ... has a built in unit test framework
 *   ... uses UTF-8 for everything string/text related
-*   ... is in some situations even faster than [Lua]
+*   ... is in some situations even faster than [Lua] 
 
 *****************************************************************************
 
@@ -79,7 +80,7 @@ in the library)*.
 
 *****************************************************************************
 
-### Types, names and others {#typesandstuff}
+### Types, names and others         {#typesandstuff}
 
 #### Types                          {#types}
 
@@ -132,9 +133,42 @@ in the library)*.
 *   Functions: (`function`)
         a = println
         
+    As functions may be assigned to e.g. variables, the following code
+    fragment *really* works:
+    
+        // Don't try this at home^^
+        
+        f = 
+        @{ (a)
+          return
+           {
+            [5] = 
+            @{ (b)
+              local z = {};
+              z[b] = 
+              @{
+                return 
+                 {
+                  [2] = 
+                   {
+                    fin = 
+                    @{ (v)
+                      return v * 2;
+                     }
+                   }
+                 };
+               };
+              return z;
+             }
+           };
+         };
+        
+        println(f(10)[5]("hund").hund()[2].fin(21));
+        // Outputs: 42
+        
 *   Objects: (`object`)
     
-    A special type representing a Java Object. This type can't be
+    A special type representing a Java(TM) Object. This type can't be
     directly manipulated from Weel code. 
     
 *	Booleans:
@@ -153,7 +187,7 @@ in the library)*.
 #### Names                          {#names}
 
 *   Names are not case sensitive, start with a letter and may contain 
-    letters, digits and `_`
+    letters, digits and `_` (underscore)
  
 #### Operators                      {#operators}
 
@@ -203,6 +237,74 @@ in the library)*.
     until,
     while    
 
+*****************************************************************************
+
+### Storage and lifetime            {#storage}
+
+By default all variables are local and every static function is global. If you 
+want to override the default storage for variables use one of the following 
+keywords:
+ 
+*   `local <name>[ = expr[,<name>...]]`
+
+    The 'local' keyword forces a variable to local:
+    
+        local i;
+        i = 1;
+        do
+            local i = 2;
+            i += 1;
+            println(i);
+            // Outputs: 3
+        end
+        
+        println(i);
+        // Outputs: 1
+
+*   `global <name>[ = expr[,<name>...]]`
+
+    The 'global' keyword registers a global variable inside the Weel. This
+    variable is accessible from every script compiled into this Weel instance.
+    
+        sub init()
+            global my = "global";
+        end
+        
+        println(my);
+        // Outputs: null
+        init();
+        println(my);
+        // Outputs: global
+
+*   `outer <name> = expr[,<name> = expr, ...]`
+
+    The keyword 'outer' declares an initialized closure variable inside
+    an anonymous function:
+    
+        f = 
+            @{
+                outer counter = -1;
+                return counter += 1;
+             };
+        
+        println(f());
+        // Outputs: 0
+        println(f());
+        // Outputs: 1
+        
+    The following code demonstrates the way 'outer' works by showing how
+    to achieve the above function definition without using 'outer':
+    
+    
+        f = null;
+        do
+            local counter = -1;
+            f = 
+                @{
+                    return counter += 1;
+                 };
+        end
+        
 *****************************************************************************
 
 ### Program flow control            {#flow}
@@ -362,19 +464,20 @@ any arguments, and the syntax for functions and subs is identically.
         return true;
     end
     
-    arr.g = @{
-        println("Hello world!");
-    }
+    arr.g = 
+        @{
+            println("Hello world!");
+         }
     
     arr2 = {
         test = 
-        @{
-            println("Another silly test ...");
-        },
+            @{
+                println("Another silly test ...");
+             },
         add = 
-        @{ (a, b)
-            return a + b;
-        }
+            @{ (a, b)
+                return a + b;
+             }
     }
     
     arr.g();
@@ -408,8 +511,8 @@ any arguments, and the syntax for functions and subs is identically.
                     // of course you could also use:
                     // var.print(var);
                     // here.
-                };
-        };
+                 };
+         };
     caller = createCaller(clazz);
     caller();
     // *cough*
@@ -422,40 +525,40 @@ any arguments, and the syntax for functions and subs is identically.
     ms = {
         // size()
         size = 
-        @{ (m)
-            return size(m);
-        },
+            @{ (m)
+                return size(m);
+             },
         // fold(f)
         // a generic list fold function
         // for maps we need to use a 'foreach' loop which
         // would make the fold function more complicated
         fold = 
-        @{ (list, fc)
-            if list == null || size(list) == 0 then
-                return null;
-            elseif size(list) == 1 then
-                return list[0];
-            else
-                ret = fc(list[0], list[1]);
-                for i = 2, size(list) - 1 do
-                    ret = fc(ret, list[i]);
+            @{ (list, fc)
+                if list == null || size(list) == 0 then
+                    return null;
+                elseif size(list) == 1 then
+                    return list[0];
+                else
+                    ret = fc(list[0], list[1]);
+                    for i = 2, size(list) - 1 do
+                        ret = fc(ret, list[i]);
+                    end
+                    return ret;
                 end
-                return ret;
-            end
-        }
+             }
     }
     
     strs = {
         // length()
         length =
-        @{ (s)
-            return size(s);
-        } ,
+            @{ (s)
+                return size(s);
+             },
         // size()
         size =
-        @{ (s)
-            return size(s);
-        } 
+            @{ (s)
+                return size(s);
+             } 
     }
     
     // Register functions for type 'map'
@@ -500,6 +603,8 @@ any arguments, and the syntax for functions and subs is identically.
     // and you're done
     // A 'dangerous' but very handy possibility to adapt libraries
     // to your needs.
+    // Well, it's not that dangerous, because you can not override
+    // any function, i.e. you can't 
     
 
 *****************************************************************************
@@ -565,7 +670,7 @@ There are four different types of function calls:
 
 1.  Static calls:
 
-    Every call to a static Weel function or a Java function is a static call
+    Every call to a static Weel function or a Java(TM) function is a static call
     which gets directly compiled into bytecode.
     
 2.  Dynamic calls (aka stack call):
@@ -639,20 +744,18 @@ So it's all a little bit cheating ... but it works ... and it's fast.
     `a = 1 + 2` evaluates to `a = 1 + 2` and not `a = 3`.
 *   local and closure variables are faster than global variables.
 *   `a = 2 * b` is faster than `a = b + b`.
-*   `a += 1` is exactly the same as writing `a = a + 1`, it just is less 
+*   `a += 1` is exactly the same as writing `a = a + 1` --- it just is less 
     characters to type.
-*   a `switch` is not faster than doing the same with `if`, `elseif` and `else`,
-    it just looks better.
-*   A Java implementation of a library function might not always be faster than
-    a pure Weel function when called from Weel code.
+*   a `switch` is not faster than doing the same with `if`, `elseif` and `else`
+    --- it just looks better.
 *   If you use overloading with array or OOP functions try to define the 
     overloaded type you will probably use the most after all other overloading
     variations. This will save you some costly runtime overload resolving 
     operations.
 *   Function calling speed (decreasing from top to bottom):
     
-    +   Static Weel/Java function calls
-    +   Static Java nice function calls
+    +   Static Weel/Java(TM) function calls
+    +   Static Java(TM) nice function calls
     +   Dynamic calls
     +   Type bound functions
     +   Dynamic calls with overload resolving

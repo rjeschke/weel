@@ -32,8 +32,6 @@ public class WeelFunction
     String clazz;
     /** The java method name. */
     String javaName;
-    /** An Object for non-static method invocation. */
-    Object instance;
     /** Invoker for invocation from outside Weel compiled code. */
     WeelInvoker invoker;
 

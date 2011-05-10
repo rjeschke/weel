@@ -41,3 +41,64 @@ end
 
 println(strsplit("Hello world!", " "))
 
+
+f = @{
+    outer z = -1
+    return z += 1
+}
+
+println(f())
+println(f())
+
+sub primes(n)
+    local isPrime = array(n + 1, true);
+    
+    local i = 2;
+    while i * i <= n do
+        if isPrime[i] then
+            local j = i;
+            while i * j <= n do
+                isPrime[i * j] = false;
+                j += 1;
+            end
+        end
+    i += 1;
+    end
+    local primes = 0;
+    for i = 2, n do
+        if isPrime[i] then
+            primes += 1;
+            println(primes.." = "..i);
+        end
+    end    
+    println(primes)
+end
+
+f = 
+ @{ (a)
+  return
+   {
+    [5] = 
+     @{ (b)
+      local z = {};
+      z[b] = 
+       @{
+        return 
+         {
+          [2] = 
+           {
+            fin = 
+             @{ (v)
+              return v * 2;
+             }
+           }
+         };
+       };
+      return z;
+     }
+   }
+ }
+
+println(f(10)[5]("hund").hund()[2].fin(21));
+
+myclass->method()

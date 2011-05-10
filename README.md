@@ -135,7 +135,7 @@ Most of the stuff is working, still a lot missing though.
 	// OUTPUT: -1
 	
 	myFunc = func()
-		// 'outer' explicitly declares a closure variable
+		// 'outer' explicitly declares an initialized closure variable
 		// closure variables can be modified and used to
 		// store the state between function calls
 		outer counter = 0
@@ -143,6 +143,18 @@ Most of the stuff is working, still a lot missing though.
 		counter += 1
 		return ret
 	end
+	
+	// Using 'outer' in the previous anonymous function would
+	// look like this, when you would do it without 'outer':
+	// myFunc = null;
+	// do
+	//     local counter = 0;
+	//     myFunc = func()
+	//         ret = counter;
+	//         counter += 1;
+	//         return ret;
+	//     end
+	// end
 	
 	println(myFunc())
 	// OUTPUT: 0
@@ -161,7 +173,7 @@ Most of the stuff is working, still a lot missing though.
 *	break, continue
 *	func/sub, exit & return
 *	anonymous functions & closures
-*	local, global
+*	local, global, outer
 *	OOP (base) and array functions
 *   changed alternate syntax for anonymous functions: e.g. `@{println("Hello world!")}`
     or `@{(a, b) return a + b}` or `@{ (a, b) println(a.." + "..b.." = "..(a + b))}`
@@ -170,7 +182,6 @@ Most of the stuff is working, still a lot missing though.
 
 ##### Missing / TODO / planned
 
-*	outer
 *	OOP (constructors, new, ...)
 *	lock/end
 *	interop nice methods

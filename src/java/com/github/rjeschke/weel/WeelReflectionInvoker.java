@@ -14,8 +14,6 @@ import java.lang.reflect.Method;
  */
 final class WeelReflectionInvoker implements WeelInvoker
 {
-    /** The Weel function. */
-    private WeelFunction function;
     /** Method for invocation. */
     private Method method;
     /** Are we initialized? */
@@ -28,8 +26,6 @@ final class WeelReflectionInvoker implements WeelInvoker
         if(this.initialized)
             return;
         
-        this.function = function;
-
         try
         {
             final Class<?> clazz = weel.classLoader.loadClass(function.clazz);
@@ -57,7 +53,7 @@ final class WeelReflectionInvoker implements WeelInvoker
     {
         try
         {
-            this.method.invoke(this.function.instance, runtime);
+            this.method.invoke(null, runtime);
         }
         catch (IllegalArgumentException e)
         {
@@ -80,7 +76,7 @@ final class WeelReflectionInvoker implements WeelInvoker
         try
         {
             runtime.initVirtual(function);
-            this.method.invoke(this.function.instance, runtime);
+            this.method.invoke(null, runtime);
             runtime.exitVirtual();
         }
         catch (IllegalArgumentException e)

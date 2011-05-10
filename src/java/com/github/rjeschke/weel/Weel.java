@@ -11,6 +11,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.github.rjeschke.weel.annotations.WeelClass;
 import com.github.rjeschke.weel.annotations.WeelRawMethod;
 import com.github.rjeschke.weel.annotations.WeelMethod;
 
@@ -265,6 +266,8 @@ public final class Weel
             }
             catch (InvocationTargetException e)
             {
+                if (e.getCause() instanceof WeelException)
+                    throw (WeelException) e.getCause();
                 throw new WeelException(e);
             }
             catch (NoSuchMethodException e)
@@ -437,45 +440,29 @@ public final class Weel
      */
     public void importFunctions(Class<?> clazz)
     {
-        this.importFunctions(clazz, null);
-    }
-
-    /**
-     * Imports a class with non-static and static Weel functions.
-     * 
-     * @param object
-     *            The class to import.
-     */
-    public void importFunctions(Object object)
-    {
-        this.importFunctions(object.getClass(), object);
-    }
-
-    /**
-     * Initializes all invokers.
-     */
-    void initAllInvokers()
-    {
-        for (final WeelFunction func : this.functions)
-        {
-            if (func.invoker == null)
-                func.invoker = WeelInvokerFactory.create();
-            func.initialize(this);
-        }
-    }
-
-    /**
-     * Imports the given class, checks for Weel annotations.
-     * 
-     * @param clazz
-     *            The class.
-     * @param object
-     *            The instance or <code>null</code> for static-only functions.
-     */
-    private void importFunctions(Class<?> clazz, Object object)
-    {
         final Method[] methods = clazz.getDeclaredMethods();
-
+        final WeelClass wclass = clazz.getAnnotation(WeelClass.class);
+        final ValueMap map;
+        final String prefix;
+        
+        if(wclass != null)
+        {
+            final String clazzName = wclass.name().length() > 0 ? wclass.name().toLowerCase() : clazz.getSimpleName().toLowerCase();
+            if(this.hasGlobal(clazzName))
+            {
+                throw new WeelException("Duplicate global variable for Weel clazz: " + clazzName);
+            }
+            final int g = this.addGlobal(clazzName);
+            map = new ValueMap();
+            this.globals.set(g, new Value(map));
+            prefix = clazzName + (wclass.usesOop() ? "$$" : "$");
+        }
+        else
+        {
+            map = null;
+            prefix = "";
+        }
+        
         for (int i = 0; i < methods.length; i++)
         {
             final Method m = methods[i];
@@ -490,25 +477,18 @@ public final class Weel
                             + m.toGenericString());
 
                 final WeelFunction func = new WeelFunction();
-                func.name = (raw.name().length() > 0 ? raw.name() : m.getName())
-                        .toLowerCase();
+                final String fname = (raw.name().length() > 0 ? raw.name() : m.getName()).toLowerCase();
+                func.name = prefix + fname;
+                
                 func.arguments = raw.args();
                 func.returnsValue = raw.returnsValue();
 
                 func.clazz = clazz.getCanonicalName();
                 func.javaName = m.getName();
 
-                if ((m.getModifiers() & Modifier.STATIC) != 0)
+                if ((m.getModifiers() & Modifier.STATIC) == 0)
                 {
-                    func.instance = null;
-                }
-                else
-                {
-                    if (object == null)
-                        throw new WeelException(
-                                "Instance to Weel function missing on: "
-                                        + m.toGenericString());
-                    func.instance = object;
+                    throw new WeelException("Weel only supports static functions: " + m);
                 }
 
                 final String iname = func.name + "#" + func.arguments;
@@ -520,6 +500,11 @@ public final class Weel
                 this.addFunction(iname, func);
                 func.invoker = WeelInvokerFactory.create();
                 func.initialize(this);
+                
+                if(map != null)
+                {
+                    map.set(fname, new Value(func));
+                }
             }
             else if (nice != null)
             {
@@ -529,6 +514,19 @@ public final class Weel
                  */
                 // TODO nice
             }
+        }
+    }
+
+    /**
+     * Initializes all invokers.
+     */
+    void initAllInvokers()
+    {
+        for (final WeelFunction func : this.functions)
+        {
+            if (func.invoker == null)
+                func.invoker = WeelInvokerFactory.create();
+            func.initialize(this);
         }
     }
 }

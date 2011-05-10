@@ -437,4 +437,11 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
             throw new IllegalStateException("Can't modify ValueMaps.");
         }
     }
+    
+    /** @see java.lang.Object#toString() */
+    @Override
+    public String toString()
+    {
+        return "map(" + this.size + ")";
+    }
 }

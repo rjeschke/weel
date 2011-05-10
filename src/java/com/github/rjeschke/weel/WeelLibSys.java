@@ -81,7 +81,7 @@ public final class WeelLibSys
      * @param runtime
      *            The Weel runtime.
      */
-    @WeelRawMethod(args = 2, returnsValue = true)
+    @WeelRawMethod(name = "array", args = 2, returnsValue = true)
     public final static void array2(final Runtime runtime)
     {
         final Value val = runtime.pop();

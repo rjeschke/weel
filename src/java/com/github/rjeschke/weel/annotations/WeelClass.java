@@ -23,4 +23,9 @@ public @interface WeelClass
      * used.
      */
     String name() default "";
+
+    /**
+     * Whether this is an OOP class or a collection of array functions.
+     */
+    boolean usesOop() default false;
 }

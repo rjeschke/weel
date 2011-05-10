@@ -50,8 +50,6 @@ public final class Runtime
     private int vp = -1;
     /** Global variables. */
     private final ArrayList<Value> globals;
-    /** Function list. */
-    private final ArrayList<WeelFunction> functions;
     /** Type bound support functions. */
     private final TypeFunctions[] typeFunctions;
 
@@ -65,7 +63,6 @@ public final class Runtime
     {
         this.mother = weel;
         this.globals = weel.globals;
-        this.functions = weel.functions;
         this.typeFunctions = weel.typeFunctions;
         for (int i = 0; i < this.stack.length; i++)
             this.stack[i] = new Value();
@@ -924,18 +921,6 @@ public final class Runtime
             this.stack[this.sp - i].setNull();
         }
         this.sp -= pops;
-    }
-
-    /**
-     * Gets an instance of a non-static Java method call.
-     * 
-     * @param index
-     *            The function index.
-     * @return The instance.
-     */
-    public Object getFunctionInstance(final int index)
-    {
-        return this.functions.get(index).instance;
     }
 
     /**

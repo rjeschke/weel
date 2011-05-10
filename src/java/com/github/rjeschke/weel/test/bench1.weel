@@ -15,16 +15,16 @@ func matrix:t(a)
 end
 
 func matrix:mul(a, b)
-    local m = size(a), n = size(a[0]), p = size(b[0]), x = {};
+    local m = size(a) - 1, n = size(a[0]) - 1, p = size(b[0]) - 1, x = {};
     assert(n == p);
     local c = this->t(b); // transpose for efficiency
     
-    for i = 0, m - 1 do
+    for i = 0, m do
         local xi = x[i] = {};
-        for j = 0, p - 1 do
+        for j = 0, p do
             local sum = 0, ai = a[i], cj = c[j];
 
-            for k = 0, n - 1 do
+            for k = 0, n do
                 sum += ai[k] * cj[k];
             end
             xi[j] = sum;
@@ -45,7 +45,7 @@ func matgen(n)
     return a;
 end
 
-// Madelbrot
+// Mandelbrot
 
 sub iterat(width, height, imax)
     local x, y, vx, vy, i, zx, zy, tx, ty, tx1, ty1, col, cnum
@@ -90,7 +90,7 @@ sub main(args)
     n &= ~1;
     local t = clock();
     a = matrix->mul(matgen(n), matgen(n));
-    t = clock() - t;
+    t = floor((clock() - t) * 100.0 + 0.5) / 100.0;
     println("C: "..a[n/2][n/2]);
     println(t.." sec.");
 
@@ -99,6 +99,6 @@ sub main(args)
     t = clock()
     n = size(args) > 1 ? toNum(args[1]) : 1000;
     iterat(n, n, n)
-    t = clock() - t
+    t = floor((clock() - t) * 100.0 + 0.5) / 100.0;
     println(t.." sec.");
 end
