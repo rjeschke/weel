@@ -50,4 +50,20 @@ public final class WeelLibMap
     {
         runtime.load(runtime.popMap().clone());
     }
+
+    /**
+     * <code>mapHasKey(m, k)</code>
+     * <p>
+     * Checks if the map 'm' contains key 'k'.
+     * </p>
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(args = 2, returnsValue = true)
+    public final static void mapHasKey(Runtime runtime)
+    {
+        final Value key = runtime.pop();
+        runtime.load(runtime.popMap().hasKey(key));
+    }
 }

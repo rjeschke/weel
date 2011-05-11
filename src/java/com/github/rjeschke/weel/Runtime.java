@@ -794,6 +794,22 @@ public final class Runtime
     }
 
     /**
+     * Loads a boolean value onto the Weel stack.
+     * 
+     * <p>
+     * <code>... &rArr; ..., value</code>
+     * </p>
+     * 
+     * @param value
+     *            Boolean value to load.
+     */
+    public void load(final boolean value)
+    {
+        this.stack[++this.sp].type = ValueType.NUMBER;
+        this.stack[this.sp].number = value ? -1 : 0;
+    }
+
+    /**
      * Loads a String value onto the Weel stack.
      * 
      * <p>
@@ -805,8 +821,15 @@ public final class Runtime
      */
     public void load(final String value)
     {
-        this.stack[++this.sp].type = ValueType.STRING;
-        this.stack[this.sp].string = value;
+        if(value != null)
+        {
+            this.stack[++this.sp].type = ValueType.STRING;
+            this.stack[this.sp].string = value;
+        }
+        else
+        {
+            this.stack[++this.sp].type = ValueType.NULL;
+        }
     }
 
     /**
@@ -821,8 +844,15 @@ public final class Runtime
      */
     public void load(final ValueMap value)
     {
-        this.stack[++this.sp].type = ValueType.MAP;
-        this.stack[this.sp].map = value;
+        if(value != null)
+        {
+            this.stack[++this.sp].type = ValueType.MAP;
+            this.stack[this.sp].map = value;
+        }
+        else
+        {
+            this.stack[++this.sp].type = ValueType.NULL;
+        }
     }
 
     /**
@@ -837,8 +867,15 @@ public final class Runtime
      */
     public void load(final WeelFunction value)
     {
-        this.stack[++this.sp].type = ValueType.FUNCTION;
-        this.stack[this.sp].function = value;
+        if(value != null)
+        {
+            this.stack[++this.sp].type = ValueType.FUNCTION;
+            this.stack[this.sp].function = value;
+        }
+        else
+        {
+            this.stack[++this.sp].type = ValueType.NULL;
+        }
     }
 
     /**
@@ -857,6 +894,28 @@ public final class Runtime
         this.stack[this.sp].object = value;
     }
 
+    /**
+     * Loads a value onto the Weel stack.
+     * 
+     * <p>
+     * <code>... &rArr; ..., value</code>
+     * </p>
+     * 
+     * @param value
+     *            Value to load.
+     */
+    public void load(final Value value)
+    {
+        if(value != null)
+        {
+            value.copyTo(this.stack[++this.sp]);
+        }
+        else
+        {
+            this.stack[++this.sp].type = ValueType.NULL;
+        }
+    }
+    
     /**
      * Loads a function.
      * 
@@ -1238,13 +1297,13 @@ public final class Runtime
      * Only used in wrapper methods.
      * </p>
      * 
-     * @param offset
-     *            Stack offset.
+     * @param var
+     *            The local variable index.
      * @return The number.
      */
-    public double getNumberRelative(final int offset)
+    public double getNumberLocal(final int var)
     {
-        return this.stack[this.sp + offset].getNumber();
+        return this.stack[var + this.frameStart[this.fp]].getNumber();
     }
 
     /**
@@ -1253,30 +1312,14 @@ public final class Runtime
      * Only used in wrapper methods.
      * </p>
      * 
-     * @param offset
-     *            Stack offset.
-     * @return The String.
-     */
-    public String getStringRelative(final int offset)
-    {
-        return this.stack[this.sp + offset].getString();
-    }
-
-    /**
-     * Gets a String value from the stack.
-     * <p>
-     * Only used in wrapper methods.
-     * </p>
-     * 
-     * @param offset
-     *            Stack offset.
+     * @param var
+     *            The local variable index.
      * @return The String or <code>null</code> if Value is of type NULL.
      */
-    public String getStringOrNullRelative(final int offset)
+    public String getStringLocal(final int var)
     {
-        final Value value = this.stack[this.sp + offset];
-        return value.type == ValueType.NULL ? null : this.stack[this.sp
-                + offset].getString();
+        final Value value = this.stack[var + this.frameStart[this.fp]];
+        return value.type == ValueType.NULL ? null : value.getString();
     }
 
     /**
@@ -1285,30 +1328,14 @@ public final class Runtime
      * Only used in wrapper methods.
      * </p>
      * 
-     * @param offset
-     *            Stack offset.
-     * @return The ValueMap.
-     */
-    public ValueMap getMapRelative(final int offset)
-    {
-        return this.stack[this.sp + offset].getMap();
-    }
-
-    /**
-     * Gets a ValueMap value from the stack.
-     * <p>
-     * Only used in wrapper methods.
-     * </p>
-     * 
-     * @param offset
-     *            Stack offset.
+     * @param var
+     *            The local variable index.
      * @return The ValueMap or <code>null</code> if Value is of type NULL.
      */
-    public ValueMap getMapOrNullRelative(final int offset)
+    public ValueMap getMapLocal(final int var)
     {
-        final Value value = this.stack[this.sp + offset];
-        return value.type == ValueType.NULL ? null : this.stack[this.sp
-                + offset].getMap();
+        final Value value = this.stack[var + this.frameStart[this.fp]];
+        return value.type == ValueType.NULL ? null : value.getMap();
     }
 
     /**
@@ -1317,30 +1344,14 @@ public final class Runtime
      * Only used in wrapper methods.
      * </p>
      * 
-     * @param offset
-     *            Stack offset.
-     * @return The WeelFunction.
-     */
-    public WeelFunction getFunctionRelative(final int offset)
-    {
-        return this.stack[this.sp + offset].getFunction();
-    }
-
-    /**
-     * Gets a function value from the stack.
-     * <p>
-     * Only used in wrapper methods.
-     * </p>
-     * 
-     * @param offset
-     *            Stack offset.
+     * @param var
+     *            The local variable index.
      * @return The WeelFunction or <code>null</code> if Value is of type NULL.
      */
-    public WeelFunction getFunctionOrNullRelative(final int offset)
+    public WeelFunction getFunctionLocal(final int var)
     {
-        final Value value = this.stack[this.sp + offset];
-        return value.type == ValueType.NULL ? null : this.stack[this.sp
-                + offset].getFunction();
+        final Value value = this.stack[var + this.frameStart[this.fp]];
+        return value.type == ValueType.NULL ? null : value.getFunction();
     }
 
     /**
@@ -1349,30 +1360,29 @@ public final class Runtime
      * Only used in wrapper methods.
      * </p>
      * 
-     * @param offset
-     *            Stack offset.
-     * @return The Object.
-     */
-    public Object getObjectRelative(final int offset)
-    {
-        return this.stack[this.sp + offset].getObject();
-    }
-
-    /**
-     * Gets an object value from the stack.
-     * <p>
-     * Only used in wrapper methods.
-     * </p>
-     * 
-     * @param offset
-     *            Stack offset.
+     * @param var
+     *            The local variable index.
      * @return The Object or <code>null</code> if Value is of type NULL.
      */
-    public Object getObjectOrNullRelative(final int offset)
+    public Object getObjectLocal(final int var)
     {
-        final Value value = this.stack[this.sp + offset];
-        return value.type == ValueType.NULL ? null : this.stack[this.sp
-                + offset].getObject();
+        final Value value = this.stack[var + this.frameStart[this.fp]];
+        return value.type == ValueType.NULL ? null : value.getObject();
+    }
+
+    /**
+     * Gets a value from the stack.
+     * <p>
+     * Only used in wrapper methods.
+     * </p>
+     * 
+     * @param var
+     *            The local variable index.
+     * @return The Value.
+     */
+    public Value getValueLocal(final int var)
+    {
+        return this.stack[var + this.frameStart[this.fp]].clone();
     }
 
     /**

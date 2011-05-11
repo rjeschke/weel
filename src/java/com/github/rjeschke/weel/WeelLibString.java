@@ -105,11 +105,51 @@ public final class WeelLibString
         final String b = runtime.popString();
         final String a = runtime.popString();
         final String[] t = a.split(b);
-        final ValueMap m  = new ValueMap();
-        for(int i = 0; i < t.length; i++)
+        final ValueMap m = new ValueMap();
+        for (int i = 0; i < t.length; i++)
         {
             m.append(new Value(t[i]));
         }
         runtime.load(m);
+    }
+
+    /**
+     * <code>strSub(str, start)</code>
+     * <p>
+     * Returns a sub string of 'str' starting at 'start'.
+     * </p>
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(args = 2, returnsValue = true)
+    public final static void strSub(final Runtime runtime)
+    {
+        final int b = (int) runtime.popNumber();
+        final String a = runtime.popString();
+        runtime.load(b <= 0 ? a : b >= a.length() ? "" : a.substring(b));
+    }
+
+    /**
+     * <code>strSub(str, start, en)</code>
+     * <p>
+     * Returns a sub string of 'str' starting at 'start' up to 'end'
+     * (exclusive).
+     * </p>
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(name = "strsub", args = 3, returnsValue = true)
+    public final static void strSub3(final Runtime runtime)
+    {
+        final int c = (int) runtime.popNumber();
+        final int b = (int) runtime.popNumber();
+        final String a = runtime.popString();
+        
+        final int start = b < 0 ? 0 : b >= a.length() ? a.length() - 1 : b;
+        final int end = c <= b ? b : c > a.length() ? a.length() : c;
+        
+        runtime.load(start != end ? a.substring(start, end) : "");
     }
 }

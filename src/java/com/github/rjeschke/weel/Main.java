@@ -7,16 +7,29 @@ package com.github.rjeschke.weel;
 import java.io.FileOutputStream;
 
 import com.github.rjeschke.weel.annotations.WeelClass;
-import com.github.rjeschke.weel.annotations.WeelRawMethod;
+import com.github.rjeschke.weel.annotations.WeelMethod;
 
-@WeelClass(name = "myclass", usesOop = true)
+@WeelClass(name = "StringBuilder", usesOop = true)
 public class Main
 {
-    @WeelRawMethod(args = 1)
-    public final static void method(final Runtime runtime)
+    @WeelMethod()
+    public final static void ctor(final ValueMap thiz)
     {
-        final ValueMap me = runtime.popMap();
-        System.out.println("This is me: " + me);
+        WeelOop.setInstance(thiz, new StringBuilder());
+    }
+    
+    @WeelMethod
+    public final static void append(final ValueMap thiz, final Value value)
+    {
+        final StringBuilder sb = WeelOop.getInstance(thiz, StringBuilder.class);
+        sb.append(value.toString());
+    }
+
+    @WeelMethod(name = "toString")
+    public final static String sbToString(final ValueMap thiz)
+    {
+        final StringBuilder sb = WeelOop.getInstance(thiz, StringBuilder.class);
+        return sb.toString();
     }
     
     public static void main(String[] args)
@@ -25,15 +38,23 @@ public class Main
         {
             final Weel weel = new Weel();
             weel.importFunctions(Main.class);
-            
-            byte[] cdata = weel.compile(Main.class.getResourceAsStream("/com/github/rjeschke/weel/test/test.weel"), "test.weel");
+
+            weel.compile(Main.class.getResourceAsStream("/com/github/rjeschke/weel/test/test.weel"), "test.weel");
             //byte[] cdata = weel.compile(Main.class.getResourceAsStream("/com/github/rjeschke/weel/test/bench1.weel"), "bench1.weel");
             weel.compile(Main.class.getResourceAsStream("/com/github/rjeschke/weel/test/wunitArith.weel"), "wunitArith.weel");
 
-            FileOutputStream fos = new FileOutputStream(
-                    "/home/rjeschke/Script0.class");
-            fos.write(cdata);
-            fos.close();
+            for(WeelLoader.ClassData cd : weel.classLoader.classData)
+            {
+                FileOutputStream fos = new FileOutputStream(
+                        "/home/rjeschke/" + cd.name.substring(cd.name.lastIndexOf('.') + 1) + ".class");
+                fos.write(cd.code);
+                fos.close();
+            }
+
+//            for(final WeelFunction f : weel.functions)
+//            {
+//                System.out.println(f.index + " : " + f.toFullString());
+//            }
             
             weel.runStatic();
             //weel.getRuntime().wipeStack();

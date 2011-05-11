@@ -36,6 +36,14 @@ public class WeelFunction
     WeelInvoker invoker;
 
     /**
+     * Constructor.
+     */
+    WeelFunction()
+    {
+        // empty
+    }
+
+    /**
      * Creates a virtual function from this function.
      * 
      * @param runtime
@@ -131,5 +139,16 @@ public class WeelFunction
     public boolean returnsValue()
     {
         return this.returnsValue;
+    }
+
+    /**
+     * Gets a full textual representation of this function.
+     * 
+     * @return The full textual representation of this function.
+     */
+    public String toFullString()
+    {
+        return this.toString() + " -> void " + this.clazz + "." + this.javaName
+                + "(Runtime)";
     }
 }

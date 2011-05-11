@@ -140,7 +140,7 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
      */
     public void get(final Value index, final Value out)
     {
-        if(index.type == ValueType.NUMBER)
+        if (index.type == ValueType.NUMBER)
         {
             final int idx = (int) index.number;
             if (this.ordered)
@@ -160,7 +160,7 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
                     out.setNull();
             }
         }
-        else if(index.type == ValueType.STRING)
+        else if (index.type == ValueType.STRING)
         {
             final Integer idx = this.strKeys.get(index.string);
             if (idx != null)
@@ -172,6 +172,57 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
         {
             throw new WeelException("Illegal map index type: " + index.type);
         }
+    }
+
+    /**
+     * Check if this map contains the given key.
+     * 
+     * @param key
+     *            The key
+     * @return <code>true</code> if it contains the given key.
+     */
+    public boolean hasKey(final String key)
+    {
+        return this.hasKey(new Value(key));
+    }
+
+    /**
+     * Check if this map contains the given key.
+     * 
+     * @param key
+     *            The key
+     * @return <code>true</code> if it contains the given key.
+     */
+    public boolean hasKey(final int key)
+    {
+        return this.hasKey(new Value(key));
+    }
+
+    /**
+     * Check if this map contains the given key.
+     * 
+     * @param key
+     *            The key
+     * @return <code>true</code> if it contains the given key.
+     */
+    public boolean hasKey(final Value key)
+    {
+        if (key.type == ValueType.NUMBER)
+        {
+            final int idx = (int) key.number;
+            if (this.ordered)
+            {
+                return idx >= 0 && idx < this.size;
+            }
+            return this.intKeys.containsKey(idx);
+        }
+        if (key.type == ValueType.STRING)
+        {
+            if (this.ordered)
+                return false;
+            return this.strKeys.containsKey(key.string);
+        }
+        throw new WeelException("Illegal map index type: " + key.type);
     }
 
     /**
@@ -230,7 +281,7 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
      */
     public void set(final Value index, final Value value)
     {
-        if(index.type == ValueType.NUMBER)
+        if (index.type == ValueType.NUMBER)
         {
             final int idx = (int) index.number;
             if (this.ordered && idx >= 0 && idx <= this.size)
@@ -267,7 +318,7 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
                 }
             }
         }
-        else if(index.type == ValueType.STRING)
+        else if (index.type == ValueType.STRING)
         {
             if (this.ordered)
             {
@@ -437,7 +488,7 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
             throw new IllegalStateException("Can't modify ValueMaps.");
         }
     }
-    
+
     /** @see java.lang.Object#toString() */
     @Override
     public String toString()

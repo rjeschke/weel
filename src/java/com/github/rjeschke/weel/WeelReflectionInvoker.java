@@ -65,6 +65,8 @@ final class WeelReflectionInvoker implements WeelInvoker
         }
         catch (InvocationTargetException e)
         {
+            if(e.getCause() instanceof WeelException)
+                throw (WeelException)e.getCause();
             throw new WeelException(e);
         }
     }

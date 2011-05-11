@@ -349,4 +349,19 @@ public final class WeelLibSys
     {
         runtime.load(runtime.pop().toString());
     }
+
+    /**
+     * <code>typeOf(v)</code>
+     * <p>
+     * Returns the argument's type as a string.
+     * </p>
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(args = 1, returnsValue = true)
+    public final static void typeOf(final Runtime runtime)
+    {
+        runtime.load(runtime.pop().type.toString());
+    }
 }

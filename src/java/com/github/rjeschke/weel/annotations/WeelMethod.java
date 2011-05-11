@@ -23,16 +23,4 @@ public @interface WeelMethod
      * will be used.
      */
     String name() default "";
-
-    /**
-     * If set to <code>true</code> the compiler will use different Object type
-     * checking to allow for <code>null</code> values.
-     * <p>
-     * E.g.: if you define a method taking a String as its argument and need to
-     * allow the user to pass a Weel NULL Value you would set this flag to
-     * <code>true</code>, otherwise the JVM will throw a runtime exception
-     * telling you that the Value is not a STRING.
-     * </p>
-     */
-    boolean allowNull() default false;
 }

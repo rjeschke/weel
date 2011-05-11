@@ -5,6 +5,7 @@
 package com.github.rjeschke.weel;
 
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -47,7 +48,9 @@ public final class Weel
     final ArrayList<String> scriptClasses = new ArrayList<String>();
     /** Type bound support functions. */
     final TypeFunctions[] typeFunctions = new TypeFunctions[5];
-
+    /** COunter for wrapper classes. */
+    private int wrapperCounter = 0;
+    
     /** ThreadLocal variable for Weel Runtimes associated with this Weel class. */
     private final ThreadLocal<Runtime> runtime = new ThreadLocal<Runtime>()
     {
@@ -72,6 +75,7 @@ public final class Weel
         this.importFunctions(WeelLibSys.class);
         this.importFunctions(WeelLibMap.class);
         this.importFunctions(WeelLibString.class);
+        this.importFunctions(WeelLibOop.class);
         this.importFunctions(WeelUnit.class);
 
         this.typeFunctions[ValueType.STRING.ordinal()] = new TypeFunctions();
@@ -209,13 +213,11 @@ public final class Weel
      * 
      * @param input
      *            The input stream.
-     * @return DEBUG purpose only. Will get removed.
      */
-    public byte[] compile(final InputStream input)
+    public void compile(final InputStream input)
     {
         final Compiler compiler = new Compiler(this);
         compiler.compile(input, null);
-        return compiler.classWriter.build();
     }
 
     /**
@@ -444,18 +446,47 @@ public final class Weel
         final WeelClass wclass = clazz.getAnnotation(WeelClass.class);
         final ValueMap map;
         final String prefix;
+        final MethodWrapper mw = new MethodWrapper(clazz.getSimpleName() + "_WRAP" + this.wrapperCounter);
         
         if(wclass != null)
         {
-            final String clazzName = wclass.name().length() > 0 ? wclass.name().toLowerCase() : clazz.getSimpleName().toLowerCase();
-            if(this.hasGlobal(clazzName))
-            {
-                throw new WeelException("Duplicate global variable for Weel clazz: " + clazzName);
-            }
-            final int g = this.addGlobal(clazzName);
             map = new ValueMap();
-            this.globals.set(g, new Value(map));
+            final String clazzName = wclass.name().length() > 0 ? wclass.name().toLowerCase() : clazz.getSimpleName().toLowerCase();
             prefix = clazzName + (wclass.usesOop() ? "$$" : "$");
+            if(wclass.isPrivate())
+            {
+                //
+                try
+                {
+                    final Field me = clazz.getDeclaredField("ME");
+                    me.set(null, map);
+                }
+                catch (SecurityException e)
+                {
+                    throw new WeelException("Can't access 'ME'", e);
+                }
+                catch (NoSuchFieldException e)
+                {
+                    throw new WeelException("Can't access 'ME'", e);
+                }
+                catch (IllegalArgumentException e)
+                {
+                    throw new WeelException("Can't access 'ME'", e);
+                }
+                catch (IllegalAccessException e)
+                {
+                    throw new WeelException("Can't access 'ME'", e);
+                }
+            }
+            else
+            {
+                if(this.hasGlobal(clazzName))
+                {
+                    throw new WeelException("Duplicate global variable for Weel clazz: " + clazzName);
+                }
+                final int g = this.addGlobal(clazzName);
+                this.globals.set(g, new Value(map));
+            }
         }
         else
         {
@@ -468,6 +499,13 @@ public final class Weel
             final Method m = methods[i];
             final WeelRawMethod raw = m.getAnnotation(WeelRawMethod.class);
             final WeelMethod nice = m.getAnnotation(WeelMethod.class);
+
+            if ((m.getModifiers() & Modifier.STATIC) == 0)
+            {
+                throw new WeelException("Weel only supports static functions: " + m);
+            }
+
+            final WeelFunction func = new WeelFunction();
             if (raw != null)
             {
                 if (m.getParameterTypes().length != 1
@@ -476,7 +514,6 @@ public final class Weel
                     throw new WeelException("Illegal raw Weel function: "
                             + m.toGenericString());
 
-                final WeelFunction func = new WeelFunction();
                 final String fname = (raw.name().length() > 0 ? raw.name() : m.getName()).toLowerCase();
                 func.name = prefix + fname;
                 
@@ -486,11 +523,6 @@ public final class Weel
                 func.clazz = clazz.getCanonicalName();
                 func.javaName = m.getName();
 
-                if ((m.getModifiers() & Modifier.STATIC) == 0)
-                {
-                    throw new WeelException("Weel only supports static functions: " + m);
-                }
-
                 final String iname = func.name + "#" + func.arguments;
                 if (this.mapFunctionsExact.containsKey(iname))
                     throw new WeelException("Duplicate function: " + func.name
@@ -498,8 +530,6 @@ public final class Weel
                             + m.toGenericString() + "]");
 
                 this.addFunction(iname, func);
-                func.invoker = WeelInvokerFactory.create();
-                func.initialize(this);
                 
                 if(map != null)
                 {
@@ -508,12 +538,34 @@ public final class Weel
             }
             else if (nice != null)
             {
-                /*
-                 * Supported types: - Primitives: - double - Objects - String -
-                 * ValueMap - Objects (with checkcast)
-                 */
-                // TODO nice
+                final String fname = (nice.name().length() > 0 ? nice.name() : m.getName()).toLowerCase();
+                func.name = prefix + fname;
+                
+                func.arguments = m.getParameterTypes().length;
+                func.returnsValue = m.getReturnType() != void.class;
+
+                func.clazz = mw.getClassName();
+                func.javaName = mw.wrap(m, func);
+
+                final String iname = func.name + "#" + func.arguments;
+                if (this.mapFunctionsExact.containsKey(iname))
+                    throw new WeelException("Duplicate function: " + func.name
+                            + "(" + func.arguments + ") ["
+                            + m.toGenericString() + "]");
+
+                this.addFunction(iname, func);
+                
+                if(map != null)
+                {
+                    map.set(fname, new Value(func));
+                }
             }
+        }
+        
+        if(mw.classWriter.hasMethods())
+        {
+            this.classLoader.addClass(mw.classWriter);
+            this.wrapperCounter++;
         }
     }
 

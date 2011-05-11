@@ -4,6 +4,7 @@
  */
 package com.github.rjeschke.weel;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -15,6 +16,8 @@ final class WeelLoader extends ClassLoader
 {
     /** HashMap containing class name to class mapping. */
     private HashMap<String, Class<?>> classes = new HashMap<String, Class<?>>();
+    /** Class data. */
+    ArrayList<ClassData> classData = new ArrayList<ClassData>();
 
     /**
      * Constructor.
@@ -35,6 +38,11 @@ final class WeelLoader extends ClassLoader
      */
     public Class<?> addClass(final String name, final byte[] code)
     {
+        if (this.classes.containsKey(name))
+        {
+            throw new WeelException("Duplicate class in WeelLoader: " + name);
+        }
+        this.classData.add(new ClassData(name, code));
         final Class<?> clazz = this.defineClass(name, code, 0, code.length);
         this.classes.put(name, clazz);
         return clazz;
@@ -60,5 +68,32 @@ final class WeelLoader extends ClassLoader
         if (clazz == null)
             throw new ClassNotFoundException(name);
         return clazz;
+    }
+
+    /**
+     * Class data.
+     * 
+     * @author René Jeschke <rene_jeschke@yahoo.de>
+     */
+    static class ClassData
+    {
+        /** The class name. */
+        final String name;
+        /** The code. */
+        final byte[] code;
+
+        /**
+         * Constructor.
+         * 
+         * @param name
+         *            The name.
+         * @param code
+         *            The code.
+         */
+        public ClassData(final String name, final byte[] code)
+        {
+            this.name = name;
+            this.code = code;
+        }
     }
 }

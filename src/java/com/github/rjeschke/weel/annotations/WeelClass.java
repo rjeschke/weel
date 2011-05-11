@@ -28,4 +28,11 @@ public @interface WeelClass
      * Whether this is an OOP class or a collection of array functions.
      */
     boolean usesOop() default false;
+
+    /**
+     * Whether this class is private and no global variable should be created or
+     * not. If you set isPrivate() to <code>true</code>, you will need a
+     * <code>public static ValueMap ME;</code> variable in your class.
+     */
+    boolean isPrivate() default false;
 }

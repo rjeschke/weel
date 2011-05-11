@@ -58,6 +58,16 @@ final class JvmClassWriter
     }
 
     /**
+     * Check if this class writer has any other methods than '&lt;init&gt;'.
+     * 
+     * @return <code>true</code> if so.
+     */
+    public boolean hasMethods()
+    {
+        return this.methods.size() > 1;
+    }
+    
+    /**
      * Creates a method.
      * 
      * @param methodName The name of the method.

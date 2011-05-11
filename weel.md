@@ -22,6 +22,9 @@ See LICENSE.txt for licensing information.
     +   [do, until](#dountil)
     +   [while, end](#while)
 *   [Functions](#functions)
+*   [Extending Weel](#extending)
+    +   [Static functions](#extstatic)
+    +   [Array and OOP functions](#arroop)
 *   [Technical details](#technical)
     +   [Performance](#perft)
     +   [Weel stacks](#stacks)
@@ -171,18 +174,18 @@ in the library)*.
     A special type representing a Java(TM) Object. This type can't be
     directly manipulated from Weel code. 
     
-*	Booleans:
+*   Booleans:
 
-	Weel does not have a real boolean type. `true` evaluates to `-1` and
-	`false` evaluates to `0`. See below to see how different types and
-	values map to `true` and `false`:
-	
-	+	Null: is always `false`
-	+	Numbers: `0.0` is `false`, everything else is `true`
-	+	Strings: "" is `false`, everything else is `true`
-	+	Map: A map with a size of `0` is `false`, everything else is `true`
-	+	Function: is always `true`
-	+	Object: a Java(TM) `null` value is `false`, everything else is `true`
+    Weel does not have a real boolean type. `true` evaluates to `-1` and
+    `false` evaluates to `0`. See below to see how different types and
+    values map to `true` and `false`:
+    
+    +   Null: is always `false`
+    +   Numbers: `0.0` is `false`, everything else is `true`
+    +   Strings: "" is `false`, everything else is `true`
+    +   Map: A map with a size of `0` is `false`, everything else is `true`
+    +   Function: is always `true`
+    +   Object: a Java(TM) `null` value is `false`, everything else is `true`
 
 #### Names                          {#names}
 
@@ -609,6 +612,182 @@ any arguments, and the syntax for functions and subs is identically.
 
 *****************************************************************************
 
+### Extending Weel                  {#extending}
+
+#### Static functions               {#extstatic}
+
+Weel uses a simple mechanism to import Java(TM) methods for usage from Weel
+code:
+
+    public void Weel.importFunctions(Class<?> clazz)
+    
+Weel only supports `static` methods, so you just have to supply the class
+you want to import.
+
+You can use two different ways to write a function for Weel:
+     
+1.  Using the `WeelRawMethod` annotation:
+
+    Example:
+    
+        // strindex(a, b, i)
+        @WeelRawMethod(name = "strindex", args = 3, returnsValue = true)
+        public final static void strIndex3(final Runtime runtime)
+        {
+            final int i = (int) runtime.popNumber();
+            final String b = runtime.popString();
+            final String a = runtime.popString();
+            runtime.load(a.indexOf(b, i));
+        }
+
+    If you don't specify `name`, the name of the method will be used,
+    `args` defaults to `0` and `returnsValue` defaults to `false`.
+    
+    As you can see, you have to 'pop' the arguments from the Weel stack (in
+    reverse order). When you use the 'pop<Type>' runtime functions Weel
+    will throw an Exception if the value is not of the requested type.
+    
+    The `load` methods are used to push a return value onto the Weel stack.
+    
+    Make sure you don't mess around with the stack: Only pop as many arguments
+    as you need, and don't push a return value if non is needed/declared.
+
+2.  Using the `WeelMethod` annotation ('nice' methods):
+
+    Example using WeelRawMethod:
+    
+        // pow(a, b)
+        @WeelRawMethod(name = "pow", args = 2, returnsValue = true)
+        public final static double pow(final Runtime runtime)
+        {
+            final double b = runtime.popNumber();
+            final double a = runtime.popNumber();
+            runtime.load(Math.pow(a, b));
+        }
+
+    The same using WeelMethod:
+
+        // pow(a, b)
+        @WeelMethod(name = "pow")
+        public final static double pow(double a, double b)
+        {
+            return Math.pow(a, b);
+        }
+
+    If you don't specify `name`, the name of the method will be used.
+    
+    As you can see, this is much simpler than doing it using the 'raw'
+    approach. Weel takes care of your values, does type checks and
+    casts things around.
+    
+    Auto-mapped types:
+    
+        Java(TM)        <=> Weel
+        ----------------------------------
+        double          <=> NUMBER
+        int             <=> NUMBER (casted to/from double)
+        String          <=> STRING/NULL
+        Value           <=> Value
+        ValueMap        <=> MAP/NULL
+        WeelFunction    <=> FUNCTION/NULL
+        
+    All other types are treated as OBJECT and casted to the desired type.
+    
+    If you need access to the runtime in a 'nice' method, just specify
+    a parameter of type `Runtime`. This parameter will receive the current
+    runtime instance and won't appear as an argument in the Weel function:
+
+        // funcFind(name, args)
+        @WeelMethod
+        public final static WeelFunction funcFind(Runtime rt, String name, int args)
+        {
+            return rt.getMother().findFunction(name, args);
+        }
+
+    The `load` methods in the runtime will automatically load `NULL` if you
+    try to load a String, Value, ValueMap or WeelFunction which is `null`.
+    
+    **Technical information:** When registering 'nice' methods, a wrapper
+    Java(TM) method is created, which takes care of parameter mappings, so this
+    is not resolved dynamically during runtime. Calling 'nice' methods is about
+    10% slower than calling 'raw' methods.
+    
+#### Array and OOP functions        {#arroop}
+
+To create array and OOP functions you only have to tag the enclosing Java(TM)
+class with `WeelClass`:
+
+    @WeelClass(name = "myclazz", usesOop = true, isPrivate = false)
+    public class MyClass
+    {
+        ...
+    }
+
+If you don't specify `name`, the simple name of the class will be used,
+`usesOop` and `isPrivate` both default to `false`.
+
+Members are declared like 'static' weel functions with `WeelRawMethod` or
+`WeelMethod`.
+
+The `usesOop` parameter is (right now) nothing more than a hint to indicate
+which naming schema should be used (see [Internal function naming](#intnames)).
+
+When `isPrivate` is `false`, a global variable named `name` will be created
+and initialized with an empty array, which then receives all defined functions. 
+
+If `isPrivate` is `true`, then no global variable will be created. The ValueMap
+which holds all the functions gets instead assigned to a static variable
+inside the class:
+
+    public static ValueMap ME;
+    
+This allows for easy 'invisible' class definition, which may get 'instantiated'
+using other methods/functions.
+
+**Remember:** When you use Oop functions (called using `->`) you will always
+get the ValueMap (`this`) as the first parameter.
+
+Here's a simple example, wrapping a StringBuilder in a Weel class:
+
+    import com.github.rjeschke.weel.*;
+    import com.github.rjeschke.weel.annotations.*;
+    
+    @WeelClass(name = "stringbuilder", usesOop = true)
+    public class MyStringBuilder
+    {
+        @WeelMethod
+        public final static void ctor(final ValueMap thiz)
+        {
+            WeelOop.setInstance(thiz, new StringBuilder());
+        }
+        
+        @WeelMethod
+        public final static void append(final ValueMap thiz, final Value value)
+        {
+            final StringBuilder sb = WeelOop.getInstance(thiz, StringBuilder.class);
+            sb.append(value.toString());
+        }
+    
+        @WeelMethod(name = "toString")
+        public final static String sbToString(final ValueMap thiz)
+        {
+            final StringBuilder sb = WeelOop.getInstance(thiz, StringBuilder.class);
+            return sb.toString();
+        }
+    }
+    
+And here's how you would use it from Weel:
+
+    sb = new(StringBuilder);
+    
+    sb->append("Hello");
+    sb->append(" world!");
+    
+    println(sb->toString());
+
+
+*****************************************************************************
+
 ### Technical details               {#technical}
 
 #### Performance                    {#perft}
@@ -690,7 +869,7 @@ There are four different types of function calls:
 3.  Anonymous closure function calls:
 
     These work exactly like stack calls (because they are stack calls) but a
-    different invoker method is used which registes the function on the 
+    different invoker method is used which registers the function on the 
     virtual function stack.
     
 4.  Type bound functions:
@@ -710,7 +889,7 @@ Declaring an anonymous function without closure variables only results in a
 Runtime.load(...) operation, loading the anonymous function (which is already
 compiled) by its function index.
 
-This behavious changes when closure variables are needed. Here every expression
+This behaviour changes when closure variables are needed. Here every expression
 which creates such a function also creates a new object with a snapshot of its
 used outer variables.
 
@@ -732,7 +911,7 @@ Anonymous functions all use the same static name `ANON`.
 
 The Weel compiler does not do any Voodoo, it mostly chains calls to runtime
 methods, generates method calls and some IFEQs, IFNEs and GOTOs. It seems
-that weel performes so well because of the JIT compiler loving small methods. 
+that weel performs so well because of the JIT compiler loving small methods. 
 
 So it's all a little bit cheating ... but it works ... and it's fast. 
 
@@ -754,12 +933,11 @@ So it's all a little bit cheating ... but it works ... and it's fast.
     operations.
 *   Function calling speed (decreasing from top to bottom):
     
-    +   Static Weel/Java(TM) function calls
-    +   Static Java(TM) nice function calls
-    +   Dynamic calls
-    +   Type bound functions
-    +   Dynamic calls with overload resolving
-    +   Dynamic calls to closure functions
+    +   Static Weel/Java(TM) function calls (1.00)
+    +   Static Java(TM) nice function calls (1.08)
+    +   Dynamic calls (1.18)
+    +   Dynamic calls with overload resolving (1.62)
+    +   Type bound functions (9.30) ?
     
     This is currently a good guess, I'll benchmark this as soon as the
     rest is stable.
