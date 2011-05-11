@@ -752,7 +752,7 @@ Here's a simple example, wrapping a StringBuilder in a Weel class:
     import com.github.rjeschke.weel.*;
     import com.github.rjeschke.weel.annotations.*;
     
-    @WeelClass(name = "stringbuilder", usesOop = true)
+    @WeelClass(name = "java.lang.StringBuilder", usesOop = true)
     public class MyStringBuilder
     {
         @WeelMethod
@@ -778,7 +778,7 @@ Here's a simple example, wrapping a StringBuilder in a Weel class:
     
 And here's how you would use it from Weel:
 
-    sb = new(StringBuilder);
+    sb = new(java.lang.StringBuilder);
     
     sb->append("Hello");
     sb->append(" world!");

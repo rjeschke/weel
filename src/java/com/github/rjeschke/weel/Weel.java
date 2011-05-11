@@ -444,7 +444,7 @@ public final class Weel
     {
         final Method[] methods = clazz.getDeclaredMethods();
         final WeelClass wclass = clazz.getAnnotation(WeelClass.class);
-        final ValueMap map;
+        ValueMap map;
         final String prefix;
         final MethodWrapper mw = new MethodWrapper(clazz.getSimpleName() + "_WRAP" + this.wrapperCounter);
         
@@ -453,7 +453,7 @@ public final class Weel
             map = new ValueMap();
             final String clazzName = wclass.name().length() > 0 ? wclass.name().toLowerCase() : clazz.getSimpleName().toLowerCase();
             prefix = clazzName + (wclass.usesOop() ? "$$" : "$");
-            if(wclass.isPrivate())
+            if(wclass.isPrivate() && clazzName.indexOf('.') == -1)
             {
                 //
                 try
@@ -480,12 +480,51 @@ public final class Weel
             }
             else
             {
-                if(this.hasGlobal(clazzName))
+                if(clazzName.indexOf('.') != -1)
                 {
-                    throw new WeelException("Duplicate global variable for Weel clazz: " + clazzName);
+                    final String[] toks = clazzName.split("[.]");
+                    final int g;
+                    if(!this.hasGlobal(toks[0]))
+                    {
+                        g = this.addGlobal(toks[0]);
+                    }
+                    else
+                    {
+                        g = this.mapGlobals.get(toks[0]);
+                    }
+                    ValueMap cur;
+                    if(this.globals.get(g).type != ValueType.MAP)
+                    {
+                        this.globals.set(g, new Value(cur = new ValueMap()));
+                    }
+                    else
+                    {
+                        cur = this.globals.get(g).getMap();
+                    }
+                    for(int i = 1; i < toks.length; i++)
+                    {
+                        ValueMap next;
+                        if(!cur.hasKey(toks[i]))
+                        {
+                            cur.set(toks[i], new Value(next = new ValueMap()));
+                        }
+                        else
+                        {
+                            next = cur.get(toks[i]).getMap();
+                        }
+                        cur = next;
+                    }
+                    map = cur;
                 }
-                final int g = this.addGlobal(clazzName);
-                this.globals.set(g, new Value(map));
+                else
+                {
+                    if(this.hasGlobal(clazzName))
+                    {
+                        throw new WeelException("Duplicate global variable for Weel clazz: " + clazzName);
+                    }
+                    final int g = this.addGlobal(clazzName);
+                    this.globals.set(g, new Value(map));
+                }
             }
         }
         else

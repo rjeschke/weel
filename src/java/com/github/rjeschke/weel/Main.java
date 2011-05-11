@@ -9,7 +9,7 @@ import java.io.FileOutputStream;
 import com.github.rjeschke.weel.annotations.WeelClass;
 import com.github.rjeschke.weel.annotations.WeelMethod;
 
-@WeelClass(name = "StringBuilder", usesOop = true)
+@WeelClass(name = "java.lang.StringBuilder", usesOop = true)
 public class Main
 {
     @WeelMethod()

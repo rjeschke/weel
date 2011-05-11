@@ -15,7 +15,7 @@ ins = new(clazz, "world");
 
 ins->print();
 
-sb = new(stringbuilder);
+sb = new(java.lang.StringBuilder);
 sb->append("Hello");
 sb->append(" world!");
 println(sb->toString());
