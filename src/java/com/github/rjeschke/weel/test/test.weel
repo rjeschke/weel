@@ -83,7 +83,7 @@ println(
 
 println(
     {}
-        ::populate(9999, @{(i) return i + 1})
+        ::populate(999, @{(i) return i + 1})
         ::filter(
             @{ (v) 
                 return (v % 3) && (v % 5) ? false : true;
@@ -93,6 +93,7 @@ println(
                 return a + b;
              })
        );
+
 
 funcReg("number", {
     toString = @{(v)
@@ -122,8 +123,26 @@ fib = {}::populate(1477, @{(l, i)
     return i < 2 ? i : l[i - 2] + l[i - 1];
 });
 
+println(
+    {}
+    ::populate(1477, 
+        @{(l, i)
+            return i < 2 ? i : l[i - 2] + l[i - 1];
+        })
+    ::filter(
+        @{(a) 
+            return a <= 4000000 && !(a % 2);
+        })
+    ::fold(
+        @{ (a, b) 
+            return a + b;
+        })
+    );
+
+
 fib::print();
 
+/*
 println(0::isEven()::bool())
 println(1::isOdd()::bool())
 println(2::isEven()::bool())
@@ -132,7 +151,7 @@ null::check();
 println(mapIsList({0, 1, 2})::bool());
 println(mapIsList({0, 1, test = 2})::bool());
 
-/*
+
 str = "";
 t = clock();
 for i = 0, 65535 do
@@ -149,7 +168,7 @@ for i = 0, 65535 do
 end
 t = clock() - t;
 println(t);
-*/
+
 
 // Lazylist
 
@@ -205,3 +224,4 @@ ll.list::print();
 println(ll->get(50))
 
 ll.list::print();
+*/
