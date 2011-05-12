@@ -47,16 +47,16 @@ class MethodWrapper
      */
     public String wrap(final Method m, final WeelFunction func)
     {
-        final String mname = m.getName() + "_WRAP";
-        final JvmMethodWriter mw = this.classWriter.createMethod(mname,
-                "(Lcom/github/rjeschke/weel/Runtime;)V");
-        final ByteList bl = mw.code;
-
         for (int i = 0; i < m.getParameterTypes().length; i++)
         {
             if (m.getParameterTypes()[i] == com.github.rjeschke.weel.Runtime.class)
                 func.arguments--;
         }
+
+        final String mname = "wrap$" + m.getName() + "$" + func.arguments;
+        final JvmMethodWriter mw = this.classWriter.createMethod(mname,
+                "(Lcom/github/rjeschke/weel/Runtime;)V");
+        final ByteList bl = mw.code;
 
         mw.maxStack = 3;
         bl.add(JvmOp.ALOAD_0);

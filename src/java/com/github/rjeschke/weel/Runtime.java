@@ -570,6 +570,40 @@ public final class Runtime
     }
 
     /**
+     * Map concatenation.
+     * <p>
+     * When both maps are 'lists' then the result is a 'real' concatenation,
+     * else a merge will be performed. This instruction modifies 'map1' instead
+     * of returning a new map.
+     * </p>
+     * 
+     * <p>
+     * <code>..., map1, map2 &rArr; ..., map1 ++= map2 </code>
+     * </p>
+     */
+    public void mapcat2()
+    {
+        final ValueMap b = this.popMap();
+        final ValueMap a = this.stack[this.sp].getMap();
+
+        if (a.ordered && b.ordered)
+        {
+            final Value v = new Value();
+            for (int i = 0; i < b.size; i++)
+            {
+                a.append(b.get(i, v));
+            }
+        }
+        else
+        {
+            for (final Entry<Value, Value> e : b)
+            {
+                a.set(e.getKey(), e.getValue());
+            }
+        }
+    }
+
+    /**
      * Addition.
      * 
      * <p>
@@ -821,7 +855,7 @@ public final class Runtime
      */
     public void load(final String value)
     {
-        if(value != null)
+        if (value != null)
         {
             this.stack[++this.sp].type = ValueType.STRING;
             this.stack[this.sp].string = value;
@@ -844,7 +878,7 @@ public final class Runtime
      */
     public void load(final ValueMap value)
     {
-        if(value != null)
+        if (value != null)
         {
             this.stack[++this.sp].type = ValueType.MAP;
             this.stack[this.sp].map = value;
@@ -867,7 +901,7 @@ public final class Runtime
      */
     public void load(final WeelFunction value)
     {
-        if(value != null)
+        if (value != null)
         {
             this.stack[++this.sp].type = ValueType.FUNCTION;
             this.stack[this.sp].function = value;
@@ -906,7 +940,7 @@ public final class Runtime
      */
     public void load(final Value value)
     {
-        if(value != null)
+        if (value != null)
         {
             value.copyTo(this.stack[++this.sp]);
         }
@@ -915,7 +949,7 @@ public final class Runtime
             this.stack[++this.sp].type = ValueType.NULL;
         }
     }
-    
+
     /**
      * Loads a function.
      * 
@@ -1064,14 +1098,7 @@ public final class Runtime
     {
         final TypeFunctions funcs = this.typeFunctions[this.stack[this.sp
                 - args].type.ordinal()];
-        if (funcs == null)
-        {
-            throw new WeelException("No support functions specified for: "
-                    + this.stack[this.sp - args].type);
-        }
-
         final WeelFunction func = funcs.findFunction(name);
-
         if (func == null)
         {
             throw new WeelException("Unknown support function '"

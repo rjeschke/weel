@@ -30,16 +30,10 @@ final class Compiler
     CodeBlock block;
     /** The current Scope. */
     Scope scope;
-
-    /** Counter for compiled script classes. */
-    private static int classCounter = 0;
-    /** Counter for anonymous functions. */
-    private static int anonCounter = 0;
     /** The class writer. */
     JvmClassWriter classWriter;
-
     /** Flag indicating that we're in debug mode. (Used for assert(cond)).*/
-    private boolean debugMode = true;
+    private final boolean debugMode;
 
     /**
      * Constructor.
@@ -50,6 +44,7 @@ final class Compiler
     public Compiler(final Weel weel)
     {
         this.weel = weel;
+        this.debugMode = weel.debugMode;
     }
 
     /**
@@ -128,7 +123,7 @@ final class Compiler
     private void initialize()
     {
         this.classWriter = new JvmClassWriter(
-                "com.github.rjeschke.weel.scripts.Script" + classCounter++);
+                "com.github.rjeschke.weel.scripts.Script" + Weel.scriptCounter.getAndIncrement());
 
         this.weel.scriptClasses.add(this.classWriter.className);
 
@@ -177,6 +172,7 @@ final class Compiler
         case CURLY_BRACE_OPEN:
         case STRING:
         case BRACE_OPEN:
+        case NUMBER:
             this.tryStaticSupport();
             this.skipSemi();
             break;
@@ -195,6 +191,12 @@ final class Compiler
         case RESERVED:
             switch (this.tokenizer.reserved)
             {
+            case NULL:
+            case TRUE:
+            case FALSE:
+                this.tryStaticSupport();
+                this.skipSemi();
+                break;
             case THIS:
                 this.parseVarsAndFuncs(false);
                 this.skipSemi();
@@ -334,6 +336,7 @@ final class Compiler
         case ASSIGN_SUB:
         case ASSIGN_XOR:
         case ASSIGN_STRCAT:
+        case ASSIGN_MAPCAT:
             return true;
         default:
             return false;
@@ -604,6 +607,7 @@ final class Compiler
             case ASSIGN_SUB:
             case ASSIGN_XOR:
             case ASSIGN_STRCAT:
+            case ASSIGN_MAPCAT:
                 if (first)
                 {
                     this.needGetVariable(var);
@@ -646,6 +650,7 @@ final class Compiler
         case ASSIGN_SUB:
         case ASSIGN_XOR:
         case ASSIGN_STRCAT:
+        case ASSIGN_MAPCAT:
         {
             final Token op = this.tokenizer.token;
             if (first && expr != ExpressionType.ARRAY && var.type == Type.NONE)
@@ -689,6 +694,9 @@ final class Compiler
                 break;
             case ASSIGN_STRCAT:
                 this.block.callRuntime("strcat");
+                break;
+            case ASSIGN_MAPCAT:
+                this.block.callRuntime("mapcat2");
                 break;
             default:
                 break;
@@ -1321,11 +1329,23 @@ final class Compiler
         }
         this.checkReserved(ReservedWord.IN);
         this.tokenizer.next();
-        this.checkToken(Token.NAME);
-        final Variable map = this.scope.findVariable(new Variable(),
-                this.tokenizer.string);
-        this.needGetVariable(map);
-        this.writeGetVariable(map);
+        if(this.tokenizer.token == Token.RESERVED && this.tokenizer.reserved == ReservedWord.THIS)
+        {
+            final Scope s = this.scope.findFunctionScope();
+            if(s == null || !s.isOop)
+            {
+                throw new WeelException(this.tokenizer.error("Illegal use of 'this'"));
+            }
+            this.block.callRuntime("lloc", 0);
+        }
+        else
+        {
+            this.checkToken(Token.NAME);
+            final Variable map = this.scope.findVariable(new Variable(),
+                    this.tokenizer.string);
+            this.needGetVariable(map);
+            this.writeGetVariable(map);
+        }
         this.tokenizer.next();
         this.checkReserved(ReservedWord.DO);
         this.tokenizer.next();
@@ -1600,8 +1620,8 @@ final class Compiler
         }
 
         func.clazz = this.classWriter.className;
-        func.javaName = anonymous ? "Anon_" + anonCounter++ : "_" + func.name
-                + "_" + func.arguments;
+        func.javaName = anonymous ? "$anon$" + Weel.anonCounter.incrementAndGet() : func.name
+                + "$" + func.arguments;
         this.block.setMethodWriter(this.classWriter.createMethod(func.javaName,
                 "(Lcom/github/rjeschke/weel/Runtime;)V"));
 
@@ -2085,29 +2105,16 @@ final class Compiler
             this.block = this.scope.block = new CodeBlock(temp.createMethod(
                     "STATIC", "(Lcom/github/rjeschke/weel/Runtime;)V"));
         }
-        int paramc = 0;
-        while (this.tokenizer.token != Token.BRACE_CLOSE)
+        this.parseExpression();
+        String message = null;
+        if(this.tokenizer.token == Token.COMMA)
         {
-            paramc++;
-            this.parseExpression();
-            if (this.tokenizer.token == Token.BRACE_CLOSE)
-            {
-                break;
-            }
-            if (this.tokenizer.token == Token.COMMA)
-            {
-                this.tokenizer.next();
-                continue;
-            }
-            this.syntaxError();
+            this.tokenizer.next();
+            this.checkToken(Token.STRING);
+            message = this.tokenizer.string;
+            this.tokenizer.next();
         }
-        // Maybe I'll add an overloaded assert, so this stays
-        // as it is at the moment
-        if (paramc != 1)
-        {
-            throw new WeelException(this.tokenizer
-                    .error("assert needs only one argument"));
-        }
+        this.checkToken(Token.BRACE_CLOSE);
         this.tokenizer.next();
         if (!this.debugMode)
         {
@@ -2116,7 +2123,10 @@ final class Compiler
         else
         {
             this.block.code.add(JvmOp.ALOAD_0);
-            this.block.ldcStr(this.tokenizer.error("Assert failed"));
+            if(message != null)
+                this.block.ldcStr(this.tokenizer.error("Assert failed (%s)", message));
+            else
+                this.block.ldcStr(this.tokenizer.error("Assert failed"));
             this.block.code.add(JvmOp.INVOKEVIRTUAL);
             this.block.code.addShort(this.classWriter.addMethodRefConstant(
                     "com.github.rjeschke.weel.Runtime", "weelAssert",

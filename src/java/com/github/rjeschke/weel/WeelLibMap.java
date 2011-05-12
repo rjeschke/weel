@@ -16,7 +16,7 @@ import com.github.rjeschke.weel.annotations.WeelRawMethod;
 public final class WeelLibMap
 {
     /**
-     * <code>mapFlat(map)</code>
+     * <code>mapToList(map)</code>
      * <p>
      * Transforms a map into a list.
      * </p>
@@ -25,7 +25,7 @@ public final class WeelLibMap
      *            The runtime.
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void mapFlat(Runtime runtime)
+    public final static void mapToList(Runtime runtime)
     {
         final ValueMap in = runtime.popMap();
         final ValueMap out = new ValueMap();
@@ -36,6 +36,22 @@ public final class WeelLibMap
         runtime.load(out);
     }
 
+    /**
+     * <code>mapIsList(map)</code>
+     * <p>
+     * Returns true if this map is a list.
+     * </p>
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(args = 1, returnsValue = true)
+    public final static void mapIsList(Runtime runtime)
+    {
+        final ValueMap in = runtime.popMap();
+        runtime.load(in.ordered);
+    }
+    
     /**
      * <code>mapClone(m)</code>
      * <p>
@@ -49,6 +65,21 @@ public final class WeelLibMap
     public final static void mapClone(Runtime runtime)
     {
         runtime.load(runtime.popMap().clone());
+    }
+
+    /**
+     * <code>mapReverse(m)</code>
+     * <p>
+     * Reverses the order of the given map.
+     * </p>
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(args = 1, returnsValue = true)
+    public final static void mapReverse(Runtime runtime)
+    {
+        runtime.load(runtime.popMap().reverse());
     }
 
     /**

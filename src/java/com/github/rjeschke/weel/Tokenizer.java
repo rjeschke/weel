@@ -338,6 +338,11 @@ final class Tokenizer
                     else if(this.current == '+')
                     {
                         this.read();
+                        if(this.current == '=')
+                        {
+                            this.read();
+                            return this.token = Token.ASSIGN_MAPCAT;
+                        }
                         return this.token = Token.MAP_CONCAT;
                     }
                     return this.token = Token.ADD;

@@ -53,55 +53,28 @@ public class WeelOop
      * 
      * @param runtime The runtime.
      * @param base The base class.
+     * @param args The arguments.
      * @return The new object.
      */
-    public final static ValueMap newClass(final Runtime runtime, final ValueMap base)
+    public final static ValueMap newClass(final Runtime runtime, final ValueMap base, final Value ... args)
     {
         final ValueMap clazz = base.clone();
         final Value ctor = clazz.get("ctor");
+        final int ac = args.length + 1;
         if (ctor.type == ValueType.FUNCTION)
         {
             WeelFunction f = ctor.function;
-            if (f.arguments != 1)
+            if (f.arguments != ac)
             {
-                f = runtime.getMother().findFunction(f.name, 1);
+                f = runtime.getMother().findFunction(f.name, ac);
             }
             if (f != null)
             {
                 runtime.load(clazz);
-                f.invoke(runtime);
-                if (f.returnsValue)
+                for(int i = 0; i < args.length; i++)
                 {
-                    runtime.pop1();
+                    runtime.load(args[i]);
                 }
-            }
-        }
-        return clazz;
-    }
-
-    /**
-     * Creates a Weel class object.
-     * 
-     * @param runtime The runtime.
-     * @param base The base class.
-     * @param args The argument.
-     * @return The new object.
-     */
-    public final static ValueMap newClass(final Runtime runtime, final ValueMap base, final Value args)
-    {
-        final ValueMap clazz = base.clone();
-        final Value ctor = clazz.get("ctor");
-        if (ctor.type == ValueType.FUNCTION)
-        {
-            WeelFunction f = ctor.function;
-            if (f.arguments != 2)
-            {
-                f = runtime.getMother().findFunction(f.name, 2);
-            }
-            if (f != null)
-            {
-                runtime.load(clazz);
-                runtime.load(args);
                 f.invoke(runtime);
                 if (f.returnsValue)
                 {

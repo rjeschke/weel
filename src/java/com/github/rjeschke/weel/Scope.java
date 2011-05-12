@@ -101,7 +101,7 @@ class Scope
         Scope current = this;
         while (current != null)
         {
-            if (current.block.function != null)
+            if (current.type == ScopeType.FUNC || current.type == ScopeType.SUB)
                 return current;
             current = current.parent;
         }

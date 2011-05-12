@@ -18,6 +18,12 @@ public class Main
         WeelOop.setInstance(thiz, new StringBuilder());
     }
     
+    @WeelMethod()
+    public final static void ctor(final ValueMap thiz, final int size)
+    {
+        WeelOop.setInstance(thiz, new StringBuilder(size));
+    }
+    
     @WeelMethod
     public final static void append(final ValueMap thiz, final Value value)
     {
@@ -25,6 +31,13 @@ public class Main
         sb.append(value.toString());
     }
 
+    @WeelMethod
+    public final static void clear(final ValueMap thiz)
+    {
+        final StringBuilder sb = WeelOop.getInstance(thiz, StringBuilder.class);
+        sb.setLength(0);
+    }
+    
     @WeelMethod(name = "toString")
     public final static String sbToString(final ValueMap thiz)
     {
@@ -37,11 +50,11 @@ public class Main
         try
         {
             final Weel weel = new Weel();
+            weel.setDebugMode(false);
             weel.importFunctions(Main.class);
 
-            weel.compile(Main.class.getResourceAsStream("/com/github/rjeschke/weel/test/test.weel"), "test.weel");
-            //byte[] cdata = weel.compile(Main.class.getResourceAsStream("/com/github/rjeschke/weel/test/bench1.weel"), "bench1.weel");
-            weel.compile(Main.class.getResourceAsStream("/com/github/rjeschke/weel/test/wunitArith.weel"), "wunitArith.weel");
+            weel.compileResource("com.github.rjeschke.weel.test.test");
+            weel.compileResource("com.github.rjeschke.weel.test.wunitArith");
 
             for(WeelLoader.ClassData cd : weel.classLoader.classData)
             {
@@ -58,7 +71,7 @@ public class Main
             
             weel.runStatic();
             //weel.getRuntime().wipeStack();
-            //WeelUnit.runTests(weel);
+//            WeelUnit.runTests(weel);
             
             if(weel.getRuntime().getStackPointer() != -1)
                 System.err.println("Doh! You messed it up! (" + weel.getRuntime().getStackPointer() + ")");

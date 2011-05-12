@@ -5,6 +5,7 @@
 package com.github.rjeschke.weel;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -376,6 +377,19 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
                     .getMap().clone()) : e.getValue());
         }
         return ret;
+    }
+
+    /**
+     * Reverses this map.
+     * 
+     * @return This map.
+     */
+    public ValueMap reverse()
+    {
+        Collections.reverse(this.data);
+        Collections.reverse(this.keys);
+
+        return this;
     }
 
     /** @see java.lang.Iterable#iterator() */

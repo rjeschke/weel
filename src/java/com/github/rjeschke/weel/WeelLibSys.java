@@ -308,6 +308,63 @@ public final class WeelLibSys
     }
 
     /**
+     * <code>funcCheck(func, args, returnsValue)</code>
+     * <p>
+     * Returns true if 'func' is a sub/function (depends on 'returnsValue')
+     * taking 'args' arguments .
+     * </p>
+     * 
+     * @param runtime
+     *            The Weel runtime.
+     */
+    @WeelRawMethod(args = 3, returnsValue = true)
+    public final static void funcCheck(final Runtime runtime)
+    {
+        final boolean ret = runtime.popBoolean();
+        final int args = (int) runtime.popNumber();
+        final Value val = runtime.pop();
+        
+        runtime.load(val.type == ValueType.FUNCTION && val.function.returnsValue == ret && val.function.arguments == args);
+    }
+
+    /**
+     * <code>funcreg(type, name, func)</code>
+     * <p>
+     * Registers type bound functions.
+     * </p>
+     * 
+     * @param runtime
+     *            The Weel runtime.
+     */
+    @WeelRawMethod(name = "funcReg", args = 3)
+    public final static void funcReg3(final Runtime runtime)
+    {
+        final WeelFunction func = runtime.popFunction();
+        final String name = runtime.popString();
+        final String iname = name + "#" + func.arguments;
+        final String typeName = runtime.popString().toUpperCase();
+
+        final ValueType type = ValueType.fromString(typeName);
+        if (type == null)
+        {
+            throw new WeelException("Unknown type '" + typeName + "'");
+        }
+
+        final TypeFunctions funcs = runtime.mother.typeFunctions[type.ordinal()];
+        if (funcs == null)
+        {
+            throw new WeelException("Unsupported type '" + type + "'");
+        }
+
+        if (funcs.findFunction(iname) != null)
+        {
+            throw new WeelException("Duplicate function '" + name + "("
+                    + func.arguments + ")' for type '" + type + "'");
+        }
+        funcs.addFunction(iname, func);
+    }
+
+    /**
      * <code>toNum(s)</code>
      * <p>
      * Returns the string argument as a number.

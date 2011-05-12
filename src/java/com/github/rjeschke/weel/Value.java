@@ -187,9 +187,13 @@ public final class Value
         case NUMBER:
         {
             // Hack
-            final String str = Double.toString(this.number);
-            return str.endsWith(".0") ? str.substring(0, str.length() - 2)
-                    : str;
+            final long temp = (long)this.number;
+            if(temp == this.number)
+                return Long.toString(temp);
+            return Double.toString(this.number);
+//            final String str = Double.toString(this.number);
+//            return str.endsWith(".0") ? str.substring(0, str.length() - 2)
+//                    : str;
         }
         case STRING:
             return this.string;

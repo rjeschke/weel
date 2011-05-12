@@ -4,7 +4,6 @@
  */
 package com.github.rjeschke.weel;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
@@ -23,25 +22,21 @@ final class WeelReflectionInvoker implements WeelInvoker
     @Override
     public void initialize(Weel weel, WeelFunction function)
     {
-        if(this.initialized)
+        if (this.initialized)
             return;
-        
+
         try
         {
             final Class<?> clazz = weel.classLoader.loadClass(function.clazz);
             this.method = clazz.getDeclaredMethod(function.javaName,
                     Runtime.class);
         }
-        catch (ClassNotFoundException e)
+        catch (Exception e)
         {
-            throw new WeelException(e);
-        }
-        catch (SecurityException e)
-        {
-            throw new WeelException(e);
-        }
-        catch (NoSuchMethodException e)
-        {
+            if (e instanceof WeelException)
+                throw (WeelException) e;
+            if (e.getCause() != null && e.getCause() instanceof WeelException)
+                throw (WeelException) e.getCause();
             throw new WeelException(e);
         }
         this.initialized = true;
@@ -55,18 +50,12 @@ final class WeelReflectionInvoker implements WeelInvoker
         {
             this.method.invoke(null, runtime);
         }
-        catch (IllegalArgumentException e)
+        catch (Exception e)
         {
-            throw new WeelException(e);
-        }
-        catch (IllegalAccessException e)
-        {
-            throw new WeelException(e);
-        }
-        catch (InvocationTargetException e)
-        {
-            if(e.getCause() instanceof WeelException)
-                throw (WeelException)e.getCause();
+            if (e instanceof WeelException)
+                throw (WeelException) e;
+            if (e.getCause() != null && e.getCause() instanceof WeelException)
+                throw (WeelException) e.getCause();
             throw new WeelException(e);
         }
     }
@@ -81,16 +70,12 @@ final class WeelReflectionInvoker implements WeelInvoker
             this.method.invoke(null, runtime);
             runtime.exitVirtual();
         }
-        catch (IllegalArgumentException e)
+        catch (Exception e)
         {
-            throw new WeelException(e);
-        }
-        catch (IllegalAccessException e)
-        {
-            throw new WeelException(e);
-        }
-        catch (InvocationTargetException e)
-        {
+            if (e instanceof WeelException)
+                throw (WeelException) e;
+            if (e.getCause() != null && e.getCause() instanceof WeelException)
+                throw (WeelException) e.getCause();
             throw new WeelException(e);
         }
     }
