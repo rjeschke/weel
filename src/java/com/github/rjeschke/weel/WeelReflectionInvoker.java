@@ -29,7 +29,7 @@ final class WeelReflectionInvoker implements WeelInvoker
         {
             final Class<?> clazz = weel.classLoader.loadClass(function.clazz);
             this.method = clazz.getDeclaredMethod(function.javaName,
-                    Runtime.class);
+                    WeelRuntime.class);
         }
         catch (Exception e)
         {
@@ -42,9 +42,9 @@ final class WeelReflectionInvoker implements WeelInvoker
         this.initialized = true;
     }
 
-    /** @see com.github.rjeschke.weel.WeelInvoker#invoke(Runtime) */
+    /** @see com.github.rjeschke.weel.WeelInvoker#invoke(WeelRuntime) */
     @Override
-    public void invoke(Runtime runtime)
+    public void invoke(WeelRuntime runtime)
     {
         try
         {
@@ -60,9 +60,9 @@ final class WeelReflectionInvoker implements WeelInvoker
         }
     }
 
-    /** @see com.github.rjeschke.weel.WeelInvoker#invoke(Runtime, WeelFunction) */
+    /** @see com.github.rjeschke.weel.WeelInvoker#invoke(WeelRuntime, WeelFunction) */
     @Override
-    public void invoke(Runtime runtime, WeelFunction function)
+    public void invoke(WeelRuntime runtime, WeelFunction function)
     {
         try
         {

@@ -29,7 +29,7 @@ public final class WeelLibCon
      * @see java.io.PrintStream#println(String)
      */
     @WeelRawMethod(name = "println", args = 1)
-    public final static void println1(final Runtime runtime)
+    public final static void println1(final WeelRuntime runtime)
     {
         System.out.println(runtime.pop());
     }
@@ -45,7 +45,7 @@ public final class WeelLibCon
      * @see java.io.PrintStream#print(String)
      */
     @WeelRawMethod(args = 1)
-    public final static void print(final Runtime runtime)
+    public final static void print(final WeelRuntime runtime)
     {
         System.out.print(runtime.pop());
     }
@@ -61,7 +61,7 @@ public final class WeelLibCon
      * @see java.io.PrintStream#println()
      */
     @WeelRawMethod()
-    public final static void println(final Runtime runtime)
+    public final static void println(final WeelRuntime runtime)
     {
         System.out.println();
     }

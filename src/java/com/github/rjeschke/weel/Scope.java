@@ -22,10 +22,14 @@ class Scope
     final ScopeType type;
     /** The parent. */
     final Scope parent;
+    /** The root. */
+    final Scope root;
     /** The CodeBlock. */
     CodeBlock block;
     /** Local name to index mapping. */
     final HashMap<String, Integer> locals = new HashMap<String, Integer>();
+    /** Private name to index mapping. */
+    final HashMap<String, Integer> privates = new HashMap<String, Integer>();
     /** List of continue jumps. */
     final LinkedList<Integer> continues = new LinkedList<Integer>();
     /** List of break jumps. */
@@ -56,6 +60,7 @@ class Scope
         this.type = type;
         this.weel = weel;
         this.parent = null;
+        this.root = this;
     }
 
     /**
@@ -72,6 +77,7 @@ class Scope
         this.parent = parent;
         this.block = parent.block;
         this.weel = parent.weel;
+        this.root = parent.root;
     }
 
     /**
@@ -246,6 +252,19 @@ class Scope
     }
 
     /**
+     * Finds a private variable.
+     * 
+     * @param name
+     *            The name.
+     * @return The index or <code>-1</code>
+     */
+    int findPrivate(final String name)
+    {
+        final Integer index = this.root.privates.get(name);
+        return index == null ? -1 : index;
+    }
+
+    /**
      * Finds a local variable, searches up to static scope.
      * 
      * @param name
@@ -307,6 +326,20 @@ class Scope
     }
 
     /**
+     * Adds a private variable to this scope.
+     * 
+     * @param name
+     *            The name.
+     * @return The index.
+     */
+    int addPrivate(String name)
+    {
+        int ret = this.weel.registerPrivate();
+        this.root.privates.put(name, ret);
+        return ret;
+    }
+    
+    /**
      * Adds a local variable to this scope.
      * 
      * @param name
@@ -343,6 +376,7 @@ class Scope
     Variable findVariable(final Variable var, final String name)
     {
         final Integer glob = this.weel.mapGlobals.get(name);
+        final Integer priv = this.root.privates.get(name);
         var.name = name;
         var.type = Type.NONE;
         final int loc = this.findLocal(name);
@@ -360,10 +394,18 @@ class Scope
                 var.type = Type.CVAR;
             }
         }
-        if (var.type == Type.NONE && glob != null)
+        if (var.type == Type.NONE)
         {
-            var.index = glob;
-            var.type = Type.GLOBAL;
+            if(priv != null)
+            {
+                var.index = priv;
+                var.type = Type.PRIVATE;
+            }
+            else if(glob != null)
+            {
+                var.index = glob;
+                var.type = Type.GLOBAL;
+            }
         }
         var.function = this.weel.findFunction(name);
         return var;
@@ -381,6 +423,7 @@ class Scope
     private Variable findVariableFull(final Variable var, final String name)
     {
         final Integer glob = this.weel.mapGlobals.get(name);
+        final Integer priv = this.root.privates.get(name);
         var.name = name;
         var.type = Type.NONE;
         if (this.block.isAnonymousFunction)
@@ -401,10 +444,18 @@ class Scope
                 var.type = Type.LOCAL;
             }
         }
-        if(var.type == Type.NONE && glob != null)
+        if (var.type == Type.NONE)
         {
-            var.index = glob;
-            var.type = Type.GLOBAL;
+            if(priv != null)
+            {
+                var.index = priv;
+                var.type = Type.PRIVATE;
+            }
+            else if(glob != null)
+            {
+                var.index = glob;
+                var.type = Type.GLOBAL;
+            }
         }
         var.function = this.weel.findFunction(name);
         return var;

@@ -225,3 +225,75 @@ println(ll->get(50))
 
 ll.list::print();
 */
+
+println(floor(rand(-128, 128)));
+println(rand(5));
+println(rand(5));
+
+private xk = "cd";
+
+sub priv()
+    println("xk"..xk);
+end
+
+priv();
+
+private sem;
+
+func haha()
+    for i = 0, 9 do
+        println(i);
+        sleep(500);
+    end
+    return "Finished!";
+end
+
+sub hahaEnd(val)
+    println(val);
+    sem->acquire();
+end
+
+
+local nums = 10;
+
+sem = new(java.Semaphore, nums);
+
+wrapper = 
+    @{ (value)
+        return
+            @{
+                for i = 0, 9 do
+                    println(value..": "..i);
+                    sleep(500);
+                end
+                return value..": Finished!";
+            }
+    }
+
+threads = {}
+for i = 0, nums - 1 do
+    threads[i] = new(java.Thread, wrapper("ID"..(i + 1)), hahaEnd);
+    threads[i]->start();
+    sleep(100);
+end
+
+str = "";
+t = clock();
+for i = 0, 65535 do
+    str ..= "A";
+end
+t = clock() - t;
+println(t);
+
+sb = new(java.StringBuilder, 65536);
+//sb->clear();
+t = clock();
+for i = 0, 65535 do
+    sb->append("A");
+end
+t = clock() - t;
+println(t);
+
+while sem->available() do
+    sleep(100);
+end

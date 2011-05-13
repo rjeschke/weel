@@ -16,7 +16,7 @@ class Variable
     /** The index. */
     int index;
     /** The type. */
-    Type type;
+    Type type = Type.NONE;
     /** The function. */
     WeelFunction function;
 
@@ -46,6 +46,7 @@ class Variable
     enum Type
     {
         GLOBAL,
+        PRIVATE,
         LOCAL,
         CVAR,
         NONE

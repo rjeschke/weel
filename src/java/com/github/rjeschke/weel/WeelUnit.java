@@ -100,7 +100,7 @@ public class WeelUnit
      *            The runtime.
      */
     @WeelRawMethod(args = 2)
-    public static void wUnitTestcase(final Runtime runtime)
+    public static void wUnitTestcase(final WeelRuntime runtime)
     {
         final String title = runtime.pop().toString();
         final ValueMap me = runtime.pop().getMap();
@@ -135,7 +135,7 @@ public class WeelUnit
      * @see WeelUnitTest#wuAssert(boolean, String)
      */
     @WeelRawMethod(name = "weelunit$$assert", args = 2)
-    public static void wuAssert2(final Runtime runtime)
+    public static void wuAssert2(final WeelRuntime runtime)
     {
         final boolean flag = runtime.popBoolean();
         final ValueMap me = runtime.pop().getMap();
@@ -151,7 +151,7 @@ public class WeelUnit
      * @see WeelUnitTest#wuAssert(boolean, String)
      */
     @WeelRawMethod(name = "weelunit$$assert", args = 3)
-    public static void wuAssert3(final Runtime runtime)
+    public static void wuAssert3(final WeelRuntime runtime)
     {
         final String title = runtime.pop().getString();
         final boolean flag = runtime.popBoolean();
@@ -165,10 +165,10 @@ public class WeelUnit
      * 
      * @param runtime
      *            The runtime.
-     * @see WeelUnitTest#wuThrows(Runtime, WeelFunction, String)
+     * @see WeelUnitTest#wuThrows(WeelRuntime, WeelFunction, String)
      */
     @WeelRawMethod(name = "weelunit$$throws", args = 2)
-    public static void wuThrows2(final Runtime runtime)
+    public static void wuThrows2(final WeelRuntime runtime)
     {
         final WeelFunction function = runtime.pop().getFunction();
         final ValueMap me = runtime.pop().getMap();
@@ -181,10 +181,10 @@ public class WeelUnit
      * 
      * @param runtime
      *            The runtime.
-     * @see WeelUnitTest#wuThrows(Runtime, WeelFunction, String)
+     * @see WeelUnitTest#wuThrows(WeelRuntime, WeelFunction, String)
      */
     @WeelRawMethod(name = "weelunit$$throws", args = 3)
-    public static void wuThrows3(final Runtime runtime)
+    public static void wuThrows3(final WeelRuntime runtime)
     {
         final String title = runtime.pop().getString();
         final WeelFunction function = runtime.pop().getFunction();
@@ -198,10 +198,10 @@ public class WeelUnit
      * 
      * @param runtime
      *            The runtime.
-     * @see WeelUnitTest#wuNoThrow(Runtime, WeelFunction, String)
+     * @see WeelUnitTest#wuNoThrow(WeelRuntime, WeelFunction, String)
      */
     @WeelRawMethod(name = "weelunit$$nothrow", args = 2)
-    public static void wuNoThrows2(final Runtime runtime)
+    public static void wuNoThrows2(final WeelRuntime runtime)
     {
         final WeelFunction function = runtime.pop().getFunction();
         final ValueMap me = runtime.pop().getMap();
@@ -214,10 +214,10 @@ public class WeelUnit
      * 
      * @param runtime
      *            The runtime.
-     * @see WeelUnitTest#wuNoThrow(Runtime, WeelFunction, String)
+     * @see WeelUnitTest#wuNoThrow(WeelRuntime, WeelFunction, String)
      */
     @WeelRawMethod(name = "weelunit$$nothrow", args = 3)
-    public static void wuNoThrow3(final Runtime runtime)
+    public static void wuNoThrow3(final WeelRuntime runtime)
     {
         final String title = runtime.pop().getString();
         final WeelFunction function = runtime.pop().getFunction();

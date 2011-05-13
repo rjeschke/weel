@@ -64,7 +64,7 @@ Weel is separated into two main parts:
 
 1.  `Weel` -- The mother class of all runtimes, giving access to a compiler
     and holding all global variables and registered functions.
-2.  `Runtime` -- The execution environment unique to each thread and mother
+2.  `WeelRuntime` -- The execution environment unique to each thread and mother
     `Weel` instance.
     
 With this model it is possible to run Weel functions safely in a 
@@ -73,7 +73,7 @@ and to have different 'sets' of Weel instances each having their unique set
 of globals and functions.
 
 Weel source code gets compiled 'into' a `Weel` instance and can then be used
-from a `Runtime` retrieved by `Weel.getRuntime()`.
+from a `WeelRuntime` retrieved by `Weel.getRuntime()`.
 
 Each source file gets internally compiled into its own Java(TM) class.
 
@@ -250,7 +250,7 @@ keywords:
  
 *   `local <name>[ = expr[,<name>...]]`
 
-    The 'local' keyword forces a variable to local:
+    The 'local' keyword forces a variable to be local:
     
         local i;
         i = 1;
@@ -278,6 +278,12 @@ keywords:
         init();
         println(my);
         // Outputs: global
+
+*   `private <name>[ = expr[,<name>...]]`
+
+    The 'private' keyword acts like 'global', but instead of making the
+    variable visible for the whole Weel instance, it is only visible to
+    the current script.
 
 *   `outer <name> = expr[,<name> = expr, ...]`
 
@@ -308,6 +314,13 @@ keywords:
                  };
         end
         
+        
+Variable search order:
+
+1.  Locals and closure variables
+2.  Private variables
+3.  Global variables
+
 *****************************************************************************
 
 ### Program flow control            {#flow}
@@ -632,7 +645,7 @@ You can use two different ways to write a function for Weel:
     
         // strindex(a, b, i)
         @WeelRawMethod(name = "strindex", args = 3, returnsValue = true)
-        public final static void strIndex3(final Runtime runtime)
+        public final static void strIndex3(final WeelRuntime runtime)
         {
             final int i = (int) runtime.popNumber();
             final String b = runtime.popString();
@@ -658,7 +671,7 @@ You can use two different ways to write a function for Weel:
     
         // pow(a, b)
         @WeelRawMethod(name = "pow", args = 2, returnsValue = true)
-        public final static double pow(final Runtime runtime)
+        public final static double pow(final WeelRuntime runtime)
         {
             final double b = runtime.popNumber();
             final double a = runtime.popNumber();
@@ -686,6 +699,7 @@ You can use two different ways to write a function for Weel:
         ----------------------------------
         double          <=> NUMBER
         int             <=> NUMBER (casted to/from double)
+        boolean         <=> Value.toBoolean()
         String          <=> STRING/NULL
         Value           <=> Value
         ValueMap        <=> MAP/NULL
@@ -694,12 +708,12 @@ You can use two different ways to write a function for Weel:
     All other types are treated as OBJECT and casted to the desired type.
     
     If you need access to the runtime in a 'nice' method, just specify
-    a parameter of type `Runtime`. This parameter will receive the current
+    a parameter of type `WeelRuntime`. This parameter will receive the current
     runtime instance and won't appear as an argument in the Weel function:
 
         // funcFind(name, args)
         @WeelMethod
-        public final static WeelFunction funcFind(Runtime rt, String name, int args)
+        public final static WeelFunction funcFind(WeelRuntime rt, String name, int args)
         {
             return rt.getMother().findFunction(name, args);
         }
@@ -845,9 +859,9 @@ really needs a `Value`, then I have to clone it.
     The Value stack is used for all Weel operations. The Runtime avoids costly 
     Object creations by copying the values inside the stack and only cloning 
     values if they need to leave the safe space inside the Runtime (e.g. when 
-    calling `Runtime.pop()`). The Runtime offers also various methods for
+    calling `WeelRuntime.pop()`). The runtime offers also various methods for
     library programmers to avoid value cloning by querying a direct value (e.g.
-    `double Runtime.popNumber()` or `String Runtime.popString()`.
+    `double WeelRuntime.popNumber()` or `String WeelRuntime.popString()`.
 
 2.  The *'Frame'* stack:
 
@@ -904,7 +918,7 @@ Anonymous functions are nameless static functions which don't get registered
 in the Weel (that's why you can't uses overloading on anonymous functions).
 
 Declaring an anonymous function without closure variables only results in a
-Runtime.load(...) operation, loading the anonymous function (which is already
+WeelRuntime.load(...) operation, loading the anonymous function (which is already
 compiled) by its function index.
 
 This behaviour changes when closure variables are needed. Here every expression

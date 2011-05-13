@@ -16,6 +16,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.github.rjeschke.weel.annotations.WeelClass;
 import com.github.rjeschke.weel.annotations.WeelRawMethod;
 import com.github.rjeschke.weel.annotations.WeelMethod;
+import com.github.rjeschke.weel.jclass.WeelLock;
+import com.github.rjeschke.weel.jclass.WeelSemaphore;
+import com.github.rjeschke.weel.jclass.WeelStringBuilder;
+import com.github.rjeschke.weel.jclass.WeelThread;
 
 /**
  * Main Weel class.
@@ -34,15 +38,17 @@ import com.github.rjeschke.weel.annotations.WeelMethod;
 public final class Weel
 {
     /** Global variables. */
-    ArrayList<Value> globals = new ArrayList<Value>();
+    final ArrayList<Value> globals = new ArrayList<Value>();
+    /** Private variables. */
+    final ArrayList<Value> privates = new ArrayList<Value>();
     /** Function list. */
-    ArrayList<WeelFunction> functions = new ArrayList<WeelFunction>();
+    final ArrayList<WeelFunction> functions = new ArrayList<WeelFunction>();
     /** Name to global variable index mapping. */
-    HashMap<String, Integer> mapGlobals = new HashMap<String, Integer>();
+    final HashMap<String, Integer> mapGlobals = new HashMap<String, Integer>();
     /** Name to function index mapping. */
-    HashMap<String, Integer> mapFunctions = new HashMap<String, Integer>();
+    final HashMap<String, Integer> mapFunctions = new HashMap<String, Integer>();
     /** Name to exact function index mapping. */
-    HashMap<String, Integer> mapFunctionsExact = new HashMap<String, Integer>();
+    final HashMap<String, Integer> mapFunctionsExact = new HashMap<String, Integer>();
     /** Weel class loader. */
     final WeelLoader classLoader = new WeelLoader();
     /** Compiled script classes. */
@@ -53,18 +59,28 @@ public final class Weel
     final static AtomicLong wrapperCounter = new AtomicLong();
     /** Counter for script classes. */
     final static AtomicLong scriptCounter = new AtomicLong();
-    /** Counter for anonymous functions. */
-    final static AtomicLong anonCounter = new AtomicLong();
     /** Debug mode flag. */
     boolean debugMode = false;
 
+    private final static Class<?>[] STDLIB = {
+        WeelLibMath.class, WeelLibString.class, WeelLibCon.class,
+        WeelLibMap.class, WeelLibOop.class, WeelLibSys.class,
+        WeelUnit.class
+    };
+    
+    private final static Class<?>[] JCLASSES = {
+        WeelStringBuilder.class,
+        WeelThread.class, WeelLock.class, WeelSemaphore.class
+    };
+
     /** ThreadLocal variable for Weel Runtimes associated with this Weel class. */
-    private final ThreadLocal<Runtime> runtime = new ThreadLocal<Runtime>()
+    private final ThreadLocal<WeelRuntime> runtime = new ThreadLocal<WeelRuntime>()
     {
+        /** @see java.lang.ThreadLocal#initialValue() */
         @Override
-        protected Runtime initialValue()
+        protected WeelRuntime initialValue()
         {
-            return new Runtime(Weel.this);
+            return new WeelRuntime(Weel.this);
         }
     };
 
@@ -77,16 +93,21 @@ public final class Weel
      */
     public Weel()
     {
-        this.importFunctions(WeelLibCon.class);
-        this.importFunctions(WeelLibMath.class);
-        this.importFunctions(WeelLibSys.class);
-        this.importFunctions(WeelLibMap.class);
-        this.importFunctions(WeelLibString.class);
-        this.importFunctions(WeelLibOop.class);
-        this.importFunctions(WeelUnit.class);
-
+        // Import standard library
+        for(final Class<?> c : STDLIB)
+        {
+            this.importFunctions(c);
+        }
+        // Import classes 
+        for(final Class<?> c : JCLASSES)
+        {
+            this.importFunctions(c);
+        }
+        // Initialize type functions
         for (int i = 0; i < this.typeFunctions.length; i++)
+        {
             this.typeFunctions[i] = new TypeFunctions();
+        }
     }
 
     /**
@@ -122,7 +143,8 @@ public final class Weel
             throw new WeelException("Unknown function '" + functionName + "'("
                     + args.length + ")");
         }
-        return this.invoke(function, args);
+
+        return this.getRuntime().invoke(function, args);
     }
 
     /**
@@ -140,64 +162,7 @@ public final class Weel
      */
     public Value invoke(final WeelFunction function, Object... args)
     {
-        final Runtime rt = this.getRuntime();
-        if (args.length != function.arguments)
-        {
-            throw new WeelException("Argument count mismatch");
-        }
-
-        for (final Object o : args)
-        {
-            if (o == null)
-            {
-                rt.load();
-                continue;
-            }
-            final Class<?> oc = o.getClass();
-            if (oc == Double.class)
-            {
-                rt.load((double) ((Double) o));
-            }
-            else if (oc == Float.class)
-            {
-                rt.load((float) ((Float) o));
-            }
-            else if (oc == Integer.class)
-            {
-                rt.load((int) ((Integer) o));
-            }
-            else if (oc == Short.class)
-            {
-                rt.load((int) ((Short) o));
-            }
-            else if (oc == Byte.class)
-            {
-                rt.load((int) ((Byte) o));
-            }
-            else if (oc == Character.class)
-            {
-                rt.load((int) ((Character) o));
-            }
-            else if (oc == String.class)
-            {
-                rt.load((String) o);
-            }
-            else if (oc == ValueMap.class)
-            {
-                rt.load((ValueMap) o);
-            }
-            else
-            {
-                rt.load(o);
-            }
-        }
-
-        function.invoke(rt);
-
-        if (function.returnsValue)
-            return rt.pop();
-
-        return null;
+        return this.getRuntime().invoke(function, args);
     }
 
     /**
@@ -281,14 +246,14 @@ public final class Weel
      */
     public void runStatic()
     {
-        final Runtime runtime = this.getRuntime();
+        final WeelRuntime runtime = this.getRuntime();
 
         for (final String name : this.scriptClasses)
         {
             try
             {
                 final Class<?> clazz = this.classLoader.findClass(name);
-                clazz.getMethod("STATIC", Runtime.class).invoke(null, runtime);
+                clazz.getMethod("STATIC", WeelRuntime.class).invoke(null, runtime);
             }
             catch (Exception e)
             {
@@ -306,10 +271,10 @@ public final class Weel
      * Gets a Runtime object local to the current Thread.
      * 
      * @return A Runtime.
-     * @see com.github.rjeschke.weel.Runtime
+     * @see com.github.rjeschke.weel.WeelRuntime
      * @see java.lang.ThreadLocal
      */
-    public Runtime getRuntime()
+    public WeelRuntime getRuntime()
     {
         return this.runtime.get();
     }
@@ -560,7 +525,7 @@ public final class Weel
             {
                 if (m.getParameterTypes().length != 1
                         || m.getReturnType() != void.class
-                        || m.getParameterTypes()[0] != Runtime.class)
+                        || m.getParameterTypes()[0] != WeelRuntime.class)
                     throw new WeelException("Illegal raw Weel function: "
                             + m.toGenericString());
 
@@ -637,5 +602,17 @@ public final class Weel
                 func.invoker = WeelInvokerFactory.create();
             func.initialize(this);
         }
+    }
+
+    /**
+     * Registeres a private variable.
+     * 
+     * @return The index.
+     */
+    int registerPrivate()
+    {
+        final int i = this.privates.size();
+        this.privates.add(new Value());
+        return i;
     }
 }

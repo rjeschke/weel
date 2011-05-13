@@ -30,7 +30,7 @@ public final class WeelLibSys
      *            The Weel runtime.
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void size(final Runtime runtime)
+    public final static void size(final WeelRuntime runtime)
     {
         runtime.load(runtime.popSize());
     }
@@ -47,7 +47,7 @@ public final class WeelLibSys
      * @see java.lang.System#nanoTime()
      */
     @WeelRawMethod(returnsValue = true)
-    public final static void clock(final Runtime runtime)
+    public final static void clock(final WeelRuntime runtime)
     {
         runtime.load(System.nanoTime() * 1e-9);
     }
@@ -62,7 +62,7 @@ public final class WeelLibSys
      *            The Weel runtime.
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void array(final Runtime runtime)
+    public final static void array(final WeelRuntime runtime)
     {
         final int size = (int) runtime.popNumber();
         final ValueMap ret = new ValueMap();
@@ -82,7 +82,7 @@ public final class WeelLibSys
      *            The Weel runtime.
      */
     @WeelRawMethod(name = "array", args = 2, returnsValue = true)
-    public final static void array2(final Runtime runtime)
+    public final static void array2(final WeelRuntime runtime)
     {
         final Value val = runtime.pop();
         final int size = (int) runtime.popNumber();
@@ -102,7 +102,7 @@ public final class WeelLibSys
      *            The Weel runtime.
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void isNull(final Runtime runtime)
+    public final static void isNull(final WeelRuntime runtime)
     {
         runtime.load(runtime.popType() == ValueType.NULL ? -1 : 0);
     }
@@ -117,7 +117,7 @@ public final class WeelLibSys
      *            The Weel runtime.
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void isNumber(final Runtime runtime)
+    public final static void isNumber(final WeelRuntime runtime)
     {
         runtime.load(runtime.popType() == ValueType.NUMBER ? -1 : 0);
     }
@@ -132,7 +132,7 @@ public final class WeelLibSys
      *            The Weel runtime.
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void isString(final Runtime runtime)
+    public final static void isString(final WeelRuntime runtime)
     {
         runtime.load(runtime.popType() == ValueType.STRING ? -1 : 0);
     }
@@ -147,7 +147,7 @@ public final class WeelLibSys
      *            The Weel runtime.
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void isMap(final Runtime runtime)
+    public final static void isMap(final WeelRuntime runtime)
     {
         runtime.load(runtime.popType() == ValueType.MAP ? -1 : 0);
     }
@@ -162,7 +162,7 @@ public final class WeelLibSys
      *            The Weel runtime.
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void isFunc(final Runtime runtime)
+    public final static void isFunc(final WeelRuntime runtime)
     {
         runtime.load(runtime.popType() == ValueType.FUNCTION ? -1 : 0);
     }
@@ -177,7 +177,7 @@ public final class WeelLibSys
      *            The Weel runtime.
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void isObject(final Runtime runtime)
+    public final static void isObject(final WeelRuntime runtime)
     {
         runtime.load(runtime.popType() == ValueType.OBJECT ? -1 : 0);
     }
@@ -192,7 +192,7 @@ public final class WeelLibSys
      *            The Weel runtime.
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void funcName(final Runtime runtime)
+    public final static void funcName(final WeelRuntime runtime)
     {
         runtime.load(runtime.popFunction().name);
     }
@@ -207,7 +207,7 @@ public final class WeelLibSys
      *            The Weel runtime.
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void funcArgs(final Runtime runtime)
+    public final static void funcArgs(final WeelRuntime runtime)
     {
         runtime.load(runtime.popFunction().arguments);
     }
@@ -222,7 +222,7 @@ public final class WeelLibSys
      *            The Weel runtime.
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void funcReturns(final Runtime runtime)
+    public final static void funcReturns(final WeelRuntime runtime)
     {
         runtime.load(runtime.popFunction().returnsValue ? -1 : 0);
     }
@@ -238,7 +238,7 @@ public final class WeelLibSys
      *            The Weel runtime.
      */
     @WeelRawMethod(args = 2, returnsValue = true)
-    public final static void funcFind(final Runtime runtime)
+    public final static void funcFind(final WeelRuntime runtime)
     {
         final int args = (int) runtime.popNumber();
         final String name = runtime.popString();
@@ -259,7 +259,7 @@ public final class WeelLibSys
      *            The Weel runtime.
      */
     @WeelRawMethod(args = 2)
-    public final static void funcReg(final Runtime runtime)
+    public final static void funcReg(final WeelRuntime runtime)
     {
         final ValueMap map = runtime.popMap();
         final String typeName = runtime.popString().toUpperCase();
@@ -318,13 +318,15 @@ public final class WeelLibSys
      *            The Weel runtime.
      */
     @WeelRawMethod(args = 3, returnsValue = true)
-    public final static void funcCheck(final Runtime runtime)
+    public final static void funcCheck(final WeelRuntime runtime)
     {
         final boolean ret = runtime.popBoolean();
         final int args = (int) runtime.popNumber();
         final Value val = runtime.pop();
-        
-        runtime.load(val.type == ValueType.FUNCTION && val.function.returnsValue == ret && val.function.arguments == args);
+
+        runtime.load(val.type == ValueType.FUNCTION
+                && val.function.returnsValue == ret
+                && val.function.arguments == args);
     }
 
     /**
@@ -337,7 +339,7 @@ public final class WeelLibSys
      *            The Weel runtime.
      */
     @WeelRawMethod(name = "funcReg", args = 3)
-    public final static void funcReg3(final Runtime runtime)
+    public final static void funcReg3(final WeelRuntime runtime)
     {
         final WeelFunction func = runtime.popFunction();
         final String name = runtime.popString();
@@ -374,7 +376,7 @@ public final class WeelLibSys
      *            The runtime.
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void toNum(final Runtime runtime)
+    public final static void toNum(final WeelRuntime runtime)
     {
         final String str = runtime.popString().toLowerCase();
         if (str.length() > 2)
@@ -402,7 +404,7 @@ public final class WeelLibSys
      *            The runtime.
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void toStr(final Runtime runtime)
+    public final static void toStr(final WeelRuntime runtime)
     {
         runtime.load(runtime.pop().toString());
     }
@@ -417,8 +419,44 @@ public final class WeelLibSys
      *            The runtime.
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void typeOf(final Runtime runtime)
+    public final static void typeOf(final WeelRuntime runtime)
     {
         runtime.load(runtime.pop().type.toString());
+    }
+
+    /**
+     * <code>sleep(ms)</code>
+     * <p>
+     * Sleeps for ne given number of milliseconds.
+     * </p>
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(args = 1, returnsValue = true)
+    public final static void sleep(final WeelRuntime runtime)
+    {
+        try
+        {
+            Thread.sleep((long) runtime.popNumber());
+            runtime.load(true);
+        }
+        catch (InterruptedException e)
+        {
+            runtime.load(false);
+        }
+    }
+
+    /**
+     * Returns the amount of memory used by this virtual machine in bytes.
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(returnsValue = true)
+    public final static void usedMem(final WeelRuntime runtime)
+    {
+        runtime.load(Runtime.getRuntime().totalMemory()
+                - Runtime.getRuntime().freeMemory());
     }
 }

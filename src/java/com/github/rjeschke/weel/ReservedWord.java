@@ -33,6 +33,8 @@ enum ReservedWord
 
     OUTER,
     
+    PRIVATE,
+    
     RETURN,
 
     SUB, SWITCH,

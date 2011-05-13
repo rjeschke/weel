@@ -24,7 +24,7 @@ import java.util.Map.Entry;
  * 
  * @author René Jeschke <rene_jeschke@yahoo.de>
  */
-public final class Runtime
+public final class WeelRuntime
 {
     /** Default size of the operand stack. */
     public final static int DEFAULT_VALUE_STACK_SIZE = 8192;
@@ -50,6 +50,8 @@ public final class Runtime
     private int vp = -1;
     /** Global variables. */
     private final ArrayList<Value> globals;
+    /** Private variables. */
+    private final ArrayList<Value> privates;
     /** Type bound support functions. */
     private final TypeFunctions[] typeFunctions;
 
@@ -59,10 +61,11 @@ public final class Runtime
      * @param weel
      *            The mother Weel.
      */
-    Runtime(final Weel weel)
+    WeelRuntime(final Weel weel)
     {
         this.mother = weel;
         this.globals = weel.globals;
+        this.privates = weel.privates;
         this.typeFunctions = weel.typeFunctions;
         for (int i = 0; i < this.stack.length; i++)
             this.stack[i] = new Value();
@@ -167,6 +170,36 @@ public final class Runtime
     public void lglob(final int index)
     {
         this.globals.get(index).copyTo(this.stack[++this.sp]);
+    }
+
+    /**
+     * Stores a Value into a private variable.
+     * 
+     * <p>
+     * <code>..., value &rArr; ... </code>
+     * </p>
+     * 
+     * @param index
+     *            The index of the private variable.
+     */
+    public void spriv(final int index)
+    {
+        this.stack[this.sp--].copyTo(this.privates.get(index));
+    }
+
+    /**
+     * Loads a Value from a private variable.
+     * 
+     * <p>
+     * <code>... &rArr; ..., value </code>
+     * </p>
+     * 
+     * @param index
+     *            The index of the private variable.
+     */
+    public void lpriv(final int index)
+    {
+        this.privates.get(index).copyTo(this.stack[++this.sp]);
     }
 
     /**
@@ -1334,6 +1367,21 @@ public final class Runtime
     }
 
     /**
+     * Gets a boolean value from the stack.
+     * <p>
+     * Only used in wrapper methods.
+     * </p>
+     * 
+     * @param var
+     *            The local variable index.
+     * @return The boolean.
+     */
+    public boolean getBooleanLocal(final int var)
+    {
+        return this.stack[var + this.frameStart[this.fp]].toBoolean();
+    }
+
+    /**
      * Gets a String value from the stack.
      * <p>
      * Only used in wrapper methods.
@@ -1413,16 +1461,16 @@ public final class Runtime
     }
 
     /**
-     * Creates a virtual function from a static anonymous function.
+     * Creates a closure function from a static anonymous function.
      * 
      * @param index
      *            The function index.
      */
-    public void createVirtual(final int index)
+    public void createClosure(final int index)
     {
         this.stack[++this.sp].type = ValueType.FUNCTION;
         this.stack[this.sp].function = this.mother.functions.get(index)
-                .cloneVirtual(this);
+                .cloneClosure(this);
     }
 
     /**
@@ -1456,6 +1504,80 @@ public final class Runtime
         {
             throw new WeelException(err);
         }
+    }
+
+    /**
+     * Invokes the Weel function with the given name and arguments.
+     * 
+     * @param function
+     *            The function.
+     * @param args
+     *            The arguments.
+     * @return A Value if the functions returns a value, <code>null</code>
+     *         otherwise.
+     * @throws WeelException
+     *             if the function argument count does not match the supplied
+     *             argument count.
+     */
+    public Value invoke(final WeelFunction function, Object... args)
+    {
+        if (args.length != function.arguments)
+        {
+            throw new WeelException("Argument count mismatch");
+        }
+
+        for (final Object o : args)
+        {
+            if (o == null)
+            {
+                this.load();
+                continue;
+            }
+            final Class<?> oc = o.getClass();
+            if (oc == Double.class)
+            {
+                this.load((double) ((Double) o));
+            }
+            else if (oc == Float.class)
+            {
+                this.load((float) ((Float) o));
+            }
+            else if (oc == Integer.class)
+            {
+                this.load((int) ((Integer) o));
+            }
+            else if (oc == Short.class)
+            {
+                this.load((int) ((Short) o));
+            }
+            else if (oc == Byte.class)
+            {
+                this.load((int) ((Byte) o));
+            }
+            else if (oc == Character.class)
+            {
+                this.load((int) ((Character) o));
+            }
+            else if (oc == String.class)
+            {
+                this.load((String) o);
+            }
+            else if (oc == ValueMap.class)
+            {
+                this.load((ValueMap) o);
+            }
+            else
+            {
+                this.load(o);
+            }
+        }
+
+        function.invoke(this);
+
+        if (function.returnsValue)
+            return this.pop();
+
+        return null;
     }
 
     /**

@@ -191,9 +191,6 @@ public final class Value
             if(temp == this.number)
                 return Long.toString(temp);
             return Double.toString(this.number);
-//            final String str = Double.toString(this.number);
-//            return str.endsWith(".0") ? str.substring(0, str.length() - 2)
-//                    : str;
         }
         case STRING:
             return this.string;
@@ -347,7 +344,7 @@ public final class Value
         switch (this.type)
         {
         case NUMBER:
-            return this.number;
+            return Math.abs(this.number);
         case STRING:
             return this.string.length();
         case MAP:

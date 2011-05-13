@@ -29,7 +29,7 @@ public final class WeelLibString
      * @see java.lang.String#toUpperCase()
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void strUpper(final Runtime runtime)
+    public final static void strUpper(final WeelRuntime runtime)
     {
         runtime.load(runtime.popString().toUpperCase());
     }
@@ -45,7 +45,7 @@ public final class WeelLibString
      * @see java.lang.String#toLowerCase()
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void strLower(final Runtime runtime)
+    public final static void strLower(final WeelRuntime runtime)
     {
         runtime.load(runtime.popString().toLowerCase());
     }
@@ -62,7 +62,7 @@ public final class WeelLibString
      * @see java.lang.String#indexOf(String)
      */
     @WeelRawMethod(name = "strindex", args = 2, returnsValue = true)
-    public final static void strIndex2(final Runtime runtime)
+    public final static void strIndex2(final WeelRuntime runtime)
     {
         final String b = runtime.popString();
         final String a = runtime.popString();
@@ -81,7 +81,7 @@ public final class WeelLibString
      * @see java.lang.String#indexOf(String, int)
      */
     @WeelRawMethod(name = "strindex", args = 3, returnsValue = true)
-    public final static void strIndex3(final Runtime runtime)
+    public final static void strIndex3(final WeelRuntime runtime)
     {
         final int i = (int) runtime.popNumber();
         final String b = runtime.popString();
@@ -100,7 +100,7 @@ public final class WeelLibString
      * @see java.lang.String#split(String)
      */
     @WeelRawMethod(args = 2, returnsValue = true)
-    public final static void strSplit(final Runtime runtime)
+    public final static void strSplit(final WeelRuntime runtime)
     {
         final String b = runtime.popString();
         final String a = runtime.popString();
@@ -123,7 +123,7 @@ public final class WeelLibString
      *            The runtime.
      */
     @WeelRawMethod(args = 2, returnsValue = true)
-    public final static void strSub(final Runtime runtime)
+    public final static void strSub(final WeelRuntime runtime)
     {
         final int b = (int) runtime.popNumber();
         final String a = runtime.popString();
@@ -141,7 +141,7 @@ public final class WeelLibString
      *            The runtime.
      */
     @WeelRawMethod(name = "strsub", args = 3, returnsValue = true)
-    public final static void strSub3(final Runtime runtime)
+    public final static void strSub3(final WeelRuntime runtime)
     {
         final int c = (int) runtime.popNumber();
         final int b = (int) runtime.popNumber();

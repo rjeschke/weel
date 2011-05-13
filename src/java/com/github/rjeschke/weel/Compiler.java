@@ -32,8 +32,12 @@ final class Compiler
     Scope scope;
     /** The class writer. */
     JvmClassWriter classWriter;
-    /** Flag indicating that we're in debug mode. (Used for assert(cond)).*/
+    /** Flag indicating that we're in debug mode. (Used for assert(cond)). */
     private final boolean debugMode;
+    /** Anonymous function counter. */
+    private int anonCounter = 0;
+    /** Flag indicating that we're used. */
+    private boolean used = false;
 
     /**
      * Constructor.
@@ -98,6 +102,10 @@ final class Compiler
      */
     private void compile()
     {
+        if (this.used)
+        {
+            throw new WeelException("Trying to reuse a compiler instance.");
+        }
         this.initialize();
 
         this.tokenizer.next();
@@ -115,6 +123,8 @@ final class Compiler
         this.weel.classLoader.addClass(this.classWriter);
 
         this.weel.initAllInvokers();
+
+        this.used = true;
     }
 
     /**
@@ -123,13 +133,14 @@ final class Compiler
     private void initialize()
     {
         this.classWriter = new JvmClassWriter(
-                "com.github.rjeschke.weel.scripts.Script" + Weel.scriptCounter.getAndIncrement());
+                "com.github.rjeschke.weel.scripts.Script"
+                        + Weel.scriptCounter.getAndIncrement());
 
         this.weel.scriptClasses.add(this.classWriter.className);
 
         final Scope s = new Scope(this.weel, ScopeType.STATIC);
         s.block = new CodeBlock(this.classWriter.createMethod("STATIC",
-                "(Lcom/github/rjeschke/weel/Runtime;)V"));
+                "(Lcom/github/rjeschke/weel/WeelRuntime;)V"));
 
         this.addScope(s);
     }
@@ -203,6 +214,10 @@ final class Compiler
                 break;
             case LOCAL:
                 this.parseLocal();
+                this.skipSemi();
+                break;
+            case PRIVATE:
+                this.parsePrivate();
                 this.skipSemi();
                 break;
             case OUTER:
@@ -406,10 +421,7 @@ final class Compiler
                 {
                     this.writeGetVariable(var);
                 }
-                else if (expr != ExpressionType.FUNCTION)
-                {
-                    this.syntaxError();
-                }
+                // FIXME ... is there something missing here?
                 this.tokenizer.next();
                 this.checkToken(Token.BRACE_OPEN);
                 this.tokenizer.next();
@@ -845,7 +857,7 @@ final class Compiler
                     }
                     else
                     {
-                        // FIXME is this really correct?
+                        // FIXME do I need this? is this correct?
                         switch (this.tokenizer.token)
                         {
                         case NAME:
@@ -1329,12 +1341,14 @@ final class Compiler
         }
         this.checkReserved(ReservedWord.IN);
         this.tokenizer.next();
-        if(this.tokenizer.token == Token.RESERVED && this.tokenizer.reserved == ReservedWord.THIS)
+        if (this.tokenizer.token == Token.RESERVED
+                && this.tokenizer.reserved == ReservedWord.THIS)
         {
             final Scope s = this.scope.findFunctionScope();
-            if(s == null || !s.isOop)
+            if (s == null || !s.isOop)
             {
-                throw new WeelException(this.tokenizer.error("Illegal use of 'this'"));
+                throw new WeelException(this.tokenizer
+                        .error("Illegal use of 'this'"));
             }
             this.block.callRuntime("lloc", 0);
         }
@@ -1620,10 +1634,10 @@ final class Compiler
         }
 
         func.clazz = this.classWriter.className;
-        func.javaName = anonymous ? "$anon$" + Weel.anonCounter.incrementAndGet() : func.name
+        func.javaName = anonymous ? "$anon$" + this.anonCounter++ : func.name
                 + "$" + func.arguments;
         this.block.setMethodWriter(this.classWriter.createMethod(func.javaName,
-                "(Lcom/github/rjeschke/weel/Runtime;)V"));
+                "(Lcom/github/rjeschke/weel/WeelRuntime;)V"));
 
         this.weel.addFunction(func.name + "#" + func.arguments, func,
                 !anonymous);
@@ -1666,7 +1680,7 @@ final class Compiler
         {
             this.removeScope();
             if (func.envLocals != null)
-                this.block.callRuntime("createVirtual", func.index);
+                this.block.callRuntime("createClosure", func.index);
             else
                 this.block.callRuntime("loadFunc", func.index);
         }
@@ -1750,57 +1764,59 @@ final class Compiler
         }
     }
 
-     /**
+    /**
      * Parses the 'outer' keyword
      */
-     private void parseOuter()
-     {
-         final Scope outer = this.scope.getBorderScope();
-         if(outer == null)
-         {
-             throw new WeelException(this.tokenizer.error("'outer' without anonymous function"));
-         }
-         this.tokenizer.next();
+    private void parseOuter()
+    {
+        final Scope outer = this.scope.getBorderScope();
+        if (outer == null)
+        {
+            throw new WeelException(this.tokenizer
+                    .error("'outer' without anonymous function"));
+        }
+        this.tokenizer.next();
 
-         while (this.tokenizer.token != Token.EOF)
-         {
-             this.checkToken(Token.NAME);
-             final String name = this.tokenizer.string;
-             int lidx = outer.findLocal(name);
-             if(this.scope.findCvar(name) != -1 || lidx != -1)
-             {
-                 throw new WeelException(this.tokenizer.error("Duplicate explicit cvar '%s'", name));
-             }
-             lidx = outer.addLocal(name);
-             Variable var = new Variable();
-             var.type = Type.NONE;
-             var.name = name;
-             this.scope.maybeCreateCvar(var);
+        while (this.tokenizer.token != Token.EOF)
+        {
+            this.checkToken(Token.NAME);
+            final String name = this.tokenizer.string;
+            int lidx = outer.findLocal(name);
+            if (this.scope.findCvar(name) != -1 || lidx != -1)
+            {
+                throw new WeelException(this.tokenizer.error(
+                        "Duplicate explicit cvar '%s'", name));
+            }
+            lidx = outer.addLocal(name);
+            Variable var = new Variable();
+            var.type = Type.NONE;
+            var.name = name;
+            this.scope.maybeCreateCvar(var);
 
-             this.tokenizer.next();
-             this.checkToken(Token.ASSIGN);
-             this.tokenizer.next();
-             
-             final Scope old = this.scope;
-             // We have to switch scopes to compile the
-             // initialize expression into the border scope.
-             this.scope = outer;
-             this.block = outer.block;
-             
-             this.parseExpression();
-             this.block.callRuntime("sloc", lidx);
+            this.tokenizer.next();
+            this.checkToken(Token.ASSIGN);
+            this.tokenizer.next();
 
-             this.scope = old;
-             this.block = old.block;
-             
-             if (this.tokenizer.token == Token.COMMA)
-             {
-                 this.tokenizer.next();
-                 continue;
-             }
-             break;
-         }
-     }
+            final Scope old = this.scope;
+            // We have to switch scopes to compile the
+            // initialize expression into the border scope.
+            this.scope = outer;
+            this.block = outer.block;
+
+            this.parseExpression();
+            this.block.callRuntime("sloc", lidx);
+
+            this.scope = old;
+            this.block = old.block;
+
+            if (this.tokenizer.token == Token.COMMA)
+            {
+                this.tokenizer.next();
+                continue;
+            }
+            break;
+        }
+    }
 
     /**
      * Parses the 'global' keyword
@@ -1825,6 +1841,39 @@ final class Compiler
                 this.tokenizer.next();
                 this.parseExpression();
                 this.block.callRuntime("sglob", index);
+            }
+            if (this.tokenizer.token == Token.COMMA)
+            {
+                this.tokenizer.next();
+                continue;
+            }
+            break;
+        }
+    }
+
+    /**
+     * Parses the 'private' keyword
+     */
+    private void parsePrivate()
+    {
+        this.tokenizer.next();
+
+        while (this.tokenizer.token != Token.EOF)
+        {
+            this.checkToken(Token.NAME);
+            final String name = this.tokenizer.string;
+            if (this.scope.findPrivate(name) != -1)
+            {
+                throw new WeelException(this.tokenizer.error(
+                        "Duplicate private variable '%s'", name));
+            }
+            final int index = this.scope.addPrivate(name);
+            this.tokenizer.next();
+            if (this.tokenizer.token == Token.ASSIGN)
+            {
+                this.tokenizer.next();
+                this.parseExpression();
+                this.block.callRuntime("spriv", index);
             }
             if (this.tokenizer.token == Token.COMMA)
             {
@@ -1950,14 +1999,27 @@ final class Compiler
      */
     private void writeGetVariable(final Variable var)
     {
-        if (var.type == Type.LOCAL)
+        switch (var.type)
+        {
+        case LOCAL:
             this.block.callRuntime("lloc", var.index);
-        else if (var.type == Type.GLOBAL)
+            break;
+        case GLOBAL:
             this.block.callRuntime("lglob", var.index);
-        else if (var.type == Type.CVAR)
+            break;
+        case PRIVATE:
+            this.block.callRuntime("lpriv", var.index);
+            break;
+        case CVAR:
             this.block.callRuntime("linenv", var.index);
-        else if (var.function != null)
-            this.block.callRuntime("loadFunc", var.function.index);
+            break;
+        default:
+            if (var.function != null)
+                this.block.callRuntime("loadFunc", var.function.index);
+            else
+                this.syntaxError();
+            break;
+        }
     }
 
     /**
@@ -2025,14 +2087,23 @@ final class Compiler
      */
     private void writeSetVariable(final Variable var)
     {
-        if (var.type == Type.LOCAL)
+        switch (var.type)
+        {
+        case LOCAL:
             this.block.callRuntime("sloc", var.index);
-        else if (var.type == Type.GLOBAL)
+            break;
+        case GLOBAL:
             this.block.callRuntime("sglob", var.index);
-        else if (var.type == Type.CVAR)
+            break;
+        case PRIVATE:
+            this.block.callRuntime("spriv", var.index);
+            break;
+        case CVAR:
             this.block.callRuntime("sinenv", var.index);
-        else
+            break;
+        default:
             this.syntaxError();
+        }
     }
 
     /**
@@ -2041,7 +2112,6 @@ final class Compiler
      * @param func
      *            The WeelFunction.
      */
-    // TODO nice functions (static wrapper may hide object instance)
     private void writeCallFunction(final WeelFunction func)
     {
         this.block.code.add(JvmOp.ALOAD_0);
@@ -2050,8 +2120,8 @@ final class Compiler
 
         this.block.code.addShort(this.classWriter.addMethodRefConstant(
                 func.clazz, func.javaName,
-                "(Lcom/github/rjeschke/weel/Runtime;)V"));
-        if(func.returnsValue)
+                "(Lcom/github/rjeschke/weel/WeelRuntime;)V"));
+        if (func.returnsValue)
             this.block.push();
         this.block.pop(func.arguments);
     }
@@ -2103,11 +2173,11 @@ final class Compiler
                     "com.github.rjeschke.weel.scripts.Assert");
 
             this.block = this.scope.block = new CodeBlock(temp.createMethod(
-                    "STATIC", "(Lcom/github/rjeschke/weel/Runtime;)V"));
+                    "STATIC", "(Lcom/github/rjeschke/weel/WeelRuntime;)V"));
         }
         this.parseExpression();
         String message = null;
-        if(this.tokenizer.token == Token.COMMA)
+        if (this.tokenizer.token == Token.COMMA)
         {
             this.tokenizer.next();
             this.checkToken(Token.STRING);
@@ -2123,13 +2193,14 @@ final class Compiler
         else
         {
             this.block.code.add(JvmOp.ALOAD_0);
-            if(message != null)
-                this.block.ldcStr(this.tokenizer.error("Assert failed (%s)", message));
+            if (message != null)
+                this.block.ldcStr(this.tokenizer.error("Assert failed (%s)",
+                        message));
             else
                 this.block.ldcStr(this.tokenizer.error("Assert failed"));
             this.block.code.add(JvmOp.INVOKEVIRTUAL);
             this.block.code.addShort(this.classWriter.addMethodRefConstant(
-                    "com.github.rjeschke.weel.Runtime", "weelAssert",
+                    "com.github.rjeschke.weel.WeelRuntime", "weelAssert",
                     "(Ljava/lang/String;)V"));
             this.block.pop();
         }

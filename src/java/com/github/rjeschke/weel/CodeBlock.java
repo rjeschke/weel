@@ -208,7 +208,7 @@ final class CodeBlock
         this.code.add(JvmOp.ALOAD_0);
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(this.classWriter.addMethodRefConstant(
-                "com.github.rjeschke.weel.Runtime", name, "()V"));
+                "com.github.rjeschke.weel.WeelRuntime", name, "()V"));
         this.autoStack(name, 0);
     }
 
@@ -225,7 +225,7 @@ final class CodeBlock
         this.code.add(JvmOp.ALOAD_0);
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(this.classWriter.addMethodRefConstant(
-                "com.github.rjeschke.weel.Runtime", name, descriptor));
+                "com.github.rjeschke.weel.WeelRuntime", name, descriptor));
         this.autoStack(name, 0);
     }
 
@@ -245,7 +245,7 @@ final class CodeBlock
         this.ldcInt(arg0);
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(this.classWriter.addMethodRefConstant(
-                "com.github.rjeschke.weel.Runtime", name, descriptor));
+                "com.github.rjeschke.weel.WeelRuntime", name, descriptor));
         this.autoStack(name, arg0);
     }
 
@@ -263,7 +263,7 @@ final class CodeBlock
         this.ldcInt(arg0);
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(this.classWriter.addMethodRefConstant(
-                "com.github.rjeschke.weel.Runtime", name, "(I)V"));
+                "com.github.rjeschke.weel.WeelRuntime", name, "(I)V"));
         this.autoStack(name, arg0);
     }
 
@@ -282,7 +282,7 @@ final class CodeBlock
         this.code.add(wantsValue ? JvmOp.ICONST_1 : JvmOp.ICONST_0);
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(this.classWriter.addMethodRefConstant(
-                "com.github.rjeschke.weel.Runtime", "stackCall", "(IZ)V"));
+                "com.github.rjeschke.weel.WeelRuntime", "stackCall", "(IZ)V"));
         if (wantsValue)
             this.push();
         this.pop(arguments);
@@ -300,7 +300,7 @@ final class CodeBlock
         this.ldcStr(value);
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(this.classWriter.addMethodRefConstant(
-                "com.github.rjeschke.weel.Runtime", "load",
+                "com.github.rjeschke.weel.WeelRuntime", "load",
                 "(Ljava/lang/String;)V"));
         this.push();
     }
@@ -327,7 +327,7 @@ final class CodeBlock
                 this.ldc(this.classWriter.addConstant(new JvmConstant(check)));
                 this.code.add(JvmOp.INVOKEVIRTUAL);
                 this.code.addShort(this.classWriter.addMethodRefConstant(
-                        "com.github.rjeschke.weel.Runtime", "load", "(F)V"));
+                        "com.github.rjeschke.weel.WeelRuntime", "load", "(F)V"));
             }
             else
             {
@@ -336,7 +336,7 @@ final class CodeBlock
                         .addConstant(new JvmConstant(value)));
                 this.code.add(JvmOp.INVOKEVIRTUAL);
                 this.code.addShort(this.classWriter.addMethodRefConstant(
-                        "com.github.rjeschke.weel.Runtime", "load", "(D)V"));
+                        "com.github.rjeschke.weel.WeelRuntime", "load", "(D)V"));
             }
             this.push();
         }
@@ -404,7 +404,7 @@ final class CodeBlock
         this.ldcInt(value);
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(this.classWriter.addMethodRefConstant(
-                "com.github.rjeschke.weel.Runtime", "load", "(I)V"));
+                "com.github.rjeschke.weel.WeelRuntime", "load", "(I)V"));
         this.push();
     }
 
@@ -427,7 +427,7 @@ final class CodeBlock
         this.ldcInt(shouldReturn ? 1 : 0);
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(this.classWriter.addMethodRefConstant(
-                "com.github.rjeschke.weel.Runtime", "specialCall",
+                "com.github.rjeschke.weel.WeelRuntime", "specialCall",
                 "(Ljava/lang/String;IZ)V"));
         if (shouldReturn)
             this.push();
@@ -457,7 +457,7 @@ final class CodeBlock
         }
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(cw.addMethodRefConstant(
-                "com.github.rjeschke.weel.Runtime", "openFrame", "(II)V"));
+                "com.github.rjeschke.weel.WeelRuntime", "openFrame", "(II)V"));
 
         // Copy old code
         for (int i = 0; i < old.size(); i++)
@@ -468,7 +468,7 @@ final class CodeBlock
         this.ldcInt(this.maxStack);
         this.code.add(JvmOp.INVOKEVIRTUAL);
         this.code.addShort(cw.addMethodRefConstant(
-                "com.github.rjeschke.weel.Runtime", (this.function != null
+                "com.github.rjeschke.weel.WeelRuntime", (this.function != null
                         && this.function.returnsValue ? "closeFrameRet"
                         : "closeFrame"), "(I)V"));
         this.code.add(JvmOp.RETURN);

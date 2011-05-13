@@ -25,7 +25,7 @@ public final class WeelLibMap
      *            The runtime.
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void mapToList(Runtime runtime)
+    public final static void mapToList(WeelRuntime runtime)
     {
         final ValueMap in = runtime.popMap();
         final ValueMap out = new ValueMap();
@@ -46,7 +46,7 @@ public final class WeelLibMap
      *            The runtime.
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void mapIsList(Runtime runtime)
+    public final static void mapIsList(WeelRuntime runtime)
     {
         final ValueMap in = runtime.popMap();
         runtime.load(in.ordered);
@@ -62,7 +62,7 @@ public final class WeelLibMap
      *            The runtime.
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void mapClone(Runtime runtime)
+    public final static void mapClone(WeelRuntime runtime)
     {
         runtime.load(runtime.popMap().clone());
     }
@@ -77,7 +77,7 @@ public final class WeelLibMap
      *            The runtime.
      */
     @WeelRawMethod(args = 1, returnsValue = true)
-    public final static void mapReverse(Runtime runtime)
+    public final static void mapReverse(WeelRuntime runtime)
     {
         runtime.load(runtime.popMap().reverse());
     }
@@ -92,7 +92,7 @@ public final class WeelLibMap
      *            The runtime.
      */
     @WeelRawMethod(args = 2, returnsValue = true)
-    public final static void mapHasKey(Runtime runtime)
+    public final static void mapHasKey(WeelRuntime runtime)
     {
         final Value key = runtime.pop();
         runtime.load(runtime.popMap().hasKey(key));

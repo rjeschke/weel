@@ -19,8 +19,8 @@ public class WeelFunction
     int arguments;
     /** Does this function return a value? */
     boolean returnsValue;
-    /** Virtual function? */
-    boolean isVirtual;
+    /** Does this function contain a closure? */
+    boolean isClosure;
     /** Function parent. */
     WeelFunction parent;
     /** Closure environment. */
@@ -44,13 +44,13 @@ public class WeelFunction
     }
 
     /**
-     * Creates a virtual function from this function.
+     * Creates a closure function from this function.
      * 
      * @param runtime
      *            The Weel runtime.
-     * @return The cloned virtual function.
+     * @return The cloned 
      */
-    WeelFunction cloneVirtual(final Runtime runtime)
+    WeelFunction cloneClosure(final WeelRuntime runtime)
     {
         final WeelFunction func = new WeelFunction();
 
@@ -58,7 +58,7 @@ public class WeelFunction
         func.name = "ANON";
         func.arguments = this.arguments;
         func.returnsValue = this.returnsValue;
-        func.isVirtual = true;
+        func.isClosure = true;
         func.parent = this;
 
         // Closure?
@@ -93,11 +93,11 @@ public class WeelFunction
      * 
      * @param runtime
      *            The Weel Runtime.
-     * @see com.github.rjeschke.weel.WeelInvoker#invoke(Runtime)
+     * @see com.github.rjeschke.weel.WeelInvoker#invoke(WeelRuntime)
      */
-    public void invoke(final Runtime runtime)
+    public void invoke(final WeelRuntime runtime)
     {
-        if (this.isVirtual)
+        if (this.isClosure)
             this.parent.invoker.invoke(runtime, this);
         else
             this.invoker.invoke(runtime);

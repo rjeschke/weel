@@ -17,7 +17,7 @@ interface WeelInvoker
      * @param runtime
      *            The Weel Runtime.
      */
-    public void invoke(final Runtime runtime);
+    public void invoke(final WeelRuntime runtime);
 
     /**
      * Invokes a Weel anonymous function with closure.
@@ -28,7 +28,7 @@ interface WeelInvoker
      *            The virtual WeelFunction.
      * 
      */
-    public void invoke(final Runtime runtime, final WeelFunction function);
+    public void invoke(final WeelRuntime runtime, final WeelFunction function);
 
     /**
      * Initializes this invoker.

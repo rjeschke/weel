@@ -43,7 +43,7 @@ public class WeelUnitTest
      */
     public boolean runTests(final Weel weel)
     {
-        final Runtime rt = weel.getRuntime();
+        final WeelRuntime rt = weel.getRuntime();
         boolean ranTest = false;
         System.out.println("[TestCase]: " + this.title);
         System.out.println("----------");
@@ -105,7 +105,7 @@ public class WeelUnitTest
      * @param runtime
      *            The runtime.
      */
-    private void invoke(final WeelFunction func, final Runtime runtime)
+    private void invoke(final WeelFunction func, final WeelRuntime runtime)
     {
         final int sp = runtime.getStackPointer();
         runtime.load(this.me);
@@ -158,7 +158,7 @@ public class WeelUnitTest
      * @param title
      *            The title.
      */
-    public void wuThrows(final Runtime runtime, final WeelFunction function,
+    public void wuThrows(final WeelRuntime runtime, final WeelFunction function,
             final String title)
     {
         System.out.print("  [throws]");
@@ -190,7 +190,7 @@ public class WeelUnitTest
      * @param title
      *            The title.
      */
-    public void wuNoThrow(final Runtime runtime, final WeelFunction function,
+    public void wuNoThrow(final WeelRuntime runtime, final WeelFunction function,
             final String title)
     {
         System.out.print(" [nothrow]");

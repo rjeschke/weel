@@ -1,203 +1,225 @@
-# Weel - An extensible scripting language
+# Weel - A fast and extensible programming language for Java
 Copyright (C) 2011 René Jeschke <rene_jeschke@yahoo.de>  
 See LICENSE.txt for licensing information.
 
 ***
 
-### Weel (aka Yjasl5) is a scripting language for Java
+[Weel] is a dynamically typed, case insensitive, imperative and slightly 
+functional and object oriented programming language running on the Java(TM)
+virtual machine.
 
-The first Yjasl (Yet just another scripting language) version
-was created somewhere around 2005 (in C#). A lot of minor and
-major changes followed. Versions 2 and 3 where also done in
-C#, 2.5 was an attempt to translate Yjasl to C.
+It's main goal is to provide a simple and powerful scripting language
+for Java with mechanisms for easy interaction with Java code
+and without having to bind to any native libraries.
 
-In 2008 I rediscovered Java (the last Java versions I worked with
-were 1.3.x and 1.4.x) and finally started to say goodbye to Microsoft-only
-solutions. Some time later Yjasl4 was born.
+Weel's syntax is heavily based on [Lua], though Weel is not Lua. There
+are minor and major differences between Lua and Weel, but if you know
+Lua, it won't be hard to get started with Weel. The syntax also contains
+elements from C, C++, Java and functional programming languages.
 
-The current version might be called Yjasl5 because it is again
-a major revision, but as it is said that I'm always reinventing
-the wheel, I decided to name this version *Weel*. (I left out the
-'h' to make it a bit less obvious ;) ).
+As usual the term 'fast' is relative. Weel is of course much slower than
+doing the same things in pure Java, but it beats most other existing 
+dynamically typed languages running on the JVM *( I'll prove this later ;-) )*.
 
-Yjasl versions 1, 3 and 4 have not been published anywhere, Yjasl2
-may be viewed [here] (http://yjasl.sourceforge.net/ "This sf.net repo is dead."). 
+### Development state
 
-Large parts of the language changed until today, so the facts and manual
-given on the SourceForge page are only valid for Yjasl2. Still you will
-get an overview of Weel's features.
-
-### Architecture
-
-Weel is a stack based, dynamically typed language with a base syntax 
-similar to [Lua] and using elements from various other languages. (At 
-the time I wrote Yjasl1 I worked heavily with [Lua] for creating [Enigma] 
-levels. That's why there's so many syntax similarities.)
-
-All previous versions compiled to a very simple byte code (less
-than 40 opcodes) and got interpreted by a *VirtualMachine* which was
-in fact a `for`-loop and a `switch`.
-
-This version compiles directly to Java byte code using only a simple 
-runtime class for its operation. *(Which decreases the execution time
-by a factor of 3 to 6 compared to Yjasl4, and now Weel doesn't need
-to hide away from other dynamically typed languages.)*
+*somewhere between alpha and beta, but more on the beta side*
 
 ### Features
 
-*   Fully written in Java without any external dependencies
-*   Hand-written compiler and tokenizer
-*   Easily extendible by Java methods 
-*   Multithreading support with a simple locking mechanism to protect
-    global variable accessing 
-*   Basic OOP functionality (by using maps)
-*   Closures and anonymous functions
-*   Possibility to export the compiled scripts to avoid making
-    your script sources publicly viewable  
-*   ... and much more
+*   Can easily be extended with Java functions (using annotations)
+*   Easy mechanisms for mapping Java classes to Weel 'classes'
+*   Multithreading support
+*   Fully written in Java, no external dependencies
+*   Unit test framework
 
-### Current development status
+For more informations have a look [here](http://rjeschke.github.com/weel/).
 
-*alpha*
+### TODO
 
-Most of the stuff is working, still a lot missing though.
+*   Switch to Apache v2 license
+*   Finish standard library (String and map functions mainly)
+*   Threading/concurrency and IO library
+*   Add mechanism for user library registering and loading on demand
+*   Map some useful Java classes to Weel (e.g. StringBuilder, RegExp)
+*   Library documentation
+*   Maybe create a 'weel-library' project on github to give users a chance
+    to extend Weel in a moderated way?
 
-### How would Weel source code look like?
+### Build instructions
 
-	func fold(list, fc)
-		if size(list) == 0 then
-			return null
-		elseif size(list) == 1 then
-			return list[0]
-		else
-			ret = fc(list[0], list[1])
-			for i = 2, size(list) - 1 do
-				ret = fc(ret, list[i])
-		    end
-		    return ret
-		end
-	end
+As usual a
 
-	ilist = {1, 2, 3, 4}
-	slist = {"Hello", "world!"}
-	
-	println("Result: "..fold(ilist, func(a, b) return a + b; end));
-	// OUTPUT: Result: 10
-	
-	println("Result: "..fold(slist, 
-		func(a, b) 
-			return a.." "..b
-		end));
-	// OUTPUT: Result: Hello world!
-	
-	func create(var)
-		return 
-			sub()
-				print(var)
-			end
-	end
+    ant release
+    
+creates the jars in the 'release' folder.
 
-	f0 = create("Foo");
-	f1 = create("Bar");
-	f0() print(" ")	f1() println()
-	// OUTPUT: Foo Bar
-	
-	clazz = {}
-	clazz.var = "Hello world!"
-	
-	sub clazz:println()
-		println(this->var)
-	end
-	
-	my = new(clazz)
-	my->var = "Hello John!"
-	my->println()
-	// OUTPUT: "Hello John!"
-	
-	clazz->println()
-	// OUTPUT: Hello world!
+### Usage
 
-	config = {
-		user = {
-			name = "John Doe"
-		},
-		prefs = {
-			nocolors = false,
-			verbose = true,
-			shell = "/bin/bash"
-		},
-		flags = { 0, 3, -2, 1 }
-	}
-	
-	println(config.user.name)
-	// OUTPUT: John Doe
-	println(config["prefs"]["verbose"])
-	// OUTPUT: -1
-	
-	myFunc = func()
-		// 'outer' explicitly declares an initialized closure variable
-		// closure variables can be modified and used to
-		// store the state between function calls
-		outer counter = 0
-		ret = counter
-		counter += 1
-		return ret
-	end
-	
-	// Using 'outer' in the previous anonymous function would
-	// look like this, when you would do it without 'outer':
-	// myFunc = null;
-	// do
-	//     local counter = 0;
-	//     myFunc = func()
-	//         ret = counter;
-	//         counter += 1;
-	//         return ret;
-	//     end
-	// end
-	
-	println(myFunc())
-	// OUTPUT: 0
-	println(myFunc())
-	// OUTPUT: 1
-	
-***
+1.  Usage from a terminal
 
-### Current compiler state
+    You can invoke Weel from a terminal using the following line:
+    
+        java -cp <path-to-weel-jar-or-build-classes> com.github.rjeschke.weel.Run <args>
+        
+        <args>:  <script> [<script> ...] [-args args]
 
-##### Implemented
+    Run searches for a sub/func called main, with 0 or 1 arguments, which gets called (if
+    exists) after all static code was run. The arguments (all after `-args`) will be supplied
+    as a list.
+    
+2.  Usage from Java
 
-*   expressions (assignments, calls, ...)
-*	if-elseif-else-end, switch-case-default-end
-*   for-end, foreach-end, do-end, do-until, while-end
-*	break, continue
-*	func/sub, exit & return
-*	anonymous functions & closures
-*	local, global, outer
-*	OOP (base) and array functions
-*   changed alternate syntax for anonymous functions: e.g. `@{println("Hello world!")}`
-    or `@{(a, b) return a + b}` or `@{ (a, b) println(a.." + "..b.." = "..(a + b))}`
-*   ternary operator: `cond ? expr : expr`
-*	type bound functions: e.g. `map::size()`
+        Weel weel = new Weel();
 
-##### Missing / TODO / planned
+        // Compile also takes InputStreams and compileResource accepts a 'resource name',
+        // e.g. if you have a script inside you code in 'my.scripts' called 'Scripts.weel'
+        // you can simply use: weel.compileResource("my.scripts.Scripts");
+        weel.compile("println('Hello world!')");
 
-*	OOP (constructors, new, ...)
-*	lock/end
-*	interop nice methods
-*	most of the Weel library
-*	unit test framework (started but not finished yet)
-*	refactor error messages
-*	expression optimization (will be one of the last things)
+        weel.runStatic(); 
 
-*REMARK:* The compiler and runtime still need full testing so everything
-might be a bit unstable at the moment (Especially the compiler is very
-fragile right now). 
+### Examples
+
+#### Type bound and anonymous functions
+
+    // Semicolons aren't needed, but allowed
+    ms = {};
+    
+    // Generic list fold function
+    func ms:fold(fc)
+        // Asserts get stripped when not compiled in debug mode
+        assert(isMap(this),
+            "Value is not a map");
+        
+        if size(this) == 0 then
+            return null;
+        elseif size(this) == 1 then
+            return this[0];
+        else
+            ret = fc(this[0], this[1]);
+            for i = 2, size(this) - 1 do
+                ret = fc(ret, this[i]);
+            end
+            return ret;
+        end
+    end 
+    
+    // Generic populate function
+    func ms:populate(sz, fc)
+        assert(sz > 0,
+            "Size is zero or less");
+        assert(isMap(this),
+            "Value is not a map");
+        assert(funcCheck(fc, 1, true) || funcCheck(fc, 2, true), 
+            "Illegal populator function signature");
+         
+        if funcArgs(fc) == 2 then
+            for i = 0, sz - 1 do
+                this[] = fc(this, i);
+            end
+        else
+            for i = 0, sz - 1 do
+                this[] = fc(i);
+            end
+        end
+        return this;
+    end
+    
+    // Generic filter function    
+    func ms:filter(fc)
+        assert(funcCheck(fc, 1, true),
+            "Illegal filter function.");
+        assert(isMap(this),
+            "Value is not a map");
+        
+        ret = {};
+        foreach v in this do
+            if fc(v) then
+                ret[] = v;
+            end
+        end
+        return ret;
+    end
+    
+    funcReg("map", ms);
+    
+    println(
+        {}
+            ::populate(9, @{(i) return i + 1})
+            ::filter(
+                @{ (v) 
+                    return (v % 3) && (v % 5) ? false : true;
+                 })
+            ::fold(
+                @{ (a, b) 
+                    return a + b;
+                 })
+           );
+
+
+#### Wrapping 'java.lang.StringBuilder'
+
+##### Java code
+
+    import com.github.rjeschke.weel.*;
+    import com.github.rjeschke.weel.annotations.*;
+    
+    @WeelClass(name = "java.lang.StringBuilder", usesOop = true)
+    public class MyStringBuilder
+    {
+        @WeelMethod
+        public final static void ctor(final ValueMap thiz)
+        {
+            WeelOop.setInstance(thiz, new StringBuilder());
+        }
+        
+        @WeelMethod
+        public final static void append(final ValueMap thiz, final Value value)
+        {
+            final StringBuilder sb = WeelOop.getInstance(thiz, StringBuilder.class);
+            sb.append(value.toString());
+        }
+    
+        @WeelMethod
+        public final static void clear(final ValueMap thiz)
+        {
+            final StringBuilder sb = WeelOop.getInstance(thiz, StringBuilder.class);
+            sb.setLength(0);
+        }
+    
+        @WeelMethod(name = "toString")
+        public final static String sbToString(final ValueMap thiz)
+        {
+            final StringBuilder sb = WeelOop.getInstance(thiz, StringBuilder.class);
+            return sb.toString();
+        }
+    }
+
+##### Import the functions into Weel
+
+    Weel weel = new Weel();
+
+    // ...
+
+    weel.importFunctions(MyStringBuilder.class);
+    
+    // ...
+
+##### Usage from Weel
+
+    sb = new(java.lang.StringBuilder);
+    
+    sb->append("Hello");
+    sb->append(" world!");
+    
+    println(sb->toString());
+
 
 ***
 
 [Lua]: http://www.lua.org/ "The Programming Language Lua"
-[Enigma]: http://www.nongnu.org/enigma/ "Enigma is a puzzle game inspired by Oxyd on the Atari ST and Rock'n'Roll on the Amiga"
+[Weel]: http://rjeschke.github.com/weel/ "Weel at rjeschke.github.com"
 
 [$PROFILE$]: extended "Txtmark processing information."
 

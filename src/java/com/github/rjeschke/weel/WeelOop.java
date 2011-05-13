@@ -9,7 +9,7 @@ package com.github.rjeschke.weel;
  * 
  * @author René Jeschke <rene_jeschke@yahoo.de>
  */
-public class WeelOop
+public final class WeelOop
 {
     /**
      * Constructor.
@@ -51,12 +51,16 @@ public class WeelOop
     /**
      * Creates a Weel class object.
      * 
-     * @param runtime The runtime.
-     * @param base The base class.
-     * @param args The arguments.
+     * @param runtime
+     *            The runtime.
+     * @param base
+     *            The base class.
+     * @param args
+     *            The arguments.
      * @return The new object.
      */
-    public final static ValueMap newClass(final Runtime runtime, final ValueMap base, final Value ... args)
+    public final static ValueMap newClass(final WeelRuntime runtime,
+            final ValueMap base, final Value... args)
     {
         final ValueMap clazz = base.clone();
         final Value ctor = clazz.get("ctor");
@@ -71,7 +75,7 @@ public class WeelOop
             if (f != null)
             {
                 runtime.load(clazz);
-                for(int i = 0; i < args.length; i++)
+                for (int i = 0; i < args.length; i++)
                 {
                     runtime.load(args[i]);
                 }
@@ -81,7 +85,61 @@ public class WeelOop
                     runtime.pop1();
                 }
             }
+            else
+            {
+                throw new WeelException("Wrong number of arguments for constructor: " + ctor.toString());
+            }
         }
         return clazz;
+    }
+
+    /**
+     * Gets a member function of 'thiz'.
+     * 
+     * @param runtime
+     *            The runtime.
+     * @param thiz
+     *            The 'thiz' object.
+     * @param name
+     *            The name.
+     * @param args
+     *            Number of arguments.
+     * @return The function or <code>null</code>.
+     */
+    public static WeelFunction getFunction(final WeelRuntime runtime,
+            final ValueMap thiz, final String name, final int args)
+    {
+        WeelFunction func = thiz.get(name).getFunction();
+        if (func.arguments != args)
+        {
+            func = runtime.getMother().findFunction(func.name, args);
+        }
+        return func;
+    }
+
+    /**
+     * Performs a 'this' call.
+     * 
+     * @param runtime
+     *            The runtime.
+     * @param thiz
+     *            The 'thiz' object.
+     * @param name
+     *            The name.
+     * @param args
+     *            The arguments.
+     * @return Return value.
+     */
+    public final static Value invoke(final WeelRuntime runtime,
+            final ValueMap thiz, final String name, final Value... args)
+    {
+        final WeelFunction func = getFunction(runtime, thiz, name,
+                args.length + 1);
+        if (func == null)
+        {
+            throw new WeelException("Unknown member function '" + name + "("
+                    + args.length + ")");
+        }
+        return runtime.invoke(func, thiz, args);
     }
 }

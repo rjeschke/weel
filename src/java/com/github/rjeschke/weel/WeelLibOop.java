@@ -21,7 +21,7 @@ public class WeelLibOop
      * @param args
      *            Number of arguments.
      */
-    private final static void callNew(final Runtime runtime, final int args)
+    private final static void callNew(final WeelRuntime runtime, final int args)
     {
         final Value[] a = new Value[args];
         for (int i = 0; i < args; i++)
@@ -39,7 +39,7 @@ public class WeelLibOop
      *            The runtime.
      */
     @WeelRawMethod(name = "new", args = 1, returnsValue = true)
-    public final static void weelNew(final Runtime runtime)
+    public final static void weelNew(final WeelRuntime runtime)
     {
         callNew(runtime, 0);
     }
@@ -51,7 +51,7 @@ public class WeelLibOop
      *            The runtime.
      */
     @WeelRawMethod(name = "new", args = 2, returnsValue = true)
-    public final static void weelNew2(final Runtime runtime)
+    public final static void weelNew2(final WeelRuntime runtime)
     {
         callNew(runtime, 1);
     }
@@ -63,7 +63,7 @@ public class WeelLibOop
      *            The runtime.
      */
     @WeelRawMethod(name = "new", args = 3, returnsValue = true)
-    public final static void weelNew3(final Runtime runtime)
+    public final static void weelNew3(final WeelRuntime runtime)
     {
         callNew(runtime, 2);
     }
@@ -75,7 +75,7 @@ public class WeelLibOop
      *            The runtime.
      */
     @WeelRawMethod(name = "new", args = 4, returnsValue = true)
-    public final static void weelNew4(final Runtime runtime)
+    public final static void weelNew4(final WeelRuntime runtime)
     {
         callNew(runtime, 3);
     }
@@ -87,7 +87,7 @@ public class WeelLibOop
      *            The runtime.
      */
     @WeelRawMethod(name = "new", args = 5, returnsValue = true)
-    public final static void weelNew5(final Runtime runtime)
+    public final static void weelNew5(final WeelRuntime runtime)
     {
         callNew(runtime, 4);
     }
