@@ -27,7 +27,7 @@ enum ReservedWord
 
     IF, IN,
 
-    LOCAL, LOCK,
+    LOCAL,
 
     NULL,
 

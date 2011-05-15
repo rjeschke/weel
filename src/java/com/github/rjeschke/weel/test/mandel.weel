@@ -1,0 +1,114 @@
+private width = 800;
+private height = 600;
+//private params = {-2.5, 1.5, -1.5, 1.5};
+private params = {-1.861408966082, -1.861408964884, 0.008042632526, 0.008042633433};
+private imax = 2046;
+private image = new(java.Image, width, height);
+
+private numthreads = 2;
+
+private x_min   = params[0]
+private x_max   = params[1]
+private y_min   = params[2]
+private y_max   = params[3]
+private x_step  = (x_max - x_min) / width
+private y_step  = (y_min - y_max) / height
+
+private lock = new(java.Lock);
+private sema = new(java.Semaphore, numthreads);
+private current = 0;
+private threads = {};
+
+func getLine()
+    lock->lock();
+    local ret = current;
+    current += 1;
+    lock->unlock();
+    println(ret.."/"..height);
+    return ret >= height ? -1 : ret;
+end
+
+sub threadDone()
+    sema->acquire();
+end
+
+sub iterat()
+    local x, y, vx, vy, i, zx, zy, tx, ty, tx1, ty1, col, cnum
+
+    for y = 0, height - 1 do
+        vy = y_max + y * y_step
+        for x = 0, width - 1 do
+            vx = x_min + x * x_step
+            zx = 0
+            zy = 0
+
+            for i = 0, imax do
+                tx = zx + vx
+                ty = zy + vy
+                tx1 = tx * tx
+                ty1 = ty * ty
+                zx = tx1 - ty1
+                zy = 2 * tx * ty
+                if (tx1 + ty1) > 4 then
+                    break
+                end
+            end
+
+            local c = clamp(i >> 3, 0, 255);
+            image->setPixel(x, y, 0xff000000 | i | (i << 8) | (i << 16));
+        end
+    end
+end
+
+sub iterat(y)
+    local x, vx, vy, i, zx, zy, tx, ty, tx1, ty1, col, cnum
+
+    vy = y_max + y * y_step
+    for x = 0, width - 1 do
+        vx = x_min + x * x_step
+        zx = 0
+        zy = 0
+
+        for i = 0, imax do
+            tx = zx + vx
+            ty = zy + vy
+            tx1 = tx * tx
+            ty1 = ty * ty
+            zx = tx1 - ty1
+            zy = 2 * tx * ty
+            if (tx1 + ty1) > 4 then
+                break
+            end
+        end
+
+        local c = clamp(i >> 3, 0, 255);
+        image->setPixel(x, y, 0xff000000 | i | (i << 8) | (i << 16));
+    end
+end
+
+sub worker()
+    local y = getLine();
+    while y >= 0 do
+        iterat(y);
+        y = getLine();
+    end
+end
+
+t = clock();
+for i = 0, numthreads - 1 do
+    threads[i] = new(java.Thread, worker, threadDone);
+    threads[i]->start(); 
+end
+
+while sema->available() do
+    sleep(100);
+end
+t = clock() - t;
+println("Using "..numthreads.." threads: "..t);
+
+image->toPng("/home/rjeschke/mandel.png");
+
+/*t = clock();
+iterat();
+t = clock() - t;
+println("Normal: "..t);*/

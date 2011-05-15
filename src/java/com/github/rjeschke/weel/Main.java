@@ -15,8 +15,9 @@ public class Main
             final Weel weel = new Weel();
             weel.setDebugMode(false);
 
-            weel.compileResource("com.github.rjeschke.weel.test.test");
-            weel.compileResource("com.github.rjeschke.weel.test.wunitArith");
+            weel.compileResource("com.github.rjeschke.weel.test.mandel");
+            //weel.compileResource("com.github.rjeschke.weel.test.test");
+            //weel.compileResource("com.github.rjeschke.weel.test.wunitArith");
 
             for(WeelLoader.ClassData cd : weel.classLoader.classData)
             {

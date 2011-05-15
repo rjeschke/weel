@@ -90,7 +90,7 @@ final class Compiler
             this.tokenizer = new Tokenizer(new BufferedReader(
                     new InputStreamReader(input, "UTF-8")), filename);
         }
-        catch (UnsupportedEncodingException e)
+        catch(UnsupportedEncodingException e)
         {
             throw new WeelException(e);
         }
@@ -102,7 +102,7 @@ final class Compiler
      */
     private void compile()
     {
-        if (this.used)
+        if(this.used)
         {
             throw new WeelException("Trying to reuse a compiler instance.");
         }
@@ -110,10 +110,10 @@ final class Compiler
 
         this.tokenizer.next();
 
-        while (this.tokenizer.token != Token.EOF)
+        while(this.tokenizer.token != Token.EOF)
             this.compileToken();
 
-        if (this.scope.type != ScopeType.STATIC)
+        if(this.scope.type != ScopeType.STATIC)
         {
             throw new WeelException("Open block: " + this.scope.type.toString());
         }
@@ -174,7 +174,7 @@ final class Compiler
      */
     private void compileToken()
     {
-        switch (this.tokenizer.token)
+        switch(this.tokenizer.token)
         {
         case NAME:
             this.parseVarsAndFuncs(false);
@@ -189,7 +189,7 @@ final class Compiler
             break;
         case CURLY_BRACE_CLOSE:
         {
-            if ((this.scope.type == ScopeType.FUNC || this.scope.type == ScopeType.SUB)
+            if((this.scope.type == ScopeType.FUNC || this.scope.type == ScopeType.SUB)
                     && this.block.isAnonymousFunction
                     && this.block.isAlternateSyntax)
             {
@@ -200,7 +200,7 @@ final class Compiler
             break;
         }
         case RESERVED:
-            switch (this.tokenizer.reserved)
+            switch(this.tokenizer.reserved)
             {
             case NULL:
             case TRUE:
@@ -273,7 +273,7 @@ final class Compiler
                 break;
             case FUNC:
             case SUB:
-                if (this.scope.findFunctionScope() != null)
+                if(this.scope.findFunctionScope() != null)
                 {
                     throw new WeelException(
                             this.tokenizer
@@ -312,7 +312,7 @@ final class Compiler
     private void tryStaticSupport()
     {
         this.parseExpression(false);
-        if (this.tokenizer.token == Token.DOUBLE_COLON)
+        if(this.tokenizer.token == Token.DOUBLE_COLON)
         {
             this.parseVarsAndFuncs(false);
         }
@@ -331,7 +331,7 @@ final class Compiler
      */
     private boolean wouldNeedReturnValue()
     {
-        switch (this.tokenizer.token)
+        switch(this.tokenizer.token)
         {
         case BRACE_OPEN:
         case BRACKET_OPEN:
@@ -352,6 +352,9 @@ final class Compiler
         case ASSIGN_XOR:
         case ASSIGN_STRCAT:
         case ASSIGN_MAPCAT:
+        case ASSIGN_SHL:
+        case ASSIGN_SHR:
+        case ASSIGN_USHR:
             return true;
         default:
             return false;
@@ -369,11 +372,11 @@ final class Compiler
         boolean first = true, stackCall = false, end = false, oop = false, append = false;
         Variable var;
 
-        if (this.tokenizer.token == Token.RESERVED
+        if(this.tokenizer.token == Token.RESERVED
                 && this.tokenizer.reserved == ReservedWord.THIS)
         {
             final Scope s = this.scope.findFunctionScope();
-            if (s == null || !s.isOop)
+            if(s == null || !s.isOop)
             {
                 throw new WeelException(this.tokenizer
                         .error("Illegal use of 'this'"));
@@ -382,7 +385,7 @@ final class Compiler
             var.type = Type.LOCAL;
             var.index = 0;
         }
-        else if (this.tokenizer.token == Token.DOUBLE_COLON)
+        else if(this.tokenizer.token == Token.DOUBLE_COLON)
         {
             var = new Variable();
         }
@@ -395,12 +398,12 @@ final class Compiler
         ExpressionType expr = var.type != Type.NONE ? ExpressionType.VARIABLE
                 : ExpressionType.NONE;
 
-        if (this.tokenizer.token != Token.DOUBLE_COLON)
+        if(this.tokenizer.token != Token.DOUBLE_COLON)
             this.tokenizer.next();
 
-        while (!end)
+        while(!end)
         {
-            switch (this.tokenizer.token)
+            switch(this.tokenizer.token)
             {
             case DOUBLE_COLON:
             {
@@ -408,16 +411,16 @@ final class Compiler
                 this.tokenizer.next();
                 this.checkToken(Token.NAME);
                 final String name = this.tokenizer.string;
-                if (expr == ExpressionType.ARRAY)
+                if(expr == ExpressionType.ARRAY)
                 {
                     this.block.callRuntime("getMap");
                 }
-                else if (first && expr == ExpressionType.VARIABLE)
+                else if(first && expr == ExpressionType.VARIABLE)
                 {
                     this.needGetVariable(var);
                     this.writeGetVariable(var);
                 }
-                else if (first && var.function != null)
+                else if(first && var.function != null)
                 {
                     this.writeGetVariable(var);
                 }
@@ -425,15 +428,15 @@ final class Compiler
                 this.tokenizer.next();
                 this.checkToken(Token.BRACE_OPEN);
                 this.tokenizer.next();
-                while (this.tokenizer.token != Token.BRACE_CLOSE)
+                while(this.tokenizer.token != Token.BRACE_CLOSE)
                 {
                     paramc++;
                     this.parseExpression();
-                    if (this.tokenizer.token == Token.BRACE_CLOSE)
+                    if(this.tokenizer.token == Token.BRACE_CLOSE)
                     {
                         break;
                     }
-                    if (this.tokenizer.token == Token.COMMA)
+                    if(this.tokenizer.token == Token.COMMA)
                     {
                         this.tokenizer.next();
                         continue;
@@ -456,10 +459,10 @@ final class Compiler
                 final boolean isAssert;
                 this.tokenizer.next();
 
-                if (first)
+                if(first)
                 {
                     isAssert = var.name.equals("assert");
-                    if (!isAssert && !var.isFunction())
+                    if(!isAssert && !var.isFunction())
                     {
                         this.needGetVariable(var, true);
                         this.writeGetVariable(var);
@@ -468,9 +471,9 @@ final class Compiler
                 }
                 else
                 {
-                    if (expr == ExpressionType.ARRAY)
+                    if(expr == ExpressionType.ARRAY)
                     {
-                        if (oop)
+                        if(oop)
                         {
                             this.block.callRuntime("getMapOop");
                             paramc++;
@@ -484,20 +487,20 @@ final class Compiler
                     isAssert = false;
                 }
 
-                if (isAssert)
+                if(isAssert)
                 {
                     this.parseAssert();
                     return;
                 }
-                while (this.tokenizer.token != Token.BRACE_CLOSE)
+                while(this.tokenizer.token != Token.BRACE_CLOSE)
                 {
                     paramc++;
                     this.parseExpression();
-                    if (this.tokenizer.token == Token.BRACE_CLOSE)
+                    if(this.tokenizer.token == Token.BRACE_CLOSE)
                     {
                         break;
                     }
-                    if (this.tokenizer.token == Token.COMMA)
+                    if(this.tokenizer.token == Token.COMMA)
                     {
                         this.tokenizer.next();
                         continue;
@@ -506,11 +509,11 @@ final class Compiler
                 }
                 this.checkToken(Token.BRACE_CLOSE);
                 this.tokenizer.next();
-                if (first && !stackCall)
+                if(first && !stackCall)
                 {
                     WeelFunction func = this.weel
                             .findFunction(var.name, paramc);
-                    if (func == null)
+                    if(func == null)
                     {
                         throw new WeelException(this.tokenizer
                                 .error("Unknown function/sub " + var.name + "("
@@ -519,9 +522,9 @@ final class Compiler
 
                     this.writeCallFunction(func);
 
-                    if (getContext || this.wouldNeedReturnValue())
+                    if(getContext || this.wouldNeedReturnValue())
                     {
-                        if (!func.returnsValue)
+                        if(!func.returnsValue)
                         {
                             throw new WeelException(this.tokenizer.error("Sub "
                                     + func.name + "(" + func.arguments
@@ -530,7 +533,7 @@ final class Compiler
                     }
                     else
                     {
-                        if (func.returnsValue)
+                        if(func.returnsValue)
                         {
                             this.block.callRuntime("pop1");
                         }
@@ -546,14 +549,14 @@ final class Compiler
                 break;
             }
             case ARROW:
-                if (first)
+                if(first)
                 {
                     this.needGetVariable(var);
                     this.writeGetVariable(var);
                 }
                 else
                 {
-                    if (expr == ExpressionType.ARRAY)
+                    if(expr == ExpressionType.ARRAY)
                         this.block.callRuntime("getMap");
                 }
                 this.tokenizer.next();
@@ -565,14 +568,14 @@ final class Compiler
                 expr = ExpressionType.ARRAY;
                 break;
             case DOT:
-                if (first)
+                if(first)
                 {
                     this.needGetVariable(var);
                     this.writeGetVariable(var);
                 }
                 else
                 {
-                    if (expr == ExpressionType.ARRAY)
+                    if(expr == ExpressionType.ARRAY)
                         this.block.callRuntime("getMap");
                 }
                 this.tokenizer.next();
@@ -583,21 +586,21 @@ final class Compiler
                 expr = ExpressionType.ARRAY;
                 break;
             case BRACKET_OPEN:
-                if (first)
+                if(first)
                 {
                     this.needGetVariable(var);
                     this.writeGetVariable(var);
                 }
                 else
                 {
-                    if (expr == ExpressionType.ARRAY)
+                    if(expr == ExpressionType.ARRAY)
                         this.block.callRuntime("getMap");
                 }
                 this.tokenizer.next();
-                if (!getContext && this.tokenizer.token == Token.BRACKET_CLOSE)
+                if(!getContext && this.tokenizer.token == Token.BRACKET_CLOSE)
                 {
                     this.tokenizer.next();
-                    if (this.tokenizer.token != Token.ASSIGN)
+                    if(this.tokenizer.token != Token.ASSIGN)
                         this.syntaxError();
                     append = true;
                 }
@@ -620,7 +623,10 @@ final class Compiler
             case ASSIGN_XOR:
             case ASSIGN_STRCAT:
             case ASSIGN_MAPCAT:
-                if (first)
+            case ASSIGN_SHL:
+            case ASSIGN_SHR:
+            case ASSIGN_USHR:
+                if(first)
                 {
                     this.needGetVariable(var);
                     expr = ExpressionType.VARIABLE;
@@ -628,7 +634,7 @@ final class Compiler
                 end = true;
                 break;
             case ASSIGN:
-                if (first)
+                if(first)
                 {
                     this.needSetVariable(var);
                     expr = ExpressionType.VARIABLE;
@@ -636,13 +642,13 @@ final class Compiler
                 end = true;
                 break;
             default:
-                if (!getContext && first && var.type == Type.NONE)
+                if(!getContext && first && var.type == Type.NONE)
                 {
                     this.syntaxError();
                 }
-                else if (getContext && first)
+                else if(getContext && first)
                 {
-                    if (!var.isFunction())
+                    if(!var.isFunction())
                         this.needGetVariable(var);
                     expr = ExpressionType.VARIABLE;
                 }
@@ -651,7 +657,7 @@ final class Compiler
             }
         }
 
-        switch (this.tokenizer.token)
+        switch(this.tokenizer.token)
         {
         case ASSIGN_ADD:
         case ASSIGN_DIV:
@@ -663,11 +669,14 @@ final class Compiler
         case ASSIGN_XOR:
         case ASSIGN_STRCAT:
         case ASSIGN_MAPCAT:
+        case ASSIGN_SHL:
+        case ASSIGN_SHR:
+        case ASSIGN_USHR:
         {
             final Token op = this.tokenizer.token;
-            if (first && expr != ExpressionType.ARRAY && var.type == Type.NONE)
+            if(first && expr != ExpressionType.ARRAY && var.type == Type.NONE)
                 this.syntaxError();
-            if (expr == ExpressionType.ARRAY)
+            if(expr == ExpressionType.ARRAY)
             {
                 this.block.callRuntime("sdup2");
                 this.block.callRuntime("getMap");
@@ -678,7 +687,7 @@ final class Compiler
             }
             this.tokenizer.next();
             this.parseExpression();
-            switch (op)
+            switch(op)
             {
             case ASSIGN_ADD:
                 this.block.callRuntime("add");
@@ -710,18 +719,27 @@ final class Compiler
             case ASSIGN_MAPCAT:
                 this.block.callRuntime("mapcat2");
                 break;
+            case ASSIGN_SHL:
+                this.block.callRuntime("shl");
+                break;
+            case ASSIGN_SHR:
+                this.block.callRuntime("shr");
+                break;
+            case ASSIGN_USHR:
+                this.block.callRuntime("ushr");
+                break;
             default:
                 break;
             }
-            if (expr == ExpressionType.ARRAY)
+            if(expr == ExpressionType.ARRAY)
             {
-                if (getContext)
+                if(getContext)
                     this.block.callRuntime("sdups");
                 this.block.callRuntime("setMap");
             }
             else
             {
-                if (getContext)
+                if(getContext)
                     this.block.callRuntime("sdup");
                 this.writeSetVariable(var);
             }
@@ -730,19 +748,19 @@ final class Compiler
         case ASSIGN:
             this.tokenizer.next();
             this.parseExpression();
-            if (expr == ExpressionType.ARRAY)
+            if(expr == ExpressionType.ARRAY)
             {
-                if (getContext)
+                if(getContext)
                     this.block.callRuntime("sdups");
 
-                if (append)
+                if(append)
                     this.block.callRuntime("appendMap");
                 else
                     this.block.callRuntime("setMap");
             }
-            else if (expr == ExpressionType.VARIABLE)
+            else if(expr == ExpressionType.VARIABLE)
             {
-                if (getContext)
+                if(getContext)
                     this.block.callRuntime("sdup");
                 this.writeSetVariable(var);
             }
@@ -752,18 +770,18 @@ final class Compiler
             }
             break;
         default:
-            if (first && getContext
+            if(first && getContext
                     && (var.type != Type.NONE || var.function != null))
             {
                 this.writeGetVariable(var);
             }
-            else if (getContext && expr == ExpressionType.ARRAY)
+            else if(getContext && expr == ExpressionType.ARRAY)
             {
                 this.block.callRuntime("getMap");
             }
-            else if (expr != ExpressionType.FUNCTION)
+            else if(expr != ExpressionType.FUNCTION)
             {
-                if (getContext && first)
+                if(getContext && first)
                 {
                     throw new WeelException(this.tokenizer.error(
                             "Unknown variable '%s'", var.name));
@@ -779,7 +797,7 @@ final class Compiler
      */
     private void parseOperand()
     {
-        switch (this.tokenizer.token)
+        switch(this.tokenizer.token)
         {
         case NUMBER:
             this.block.load(this.tokenizer.number);
@@ -790,7 +808,7 @@ final class Compiler
             this.tokenizer.next();
             break;
         case RESERVED:
-            switch (this.tokenizer.reserved)
+            switch(this.tokenizer.reserved)
             {
             case TRUE:
                 this.block.load(-1);
@@ -819,10 +837,10 @@ final class Compiler
         {
             this.block.callRuntime("createMap");
             this.tokenizer.next();
-            while (this.tokenizer.token != Token.CURLY_BRACE_CLOSE)
+            while(this.tokenizer.token != Token.CURLY_BRACE_CLOSE)
             {
                 this.block.callRuntime("sdup");
-                switch (this.tokenizer.token)
+                switch(this.tokenizer.token)
                 {
                 case DOT:
                     this.tokenizer.next();
@@ -848,7 +866,7 @@ final class Compiler
                 {
                     final Token prev = this.tokenizer.token;
                     final String name = this.tokenizer.string;
-                    if (this.tokenizer.next() == Token.ASSIGN)
+                    if(this.tokenizer.next() == Token.ASSIGN)
                     {
                         this.block.load(name);
                         this.tokenizer.next();
@@ -858,7 +876,7 @@ final class Compiler
                     else
                     {
                         // FIXME do I need this? is this correct?
-                        switch (this.tokenizer.token)
+                        switch(this.tokenizer.token)
                         {
                         case NAME:
                         case RESERVED:
@@ -880,9 +898,9 @@ final class Compiler
                     this.block.callRuntime("appendMap");
                     break;
                 }
-                if (this.tokenizer.token == Token.CURLY_BRACE_CLOSE)
+                if(this.tokenizer.token == Token.CURLY_BRACE_CLOSE)
                     break;
-                if (this.tokenizer.token == Token.COMMA)
+                if(this.tokenizer.token == Token.COMMA)
                 {
                     this.tokenizer.next();
                     continue;
@@ -913,7 +931,7 @@ final class Compiler
      */
     private void parseExpression(final boolean allowDoubleColon)
     {
-        if (this.tokenizer.token == Token.RESERVED
+        if(this.tokenizer.token == Token.RESERVED
                 && (this.tokenizer.reserved == ReservedWord.FUNC || this.tokenizer.reserved == ReservedWord.SUB)
                 || this.tokenizer.token == Token.ANON_OPEN)
         {
@@ -922,7 +940,7 @@ final class Compiler
 
             this.openFunction(true, this.tokenizer.token == Token.ANON_OPEN);
 
-            while (this.scope != start && this.tokenizer.token != Token.EOF)
+            while(this.scope != start && this.tokenizer.token != Token.EOF)
             {
                 this.compileToken();
             }
@@ -931,7 +949,7 @@ final class Compiler
         {
             this.parseExpression(-1);
 
-            if (this.tokenizer.token == Token.TERNARY)
+            if(this.tokenizer.token == Token.TERNARY)
             {
                 this.block.callRuntime("popBoolean", "()Z");
                 final int first = this.block.writeJmp(JvmOp.IFEQ, 0);
@@ -945,7 +963,7 @@ final class Compiler
                 this.block
                         .writeShortAt(second, this.block.getPc() - second + 1);
             }
-            else if (this.tokenizer.token == Token.DOUBLE_COLON
+            else if(this.tokenizer.token == Token.DOUBLE_COLON
                     && allowDoubleColon)
             {
                 this.parseVarsAndFuncs(true);
@@ -964,9 +982,9 @@ final class Compiler
     private Token parseExpression(final int prio)
     {
         this.checkExpr();
-        if (this.tokenizer.isUnary(this.tokenizer.token))
+        if(this.tokenizer.isUnary(this.tokenizer.token))
         {
-            switch (this.tokenizer.token)
+            switch(this.tokenizer.token)
             {
             case BRACE_OPEN:
                 this.tokenizer.next();
@@ -976,7 +994,7 @@ final class Compiler
                 break;
             case SUB:
                 this.tokenizer.next();
-                if (this.tokenizer.token == Token.NUMBER)
+                if(this.tokenizer.token == Token.NUMBER)
                 {
                     this.block.load(-this.tokenizer.number);
                     this.tokenizer.next();
@@ -992,7 +1010,7 @@ final class Compiler
                 final Token tok = this.tokenizer.token;
                 this.tokenizer.next();
                 this.parseExpression(Tokenizer.UOPR_PRIORITY);
-                switch (tok)
+                switch(tok)
                 {
                 case LOGICAL_NOT:
                     this.block.callRuntime("lnot");
@@ -1014,18 +1032,18 @@ final class Compiler
 
         Token bop = this.tokenizer.token;
 
-        while (this.tokenizer.isBinary(bop)
+        while(this.tokenizer.isBinary(bop)
                 && this.tokenizer.getBinaryPriority(bop) > prio)
         {
             this.tokenizer.next();
             int taddr = 0;
             // Short circuit logical and/or
-            if (bop == Token.LOGICAL_AND)
+            if(bop == Token.LOGICAL_AND)
             {
                 this.block.callRuntime("testPopFalse", "()Z");
                 taddr = this.block.writeJmp(JvmOp.IFNE, 0);
             }
-            else if (bop == Token.LOGICAL_OR)
+            else if(bop == Token.LOGICAL_OR)
             {
                 this.block.callRuntime("testPopTrue", "()Z");
                 taddr = this.block.writeJmp(JvmOp.IFNE, 0);
@@ -1034,7 +1052,7 @@ final class Compiler
             Token nbop = this.parseExpression(this.tokenizer
                     .getBinaryPriority(bop));
 
-            switch (bop)
+            switch(bop)
             {
             case ADD:
                 this.block.callRuntime("add");
@@ -1088,6 +1106,15 @@ final class Compiler
             case BINARY_XOR:
                 this.block.callRuntime("xor");
                 break;
+            case SHL:
+                this.block.callRuntime("shl");
+                break;
+            case SHR:
+                this.block.callRuntime("shr");
+                break;
+            case USHR:
+                this.block.callRuntime("ushr");
+                break;
             default:
                 break;
             }
@@ -1103,7 +1130,7 @@ final class Compiler
      */
     private void closeScope()
     {
-        switch (this.scope.type)
+        switch(this.scope.type)
         {
         case IF:
             this.closeIf();
@@ -1138,7 +1165,7 @@ final class Compiler
     private void addBreak()
     {
         final Scope s = this.scope.getBreakScope();
-        if (s == null)
+        if(s == null)
         {
             throw new WeelException(this.tokenizer
                     .error("'break' without suitable scope"));
@@ -1153,7 +1180,7 @@ final class Compiler
     private void addContinue()
     {
         final Scope s = this.scope.getBreakScope();
-        if (s == null)
+        if(s == null)
         {
             throw new WeelException(this.tokenizer
                     .error("'continue' without suitable scope"));
@@ -1168,17 +1195,17 @@ final class Compiler
     private void addCase()
     {
         int cont = 0;
-        if (this.scope.type != ScopeType.SWITCH)
+        if(this.scope.type != ScopeType.SWITCH)
         {
             throw new WeelException(this.tokenizer
                     .error("'switch' without 'case'"));
         }
-        if (this.scope.hasDefault)
+        if(this.scope.hasDefault)
         {
             throw new WeelException(this.tokenizer
                     .error("'switch' after 'default'"));
         }
-        if (this.scope.hasCase)
+        if(this.scope.hasCase)
         {
             cont = this.block.writeJmp(JvmOp.GOTO, 0);
             final int pc = this.scope.removeContinue();
@@ -1191,7 +1218,7 @@ final class Compiler
         this.tokenizer.next();
         this.block.callRuntime("cmpEqual", "()Z");
         this.scope.addContinue(this.block.writeJmp(JvmOp.IFEQ, 0));
-        if (this.scope.hasCase)
+        if(this.scope.hasCase)
         {
             this.block.writeShortAt(cont, this.block.getPc() - cont + 1);
         }
@@ -1203,16 +1230,16 @@ final class Compiler
      */
     private void addDefault()
     {
-        if (this.scope.type != ScopeType.SWITCH)
+        if(this.scope.type != ScopeType.SWITCH)
         {
             throw new WeelException(this.tokenizer
                     .error("'default' without 'case'"));
         }
-        if (this.scope.hasDefault)
+        if(this.scope.hasDefault)
         {
             throw new WeelException(this.tokenizer.error("Duplicate 'default'"));
         }
-        if (this.scope.hasCase)
+        if(this.scope.hasCase)
         {
             final int pc = this.scope.removeContinue();
             this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
@@ -1243,11 +1270,11 @@ final class Compiler
      */
     private void closeSwitch()
     {
-        for (final int pc : this.scope.continues)
+        for(final int pc : this.scope.continues)
         {
             this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
         }
-        for (final int pc : this.scope.breaks)
+        for(final int pc : this.scope.breaks)
         {
             this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
         }
@@ -1266,7 +1293,7 @@ final class Compiler
         this.checkToken(Token.NAME);
         final Variable var = this.scope.findVariable(new Variable(),
                 this.tokenizer.string);
-        if (var.type != Type.LOCAL)
+        if(var.type != Type.LOCAL)
         {
             var.index = this.scope.addLocal(var.name);
             var.type = Type.LOCAL;
@@ -1279,7 +1306,7 @@ final class Compiler
         this.checkToken(Token.COMMA);
         this.tokenizer.next();
         this.parseExpression();
-        if (this.tokenizer.token == Token.COMMA)
+        if(this.tokenizer.token == Token.COMMA)
         {
             this.tokenizer.next();
             this.parseExpression();
@@ -1301,14 +1328,14 @@ final class Compiler
      */
     private void closeFor()
     {
-        for (final int pc : this.scope.continues)
+        for(final int pc : this.scope.continues)
         {
             this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
         }
         this.block.callRuntime("endForLoop", "(I)Z", this.scope.localIndex);
         this.block
                 .writeJmp(JvmOp.IFNE, this.scope.startPc - this.block.getPc());
-        for (final int pc : this.scope.breaks)
+        for(final int pc : this.scope.breaks)
         {
             this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
         }
@@ -1329,7 +1356,7 @@ final class Compiler
                 this.tokenizer.string);
         this.needSetVariable(val);
         this.tokenizer.next();
-        if (this.tokenizer.token == Token.COMMA)
+        if(this.tokenizer.token == Token.COMMA)
         {
             this.tokenizer.next();
             this.checkToken(Token.NAME);
@@ -1341,11 +1368,11 @@ final class Compiler
         }
         this.checkReserved(ReservedWord.IN);
         this.tokenizer.next();
-        if (this.tokenizer.token == Token.RESERVED
+        if(this.tokenizer.token == Token.RESERVED
                 && this.tokenizer.reserved == ReservedWord.THIS)
         {
             final Scope s = this.scope.findFunctionScope();
-            if (s == null || !s.isOop)
+            if(s == null || !s.isOop)
             {
                 throw new WeelException(this.tokenizer
                         .error("Illegal use of 'this'"));
@@ -1369,7 +1396,7 @@ final class Compiler
         this.block.callRuntime("doForEach", "()Z");
         this.scope.addBreak(this.block.writeJmp(JvmOp.IFEQ, 0));
         this.writeSetVariable(val);
-        if (key != null)
+        if(key != null)
             this.writeSetVariable(key);
         else
             this.block.callRuntime("pop1");
@@ -1381,11 +1408,11 @@ final class Compiler
     private void closeForEach()
     {
         this.scope.addContinue(this.block.writeJmp(JvmOp.GOTO, 0));
-        for (final int pc : this.scope.continues)
+        for(final int pc : this.scope.continues)
         {
             this.block.writeShortAt(pc, this.scope.startPc - pc + 1);
         }
-        for (final int pc : this.scope.breaks)
+        for(final int pc : this.scope.breaks)
         {
             this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
         }
@@ -1409,11 +1436,11 @@ final class Compiler
      */
     private void closeDo()
     {
-        for (final int pc : this.scope.breaks)
+        for(final int pc : this.scope.breaks)
         {
             this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
         }
-        if (!this.scope.continues.isEmpty())
+        if(!this.scope.continues.isEmpty())
             throw new WeelException(this.tokenizer
                     .error("Misplaced 'continue'"));
         this.removeScope();
@@ -1425,7 +1452,7 @@ final class Compiler
      */
     private void closeDoUntil()
     {
-        for (final int pc : this.scope.continues)
+        for(final int pc : this.scope.continues)
         {
             this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
         }
@@ -1435,7 +1462,7 @@ final class Compiler
         this.block
                 .writeJmp(JvmOp.IFEQ, this.scope.startPc - this.block.getPc());
 
-        for (final int pc : this.scope.breaks)
+        for(final int pc : this.scope.breaks)
         {
             this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
         }
@@ -1463,11 +1490,11 @@ final class Compiler
     private void closeWhile()
     {
         this.scope.addContinue(this.block.writeJmp(JvmOp.GOTO, 0));
-        for (final int pc : this.scope.continues)
+        for(final int pc : this.scope.continues)
         {
             this.block.writeShortAt(pc, this.scope.startPc - pc + 1);
         }
-        for (final int pc : this.scope.breaks)
+        for(final int pc : this.scope.breaks)
         {
             this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
         }
@@ -1494,10 +1521,10 @@ final class Compiler
      */
     private void addElseIf()
     {
-        if (this.scope == null || this.scope.type != ScopeType.IF)
+        if(this.scope == null || this.scope.type != ScopeType.IF)
             throw new WeelException(this.tokenizer
                     .error("'elseif' without 'if'"));
-        if (this.scope.hasElse)
+        if(this.scope.hasElse)
             throw new WeelException(this.tokenizer
                     .error("'elseif' after 'else'"));
         this.scope.addBreak(this.block.writeJmp(JvmOp.GOTO, 0));
@@ -1517,9 +1544,9 @@ final class Compiler
      */
     private void addElse()
     {
-        if (this.scope == null || this.scope.type != ScopeType.IF)
+        if(this.scope == null || this.scope.type != ScopeType.IF)
             throw new WeelException(this.tokenizer.error("'else' without 'if'"));
-        if (this.scope.hasElse)
+        if(this.scope.hasElse)
             throw new WeelException(this.tokenizer.error("Duplicate 'else'"));
 
         this.tokenizer.next();
@@ -1534,11 +1561,11 @@ final class Compiler
      */
     private void closeIf()
     {
-        for (final int pc : this.scope.continues)
+        for(final int pc : this.scope.continues)
         {
             this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
         }
-        for (final int pc : this.scope.breaks)
+        for(final int pc : this.scope.breaks)
         {
             this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
         }
@@ -1554,7 +1581,7 @@ final class Compiler
      */
     private void openFunction(final boolean anonymous, final boolean alternate)
     {
-        if (anonymous)
+        if(anonymous)
             this.addScope(new Scope(this.scope, ScopeType.BORDER));
         this.addScope(new Scope(this.scope,
                 this.tokenizer.reserved == ReservedWord.SUB ? ScopeType.SUB
@@ -1566,13 +1593,13 @@ final class Compiler
         func.returnsValue = this.tokenizer.reserved == ReservedWord.FUNC;
         this.tokenizer.next();
 
-        if (!anonymous)
+        if(!anonymous)
         {
             this.checkToken(Token.NAME);
             func.name = this.tokenizer.string;
             this.tokenizer.next();
 
-            if (this.tokenizer.token == Token.DOT
+            if(this.tokenizer.token == Token.DOT
                     || this.tokenizer.token == Token.COLON)
             {
                 this.scope.isOop = this.tokenizer.token == Token.COLON;
@@ -1596,29 +1623,29 @@ final class Compiler
 
         int paramc = 0;
 
-        if (this.scope.isOop)
+        if(this.scope.isOop)
         {
             this.scope.addLocal("THIS");
             paramc++;
         }
 
-        if ((alternate && this.tokenizer.token == Token.BRACE_OPEN)
+        if((alternate && this.tokenizer.token == Token.BRACE_OPEN)
                 || !alternate)
         {
             this.checkToken(Token.BRACE_OPEN);
             this.tokenizer.next();
-            while (this.tokenizer.token != Token.BRACE_CLOSE)
+            while(this.tokenizer.token != Token.BRACE_CLOSE)
             {
                 paramc++;
                 this.checkToken(Token.NAME);
                 this.scope.addLocal(this.tokenizer.string);
                 this.tokenizer.next();
-                if (this.tokenizer.token == Token.COMMA)
+                if(this.tokenizer.token == Token.COMMA)
                 {
                     this.tokenizer.next();
                     continue;
                 }
-                if (this.tokenizer.token != Token.BRACE_CLOSE)
+                if(this.tokenizer.token != Token.BRACE_CLOSE)
                 {
                     this.syntaxError();
                 }
@@ -1627,7 +1654,7 @@ final class Compiler
         }
         func.arguments = paramc;
 
-        if (this.weel.findFunction(func.name, func.arguments) != null)
+        if(this.weel.findFunction(func.name, func.arguments) != null)
         {
             throw new WeelException(this.tokenizer.error("Duplicate function: "
                     + func));
@@ -1654,39 +1681,39 @@ final class Compiler
         final Variable oopVar = this.scope.oopVariable;
         final String oopIndex = this.scope.oopIndex;
 
-        if (anonymous && this.block.isAlternateSyntax && this.block.hasReturn)
+        if(anonymous && this.block.isAlternateSyntax && this.block.hasReturn)
         {
             func.returnsValue = true;
         }
 
-        for (final int pc : this.scope.breaks)
+        for(final int pc : this.scope.breaks)
         {
             this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
         }
         this.block.closeBlock();
 
-        if (!this.block.cvarIndex.isEmpty())
+        if(!this.block.cvarIndex.isEmpty())
         {
             func.environment = new Value[this.block.cvarIndex.size()];
             func.envLocals = new int[this.block.cvarIndex.size()];
-            for (int i = 0; i < func.environment.length; i++)
+            for(int i = 0; i < func.environment.length; i++)
             {
                 func.envLocals[i] = this.block.cvarIndex.get(i);
             }
         }
 
         this.removeScope();
-        if (anonymous)
+        if(anonymous)
         {
             this.removeScope();
-            if (func.envLocals != null)
+            if(func.envLocals != null)
                 this.block.callRuntime("createClosure", func.index);
             else
                 this.block.callRuntime("loadFunc", func.index);
         }
         this.tokenizer.next();
 
-        if (oopVar != null)
+        if(oopVar != null)
         {
             this.writeGetVariable(oopVar);
             this.block.load(oopIndex);
@@ -1701,7 +1728,7 @@ final class Compiler
     private void addExit()
     {
         final Scope s = this.scope.findFunctionScope();
-        if (s == null || s.type == ScopeType.FUNC || this.block.hasReturn)
+        if(s == null || s.type == ScopeType.FUNC || this.block.hasReturn)
         {
             throw new WeelException(this.tokenizer
                     .error("'exit' without 'sub'"));
@@ -1718,7 +1745,7 @@ final class Compiler
     private void addReturn()
     {
         final Scope s = this.scope.findFunctionScope();
-        if (s == null || s.type == ScopeType.SUB || this.block.hasExit)
+        if(s == null || s.type == ScopeType.SUB || this.block.hasExit)
         {
             throw new WeelException(this.tokenizer
                     .error("'return' without 'func'"));
@@ -1737,11 +1764,11 @@ final class Compiler
     {
         this.tokenizer.next();
 
-        while (this.tokenizer.token != Token.EOF)
+        while(this.tokenizer.token != Token.EOF)
         {
             this.checkToken(Token.NAME);
             final String name = this.tokenizer.string;
-            if (this.scope.locals.containsKey(name)
+            if(this.scope.locals.containsKey(name)
                     || this.block.cvars.containsKey(name))
             {
                 throw new WeelException(this.tokenizer.error(
@@ -1749,13 +1776,13 @@ final class Compiler
             }
             final int index = this.scope.addLocal(name);
             this.tokenizer.next();
-            if (this.tokenizer.token == Token.ASSIGN)
+            if(this.tokenizer.token == Token.ASSIGN)
             {
                 this.tokenizer.next();
                 this.parseExpression();
                 this.block.callRuntime("sloc", index);
             }
-            if (this.tokenizer.token == Token.COMMA)
+            if(this.tokenizer.token == Token.COMMA)
             {
                 this.tokenizer.next();
                 continue;
@@ -1770,19 +1797,19 @@ final class Compiler
     private void parseOuter()
     {
         final Scope outer = this.scope.getBorderScope();
-        if (outer == null)
+        if(outer == null)
         {
             throw new WeelException(this.tokenizer
                     .error("'outer' without anonymous function"));
         }
         this.tokenizer.next();
 
-        while (this.tokenizer.token != Token.EOF)
+        while(this.tokenizer.token != Token.EOF)
         {
             this.checkToken(Token.NAME);
             final String name = this.tokenizer.string;
             int lidx = outer.findLocal(name);
-            if (this.scope.findCvar(name) != -1 || lidx != -1)
+            if(this.scope.findCvar(name) != -1 || lidx != -1)
             {
                 throw new WeelException(this.tokenizer.error(
                         "Duplicate explicit cvar '%s'", name));
@@ -1809,7 +1836,7 @@ final class Compiler
             this.scope = old;
             this.block = old.block;
 
-            if (this.tokenizer.token == Token.COMMA)
+            if(this.tokenizer.token == Token.COMMA)
             {
                 this.tokenizer.next();
                 continue;
@@ -1825,24 +1852,24 @@ final class Compiler
     {
         this.tokenizer.next();
 
-        while (this.tokenizer.token != Token.EOF)
+        while(this.tokenizer.token != Token.EOF)
         {
             this.checkToken(Token.NAME);
             final String name = this.tokenizer.string;
-            if (this.weel.mapGlobals.containsKey(name))
+            if(this.weel.mapGlobals.containsKey(name))
             {
                 throw new WeelException(this.tokenizer.error(
                         "Duplicate global variable '%s'", name));
             }
             final int index = this.weel.addGlobal(name);
             this.tokenizer.next();
-            if (this.tokenizer.token == Token.ASSIGN)
+            if(this.tokenizer.token == Token.ASSIGN)
             {
                 this.tokenizer.next();
                 this.parseExpression();
                 this.block.callRuntime("sglob", index);
             }
-            if (this.tokenizer.token == Token.COMMA)
+            if(this.tokenizer.token == Token.COMMA)
             {
                 this.tokenizer.next();
                 continue;
@@ -1858,24 +1885,24 @@ final class Compiler
     {
         this.tokenizer.next();
 
-        while (this.tokenizer.token != Token.EOF)
+        while(this.tokenizer.token != Token.EOF)
         {
             this.checkToken(Token.NAME);
             final String name = this.tokenizer.string;
-            if (this.scope.findPrivate(name) != -1)
+            if(this.scope.findPrivate(name) != -1)
             {
                 throw new WeelException(this.tokenizer.error(
                         "Duplicate private variable '%s'", name));
             }
             final int index = this.scope.addPrivate(name);
             this.tokenizer.next();
-            if (this.tokenizer.token == Token.ASSIGN)
+            if(this.tokenizer.token == Token.ASSIGN)
             {
                 this.tokenizer.next();
                 this.parseExpression();
                 this.block.callRuntime("spriv", index);
             }
-            if (this.tokenizer.token == Token.COMMA)
+            if(this.tokenizer.token == Token.COMMA)
             {
                 this.tokenizer.next();
                 continue;
@@ -1892,7 +1919,7 @@ final class Compiler
      */
     private void checkExpr()
     {
-        if (!this.tokenizer.isExpression())
+        if(!this.tokenizer.isExpression())
             throw new WeelException(this.tokenizer.error("Expression expected"));
     }
 
@@ -1906,7 +1933,7 @@ final class Compiler
      */
     private void checkReserved(final ReservedWord rw)
     {
-        if (this.tokenizer.token != Token.RESERVED
+        if(this.tokenizer.token != Token.RESERVED
                 || this.tokenizer.reserved != rw)
             throw new WeelException(this.tokenizer.error("'%s' expected", rw
                     .toString().toLowerCase()));
@@ -1922,7 +1949,7 @@ final class Compiler
      */
     private void checkToken(final Token tok)
     {
-        if (this.tokenizer.token != tok)
+        if(this.tokenizer.token != tok)
             this.errorExp(tok);
     }
 
@@ -1931,7 +1958,7 @@ final class Compiler
      */
     private void skipSemi()
     {
-        if (this.tokenizer.token == Token.SEMICOLON)
+        if(this.tokenizer.token == Token.SEMICOLON)
             this.tokenizer.next();
     }
 
@@ -1953,7 +1980,7 @@ final class Compiler
     private void errorExp(final Token tok)
     {
         String msg = "";
-        switch (tok)
+        switch(tok)
         {
         case BRACE_OPEN:
             msg += "'('";
@@ -1999,7 +2026,7 @@ final class Compiler
      */
     private void writeGetVariable(final Variable var)
     {
-        switch (var.type)
+        switch(var.type)
         {
         case LOCAL:
             this.block.callRuntime("lloc", var.index);
@@ -2014,7 +2041,7 @@ final class Compiler
             this.block.callRuntime("linenv", var.index);
             break;
         default:
-            if (var.function != null)
+            if(var.function != null)
                 this.block.callRuntime("loadFunc", var.function.index);
             else
                 this.syntaxError();
@@ -2044,13 +2071,13 @@ final class Compiler
      */
     private void needGetVariable(final Variable var, final boolean maybeFunction)
     {
-        if (var.type != Type.NONE)
+        if(var.type != Type.NONE)
             return;
-        if (this.block.isAnonymousFunction)
+        if(this.block.isAnonymousFunction)
         {
             this.scope.maybeCreateCvar(var);
         }
-        if (var.type == Type.NONE)
+        if(var.type == Type.NONE)
         {
             throw new WeelException(this.tokenizer.error(
                     maybeFunction ? "Unknown function '%s'"
@@ -2066,13 +2093,13 @@ final class Compiler
      */
     private void needSetVariable(final Variable var)
     {
-        if (var.type != Type.NONE)
+        if(var.type != Type.NONE)
             return;
-        if (this.block.isAnonymousFunction)
+        if(this.block.isAnonymousFunction)
         {
             this.scope.maybeCreateCvar(var);
         }
-        if (var.type == Type.NONE)
+        if(var.type == Type.NONE)
         {
             var.type = Type.LOCAL;
             var.index = this.scope.addLocal(var.name);
@@ -2087,7 +2114,7 @@ final class Compiler
      */
     private void writeSetVariable(final Variable var)
     {
-        switch (var.type)
+        switch(var.type)
         {
         case LOCAL:
             this.block.callRuntime("sloc", var.index);
@@ -2121,7 +2148,7 @@ final class Compiler
         this.block.code.addShort(this.classWriter.addMethodRefConstant(
                 func.clazz, func.javaName,
                 "(Lcom/github/rjeschke/weel/WeelRuntime;)V"));
-        if (func.returnsValue)
+        if(func.returnsValue)
             this.block.push();
         this.block.pop(func.arguments);
     }
@@ -2134,10 +2161,10 @@ final class Compiler
     {
         int pops = 0;
         Scope s = this.scope;
-        while (s != null
+        while(s != null
                 && (s.type != ScopeType.SUB && s.type != ScopeType.FUNC))
         {
-            switch (s.type)
+            switch(s.type)
             {
             case FOR:
                 pops += 2;
@@ -2151,11 +2178,11 @@ final class Compiler
             }
             s = s.parent;
         }
-        if (pops == 1)
+        if(pops == 1)
         {
             this.block.callRuntime("pop1");
         }
-        else if (pops > 1)
+        else if(pops > 1)
         {
             this.block.callRuntime("pop", pops);
         }
@@ -2167,7 +2194,7 @@ final class Compiler
     private void parseAssert()
     {
         CodeBlock old = this.block;
-        if (!this.debugMode)
+        if(!this.debugMode)
         {
             final JvmClassWriter temp = new JvmClassWriter(
                     "com.github.rjeschke.weel.scripts.Assert");
@@ -2177,7 +2204,7 @@ final class Compiler
         }
         this.parseExpression();
         String message = null;
-        if (this.tokenizer.token == Token.COMMA)
+        if(this.tokenizer.token == Token.COMMA)
         {
             this.tokenizer.next();
             this.checkToken(Token.STRING);
@@ -2186,14 +2213,14 @@ final class Compiler
         }
         this.checkToken(Token.BRACE_CLOSE);
         this.tokenizer.next();
-        if (!this.debugMode)
+        if(!this.debugMode)
         {
             this.block = this.scope.block = old;
         }
         else
         {
             this.block.code.add(JvmOp.ALOAD_0);
-            if (message != null)
+            if(message != null)
                 this.block.ldcStr(this.tokenizer.error("Assert failed (%s)",
                         message));
             else

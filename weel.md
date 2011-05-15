@@ -214,13 +214,16 @@ in the library)*.
 *   `~` : Binary not
 *   `&` : Binary and
 *   `|` : Binary or
-*   `^` : Binary xor 
+*   `^` : Binary xor
+*   `>>` : Binary signed right shift 
+*   `>>>` : Binary unsigned right shift 
+*   `<<` : Binary left shift 
 *   `.` : Dot (named array indices)
 *   `:` : Colon (declaring OOP functions)
 *   `::` : Double colon (calling type bound functions)
 *   `->` : Arrow (calling OOP functions)
 *   `?` : Ternary (`<cond> ? <expr> : <expr>`)
-*   `+=, -=, *=, /=, %=, &=, |=, ^=, ..=`
+*   `+=, -=, *=, /=, %=, &=, |=, ^=, ..=, ++=, >>=, <<=, <<<=`
 
 #### Reserved words                 {#reservedwords}
 

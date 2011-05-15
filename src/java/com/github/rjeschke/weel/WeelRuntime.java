@@ -67,7 +67,7 @@ public final class WeelRuntime
         this.globals = weel.globals;
         this.privates = weel.privates;
         this.typeFunctions = weel.typeFunctions;
-        for (int i = 0; i < this.stack.length; i++)
+        for(int i = 0; i < this.stack.length; i++)
             this.stack[i] = new Value();
     }
 
@@ -285,7 +285,7 @@ public final class WeelRuntime
      */
     public boolean testPopTrue()
     {
-        if (this.stack[this.sp].toBoolean())
+        if(this.stack[this.sp].toBoolean())
             return true;
         this.sp--;
         return false;
@@ -298,7 +298,7 @@ public final class WeelRuntime
      */
     public boolean testPopFalse()
     {
-        if (!this.stack[this.sp].toBoolean())
+        if(!this.stack[this.sp].toBoolean())
             return true;
         this.sp--;
         return false;
@@ -335,10 +335,10 @@ public final class WeelRuntime
         final Value a = this.stack[this.sp - 1];
         final Value b = this.stack[this.sp];
         this.sp -= 2;
-        if (a.type != b.type)
+        if(a.type != b.type)
             throw new WeelException("Incompatible values for comparison: "
                     + a.type + " <-> " + b.type);
-        switch (a.type)
+        switch(a.type)
         {
         case NULL:
             return 0;
@@ -451,9 +451,9 @@ public final class WeelRuntime
         final Value a = this.stack[this.sp - 1];
         final Value b = this.stack[this.sp];
         this.sp -= 2;
-        if (a.type != b.type)
+        if(a.type != b.type)
             return false;
-        switch (a.type)
+        switch(a.type)
         {
         case NULL:
             return true;
@@ -486,7 +486,7 @@ public final class WeelRuntime
         final double step = this.stack[this.sp].number;
         final double lim = this.stack[this.sp - 1].number;
         final Value value = this.stack[index];
-        if (value.type != ValueType.NUMBER)
+        if(value.type != ValueType.NUMBER)
             throw new WeelException("FOR variable must be a number.");
         return step < 0 ? value.number >= lim : value.number <= lim;
     }
@@ -534,7 +534,7 @@ public final class WeelRuntime
     {
         final Iterator<Entry<Value, Value>> iterator = (Iterator<Entry<Value, Value>>) this.stack[this.sp]
                 .getObject();
-        if (!iterator.hasNext())
+        if(!iterator.hasNext())
             return false;
         final Entry<Value, Value> e = iterator.next();
         e.getKey().copyTo(this.stack[this.sp + 1]);
@@ -575,25 +575,25 @@ public final class WeelRuntime
         final ValueMap a = this.popMap();
         final ValueMap c = new ValueMap();
 
-        if (a.ordered && b.ordered)
+        if(a.ordered && b.ordered)
         {
             final Value v = new Value();
-            for (int i = 0; i < a.size; i++)
+            for(int i = 0; i < a.size; i++)
             {
                 c.append(a.get(i, v));
             }
-            for (int i = 0; i < b.size; i++)
+            for(int i = 0; i < b.size; i++)
             {
                 c.append(b.get(i, v));
             }
         }
         else
         {
-            for (final Entry<Value, Value> e : a)
+            for(final Entry<Value, Value> e : a)
             {
                 c.set(e.getKey(), e.getValue());
             }
-            for (final Entry<Value, Value> e : b)
+            for(final Entry<Value, Value> e : b)
             {
                 c.set(e.getKey(), e.getValue());
             }
@@ -619,17 +619,17 @@ public final class WeelRuntime
         final ValueMap b = this.popMap();
         final ValueMap a = this.stack[this.sp].getMap();
 
-        if (a.ordered && b.ordered)
+        if(a.ordered && b.ordered)
         {
             final Value v = new Value();
-            for (int i = 0; i < b.size; i++)
+            for(int i = 0; i < b.size; i++)
             {
                 a.append(b.get(i, v));
             }
         }
         else
         {
-            for (final Entry<Value, Value> e : b)
+            for(final Entry<Value, Value> e : b)
             {
                 a.set(e.getKey(), e.getValue());
             }
@@ -757,6 +757,48 @@ public final class WeelRuntime
         final Value b = this.stack[this.sp--];
         final Value a = this.stack[this.sp];
         a.number = (int) a.number ^ (int) b.number;
+    }
+
+    /**
+     * Binary signed right shift.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ..., value1 >> value2 </code>
+     * </p>
+     */
+    public void shr()
+    {
+        final Value b = this.stack[this.sp--];
+        final Value a = this.stack[this.sp];
+        a.number = (int) a.number >> (int) b.number;
+    }
+
+    /**
+     * Binary unsigned right shift.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ..., value1 >>> value2 </code>
+     * </p>
+     */
+    public void ushr()
+    {
+        final Value b = this.stack[this.sp--];
+        final Value a = this.stack[this.sp];
+        a.number = (int) a.number >>> (int) b.number;
+    }
+
+    /**
+     * Binary left shift.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ..., value1 &lt;&lt; value2 </code>
+     * </p>
+     */
+    public void shl()
+    {
+        final Value b = this.stack[this.sp--];
+        final Value a = this.stack[this.sp];
+        a.number = (int) a.number << (int) b.number;
     }
 
     /**
@@ -888,7 +930,7 @@ public final class WeelRuntime
      */
     public void load(final String value)
     {
-        if (value != null)
+        if(value != null)
         {
             this.stack[++this.sp].type = ValueType.STRING;
             this.stack[this.sp].string = value;
@@ -911,7 +953,7 @@ public final class WeelRuntime
      */
     public void load(final ValueMap value)
     {
-        if (value != null)
+        if(value != null)
         {
             this.stack[++this.sp].type = ValueType.MAP;
             this.stack[this.sp].map = value;
@@ -934,7 +976,7 @@ public final class WeelRuntime
      */
     public void load(final WeelFunction value)
     {
-        if (value != null)
+        if(value != null)
         {
             this.stack[++this.sp].type = ValueType.FUNCTION;
             this.stack[this.sp].function = value;
@@ -973,7 +1015,7 @@ public final class WeelRuntime
      */
     public void load(final Value value)
     {
-        if (value != null)
+        if(value != null)
         {
             value.copyTo(this.stack[++this.sp]);
         }
@@ -1023,7 +1065,7 @@ public final class WeelRuntime
     public void closeFrame(final int depth)
     {
         final int pops = this.frameSize[this.fp--];
-        for (int i = -depth; i < pops; i++)
+        for(int i = -depth; i < pops; i++)
         {
             this.stack[this.sp - i].setNull();
         }
@@ -1038,11 +1080,11 @@ public final class WeelRuntime
      */
     public void closeFrameRet(final int depth)
     {
-        if (this.sp - this.frameStart[this.fp] < this.frameSize[this.fp])
+        if(this.sp - this.frameStart[this.fp] < this.frameSize[this.fp])
             this.stack[++this.sp].setNull();
         this.stack[this.sp].copyTo(this.stack[this.frameStart[this.fp]]);
         final int pops = this.frameSize[this.fp--];
-        for (int i = -depth; i < pops; i++)
+        for(int i = -depth; i < pops; i++)
         {
             this.stack[this.sp - i].setNull();
         }
@@ -1069,12 +1111,12 @@ public final class WeelRuntime
     {
         WeelFunction func = this.stack[this.sp - args].getFunction();
 
-        if (func.arguments != args)
+        if(func.arguments != args)
         {
             // Is there a valid overloaded function?
             final WeelFunction overloaded = this.mother.findFunction(func.name,
                     args);
-            if (overloaded != null)
+            if(overloaded != null)
             {
                 // Yes, use it
                 func = this.stack[this.sp - args].function = overloaded;
@@ -1090,9 +1132,9 @@ public final class WeelRuntime
 
         func.invoke(this);
         // Check return value
-        if (func.returnsValue)
+        if(func.returnsValue)
         {
-            if (shouldReturn)
+            if(shouldReturn)
             {
                 this.stack[this.sp].copyTo(this.stack[this.sp - 1]);
                 --this.sp;
@@ -1102,7 +1144,7 @@ public final class WeelRuntime
                 this.sp -= 2;
             }
         }
-        else if (shouldReturn)
+        else if(shouldReturn)
         {
             this.stack[this.sp].setNull();
         }
@@ -1132,7 +1174,7 @@ public final class WeelRuntime
         final TypeFunctions funcs = this.typeFunctions[this.stack[this.sp
                 - args].type.ordinal()];
         final WeelFunction func = funcs.findFunction(name);
-        if (func == null)
+        if(func == null)
         {
             throw new WeelException("Unknown support function '"
                     + name.substring(0, name.lastIndexOf('#')) + "(" + args
@@ -1141,11 +1183,11 @@ public final class WeelRuntime
 
         func.invoke(this);
         // Check return value
-        if (func.returnsValue && !shouldReturn)
+        if(func.returnsValue && !shouldReturn)
         {
             this.sp--;
         }
-        else if (!func.returnsValue && shouldReturn)
+        else if(!func.returnsValue && shouldReturn)
         {
             this.stack[++this.sp].setNull();
         }
@@ -1483,7 +1525,7 @@ public final class WeelRuntime
      */
     public void wipeStack()
     {
-        for (int i = this.stack.length - 1; i > this.sp; i--)
+        for(int i = this.stack.length - 1; i > this.sp; i--)
         {
             this.stack[i].setNull();
         }
@@ -1500,7 +1542,7 @@ public final class WeelRuntime
      */
     public void weelAssert(final String err)
     {
-        if (!this.popBoolean())
+        if(!this.popBoolean())
         {
             throw new WeelException(err);
         }
@@ -1521,48 +1563,48 @@ public final class WeelRuntime
      */
     public Value invoke(final WeelFunction function, Object... args)
     {
-        if (args.length != function.arguments)
+        if(args.length != function.arguments)
         {
             throw new WeelException("Argument count mismatch");
         }
 
-        for (final Object o : args)
+        for(final Object o : args)
         {
-            if (o == null)
+            if(o == null)
             {
                 this.load();
                 continue;
             }
             final Class<?> oc = o.getClass();
-            if (oc == Double.class)
+            if(oc == Double.class)
             {
                 this.load((double) ((Double) o));
             }
-            else if (oc == Float.class)
+            else if(oc == Float.class)
             {
                 this.load((float) ((Float) o));
             }
-            else if (oc == Integer.class)
+            else if(oc == Integer.class)
             {
                 this.load((int) ((Integer) o));
             }
-            else if (oc == Short.class)
+            else if(oc == Short.class)
             {
                 this.load((int) ((Short) o));
             }
-            else if (oc == Byte.class)
+            else if(oc == Byte.class)
             {
                 this.load((int) ((Byte) o));
             }
-            else if (oc == Character.class)
+            else if(oc == Character.class)
             {
                 this.load((int) ((Character) o));
             }
-            else if (oc == String.class)
+            else if(oc == String.class)
             {
                 this.load((String) o);
             }
-            else if (oc == ValueMap.class)
+            else if(oc == ValueMap.class)
             {
                 this.load((ValueMap) o);
             }
@@ -1574,7 +1616,7 @@ public final class WeelRuntime
 
         function.invoke(this);
 
-        if (function.returnsValue)
+        if(function.returnsValue)
             return this.pop();
 
         return null;

@@ -118,7 +118,7 @@ final class Tokenizer
                         }
                         if (this.builder.length() == 0)
                             throw new WeelException(this.error("Syntax error"));
-                        this.number = Integer.parseInt(this.builder.toString(),
+                        this.number = (int)Long.parseLong(this.builder.toString(),
                                 16);
                         return;
                     case 'O':
@@ -134,7 +134,7 @@ final class Tokenizer
                         }
                         if (this.builder.length() == 0)
                             throw new WeelException(this.error("Syntax error"));
-                        this.number = Integer.parseInt(this.builder.toString(),
+                        this.number = (int)Long.parseLong(this.builder.toString(),
                                 8);
                         return;
                     case 'B':
@@ -150,7 +150,7 @@ final class Tokenizer
                         }
                         if (this.builder.length() == 0)
                             throw new WeelException(this.error("Syntax error"));
-                        this.number = Integer.parseInt(this.builder.toString(),
+                        this.number = (int)Long.parseLong(this.builder.toString(),
                                 2);
                         return;
                     }
@@ -489,6 +489,26 @@ final class Tokenizer
                         this.read();
                         return this.token = Token.GREATER_EQUAL;
                     }
+                    else if(this.current == '>')
+                    {
+                        this.read();
+                        if(this.current == '=')
+                        {
+                            this.read();
+                            return this.token = Token.ASSIGN_SHR;
+                        }
+                        else if(this.current == '>')
+                        {
+                            this.read();
+                            if(this.current == '=')
+                            {
+                                this.read();
+                                return this.token = Token.ASSIGN_USHR;
+                            }
+                            return this.token = Token.USHR;
+                        }
+                        return this.token = Token.SHR;
+                    }
                     return this.token = Token.GREATER;
                 case '<':
                     this.read();
@@ -496,6 +516,16 @@ final class Tokenizer
                     {
                         this.read();
                         return this.token = Token.LESS_EQUAL;
+                    }
+                    else if(this.current == '<')
+                    {
+                        this.read();
+                        if(this.current == '=')
+                        {
+                            this.read();
+                            return this.token = Token.ASSIGN_SHL;
+                        }
+                        return this.token = Token.SHL;
                     }
                     return this.token = Token.LESS;
                 case '&':
@@ -623,6 +653,9 @@ final class Tokenizer
         case BINARY_AND:
         case BINARY_OR:
         case BINARY_XOR:
+        case SHR:
+        case USHR:
+        case SHL:
             return true;
         default:
             return false;
@@ -686,6 +719,10 @@ final class Tokenizer
         case ADD:
         case SUB:
             return 11;
+        case SHL:
+        case SHR:
+        case USHR:
+            return 10;
         case GREATER:
         case GREATER_EQUAL:
         case LESS:

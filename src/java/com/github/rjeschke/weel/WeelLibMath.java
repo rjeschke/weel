@@ -448,4 +448,89 @@ public final class WeelLibMath
         final double min = runtime.popNumber();
         runtime.load(Math.random() * (max - min) + min);
     }
+
+    /**
+     * <code>imul(a, b)</code>
+     * <p>
+     * Integer multiply.
+     * </p>
+     * 
+     * @param runtime
+     *            The Weel runtime.
+     */
+    @WeelRawMethod(args = 2, returnsValue = true)
+    public final static void imul(final WeelRuntime runtime)
+    {
+        final int b = (int) runtime.popNumber();
+        final int a = (int) runtime.popNumber();
+        runtime.load(a * b);
+    }
+
+    /**
+     * <code>idiv(a, b)</code>
+     * <p>
+     * Integer division.
+     * </p>
+     * 
+     * @param runtime
+     *            The Weel runtime.
+     */
+    @WeelRawMethod(args = 2, returnsValue = true)
+    public final static void idiv(final WeelRuntime runtime)
+    {
+        final int b = (int) runtime.popNumber();
+        final int a = (int) runtime.popNumber();
+        runtime.load(a / b);
+    }
+
+    /**
+     * <code>iadd(a, b)</code>
+     * <p>
+     * Integer addition.
+     * </p>
+     * 
+     * @param runtime
+     *            The Weel runtime.
+     */
+    @WeelRawMethod(args = 2, returnsValue = true)
+    public final static void iadd(final WeelRuntime runtime)
+    {
+        final int b = (int) runtime.popNumber();
+        final int a = (int) runtime.popNumber();
+        runtime.load(a + b);
+    }
+
+    /**
+     * <code>isub(a, b)</code>
+     * <p>
+     * Integer subtraction.
+     * </p>
+     * 
+     * @param runtime
+     *            The Weel runtime.
+     */
+    @WeelRawMethod(args = 2, returnsValue = true)
+    public final static void isub(final WeelRuntime runtime)
+    {
+        final int b = (int) runtime.popNumber();
+        final int a = (int) runtime.popNumber();
+        runtime.load(a - b);
+    }
+
+    /**
+     * <code>imod(a, b)</code>
+     * <p>
+     * Integer modulo.
+     * </p>
+     * 
+     * @param runtime
+     *            The Weel runtime.
+     */
+    @WeelRawMethod(args = 2, returnsValue = true)
+    public final static void imod(final WeelRuntime runtime)
+    {
+        final int b = (int) runtime.popNumber();
+        final int a = (int) runtime.popNumber();
+        runtime.load(a % b);
+    }
 }

@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.github.rjeschke.weel.annotations.WeelClass;
 import com.github.rjeschke.weel.annotations.WeelRawMethod;
 import com.github.rjeschke.weel.annotations.WeelMethod;
+import com.github.rjeschke.weel.jclass.WeelImage;
 import com.github.rjeschke.weel.jclass.WeelLock;
 import com.github.rjeschke.weel.jclass.WeelSemaphore;
 import com.github.rjeschke.weel.jclass.WeelStringBuilder;
@@ -70,6 +71,7 @@ public final class Weel
     
     private final static Class<?>[] JCLASSES = {
         WeelStringBuilder.class,
+        WeelImage.class,
         WeelThread.class, WeelLock.class, WeelSemaphore.class
     };
 
