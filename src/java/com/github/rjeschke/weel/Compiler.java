@@ -1258,10 +1258,8 @@ final class Compiler
     {
         this.addScope(new Scope(this.scope, ScopeType.SWITCH));
         this.tokenizer.next();
-        this.checkToken(Token.BRACE_OPEN);
-        this.tokenizer.next();
         this.parseExpression();
-        this.checkToken(Token.BRACE_CLOSE);
+        this.checkReserved(ReservedWord.DO);
         this.tokenizer.next();
     }
 

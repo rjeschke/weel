@@ -343,7 +343,7 @@ An `if` block may contain zero or more `elseif`s and zero or one `else`. The
 
 #### switch, end                    {#switch}
  
-    switch(<expr>)
+    switch <expr> do
         [case <expr>:]
             ...
             [break]

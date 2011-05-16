@@ -1,0 +1,38 @@
+/*
+require 'benchmark'
+
+def fib_ruby(n)
+  if n < 2
+    n
+  else
+    fib_ruby(n - 2) + fib_ruby(n - 1)
+  end
+end
+
+TIMES = (ARGV[0] || 5).to_i
+N = (ARGV[1] || 30).to_i
+TIMES.times {
+  puts Benchmark.measure { puts fib_ruby(N) }
+}
+
+*/
+
+func fib_weel(n)
+  if n < 2 then
+    return n
+  else
+    return fib_weel(n - 2) + fib_weel(n - 1)
+  end
+end
+
+sub main(args)
+    local times = args[0] != null ? toNum(args[0]) : 5;
+    local n = args[1] != null ? toNum(args[1]) : 30;
+    
+    for i = 1, times do
+        t = clock();
+        fib_weel(n);
+        t = clock() - t;
+        println(i .. ": " .. t);
+    end
+end

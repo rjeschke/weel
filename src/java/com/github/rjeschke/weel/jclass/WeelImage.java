@@ -62,6 +62,61 @@ public final class WeelImage
     }
 
     /**
+     * Seta a pixel with the define color.
+     * 
+     * @param thiz
+     *            This.
+     * @param x
+     *            X.
+     * @param y
+     *            Y.
+     * @param r
+     *            Red (0 - 255).
+     * @param g
+     *            Green (0 - 255).
+     * @param b
+     *            Blue (0 - 255).
+     */
+    @WeelMethod
+    public static final void setPixel(final ValueMap thiz, final int x,
+            final int y, final int r, final int g, final int b)
+    {
+        final ImageWrapper img = WeelOop.getInstance(thiz, ImageWrapper.class);
+        img.setPixel(x, y, 0xff000000 | (ImageWrapper.clamp(r, 0, 255) << 16)
+                | (ImageWrapper.clamp(g, 0, 255) << 8)
+                | ImageWrapper.clamp(b, 0, 255));
+    }
+
+    /**
+     * Seta a pixel with the define color.
+     * 
+     * @param thiz
+     *            This.
+     * @param x
+     *            X.
+     * @param y
+     *            Y.
+     * @param a
+     *            Alpha (0 - 255).
+     * @param r
+     *            Red (0 - 255).
+     * @param g
+     *            Green (0 - 255).
+     * @param b
+     *            Blue (0 - 255).
+     */
+    @WeelMethod
+    public static final void setPixel(final ValueMap thiz, final int x,
+            final int y, final int a, final int r, final int g, final int b)
+    {
+        final ImageWrapper img = WeelOop.getInstance(thiz, ImageWrapper.class);
+        img.setPixel(x, y, (ImageWrapper.clamp(a, 0, 255) << 24)
+                | (ImageWrapper.clamp(r, 0, 255) << 16)
+                | (ImageWrapper.clamp(g, 0, 255) << 8)
+                | ImageWrapper.clamp(b, 0, 255));
+    }
+
+    /**
      * Gets a pixel.
      * 
      * @param thiz
@@ -191,7 +246,7 @@ public final class WeelImage
                 ImageIO.write(this.image, "png", new File(filename));
                 return true;
             }
-            catch(IOException e)
+            catch (IOException e)
             {
                 return false;
             }

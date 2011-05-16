@@ -38,6 +38,8 @@ For more informations have a look [here](http://rjeschke.github.com/weel/).
 ### TODO
 
 *   Switch to Apache v2 license
+*   Compiler redesign with intermediate code and specialized overloaded
+    runtime methods
 *   Finish standard library (String and map functions mainly)
 *   Threading/concurrency and IO library
 *   Add mechanism for user library registering and loading on demand

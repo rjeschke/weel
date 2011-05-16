@@ -10,12 +10,14 @@ public class Main
 {
     public static void main(String[] args)
     {
+        System.out.println(System.getProperty("java.vm.name") + " v" + System.getProperty("java.vm.version"));
         try
         {
             final Weel weel = new Weel();
             weel.setDebugMode(false);
 
-            weel.compileResource("com.github.rjeschke.weel.test.mandel");
+            weel.compileResource("com.github.rjeschke.weel.test.bench_fib_recursive");
+//            weel.compileResource("com.github.rjeschke.weel.test.mandel");
             //weel.compileResource("com.github.rjeschke.weel.test.test");
             //weel.compileResource("com.github.rjeschke.weel.test.wunitArith");
 
