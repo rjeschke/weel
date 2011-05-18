@@ -38,12 +38,9 @@ For more informations have a look [here](http://rjeschke.github.com/weel/).
 ### TODO
 
 *   Switch to Apache v2 license
-*   Compiler redesign with intermediate code and specialized overloaded
-    runtime methods
 *   Finish standard library (String and map functions mainly)
-*   Threading/concurrency and IO library
 *   Add mechanism for user library registering and loading on demand
-*   Map some useful Java classes to Weel (e.g. StringBuilder, RegExp)
+*   Map some more useful Java classes to Weel
 *   Library documentation
 *   Maybe create a 'weel-library' project on github to give users a chance
     to extend Weel in a moderated way?

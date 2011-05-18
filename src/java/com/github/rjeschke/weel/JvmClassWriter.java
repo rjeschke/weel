@@ -30,7 +30,8 @@ final class JvmClassWriter
     /**
      * Constructor.
      * 
-     * @param className The full class name.
+     * @param className
+     *            The full class name.
      */
     public JvmClassWriter(final String className)
     {
@@ -47,14 +48,12 @@ final class JvmClassWriter
                 .addConstant(new JvmConstant("java/lang/Object"))));
 
         // Create default constructor
-        final JvmMethodWriter mw = this.createMethod("<init>", "()V");
-        mw.maxLocals = mw.maxStack = 1;
-        mw.access = Modifier.PRIVATE;
-        mw.code.add(JvmOp.ALOAD_0);
-        mw.code.add(JvmOp.INVOKESPECIAL);
-        mw.code.addShort(this.addMethodRefConstant("java.lang.Object",
-                "<init>", "()V"));
-        mw.code.add(JvmOp.RETURN);
+        final JvmMethodWriter mw = this.createMethod("<init>", "()V",
+                Modifier.PRIVATE);
+
+        mw.aload(0);
+        mw.invokeSpecial("java.lang.Object", "<init>", "()V");
+        mw.addOp(JvmOp.RETURN);
     }
 
     /**
@@ -66,19 +65,39 @@ final class JvmClassWriter
     {
         return this.methods.size() > 1;
     }
-    
+
     /**
      * Creates a method.
      * 
-     * @param methodName The name of the method.
-     * @param descriptor The descriptor.
+     * @param methodName
+     *            The name of the method.
+     * @param descriptor
+     *            The descriptor
      * @return A JvmMethodWriter.
      */
     public JvmMethodWriter createMethod(final String methodName,
             final String descriptor)
     {
+        return this.createMethod(methodName, descriptor, Modifier.PUBLIC
+                | Modifier.FINAL | Modifier.STATIC);
+    }
+
+    /**
+     * Creates a method.
+     * 
+     * @param methodName
+     *            The name of the method.
+     * @param descriptor
+     *            The descriptor
+     * @param access
+     *            The access modifiers.
+     * @return A JvmMethodWriter.
+     */
+    public JvmMethodWriter createMethod(final String methodName,
+            final String descriptor, final int access)
+    {
         final JvmMethodWriter mw = new JvmMethodWriter(this, methodName,
-                descriptor);
+                descriptor, access);
         mw.nameIndex = this.addConstant(new JvmConstant(methodName));
         mw.descriptorIndex = this.addConstant(new JvmConstant(descriptor));
         this.methods.add(mw);
@@ -88,18 +107,19 @@ final class JvmClassWriter
     /**
      * Adds a constant.
      * 
-     * @param c The constant.
+     * @param c
+     *            The constant.
      * @return The index of this constant in the constant pool.
      */
     public int addConstant(final JvmConstant c)
     {
         final Integer t = this.mapConstants.get(c);
-        if (t != null)
+        if(t != null)
             return t;
         final int idx = this.constants.size();
         this.mapConstants.put(c, idx);
         this.constants.add(c);
-        if (c.type == JvmConstant.CONSTANT_Double
+        if(c.type == JvmConstant.CONSTANT_Double
                 || c.type == JvmConstant.CONSTANT_Long)
             this.constants.add(null);
         return idx;
@@ -137,17 +157,17 @@ final class JvmClassWriter
             // write constants
             bytes.addShort(this.constants.size());
 
-            for (int i = 1; i < this.constants.size(); i++)
+            for(int i = 1; i < this.constants.size(); i++)
             {
                 final JvmConstant c = this.constants.get(i);
                 bytes.add(c.type);
-                switch (c.type)
+                switch(c.type)
                 {
                 case JvmConstant.CONSTANT_Utf8:
                 {
                     final byte[] str = c.stringValue.getBytes("UTF-8");
                     bytes.addShort(str.length);
-                    for (int n = 0; n < str.length; n++)
+                    for(int n = 0; n < str.length; n++)
                         bytes.add(str[n]);
                     break;
                 }
@@ -193,7 +213,7 @@ final class JvmClassWriter
 
             // write methods
             bytes.addShort(this.methods.size());
-            for (int i = 0; i < this.methods.size(); i++)
+            for(int i = 0; i < this.methods.size(); i++)
             {
                 final JvmMethodWriter mw = this.methods.get(i);
                 bytes.addShort(mw.access);
@@ -206,7 +226,7 @@ final class JvmClassWriter
                 bytes.addShort(mw.maxStack);
                 bytes.addShort(mw.maxLocals);
                 bytes.addInteger(code.length);
-                for (int n = 0; n < code.length; n++)
+                for(int n = 0; n < code.length; n++)
                     bytes.add(code[n]);
                 bytes.addShort(0); // exception table
                 bytes.addShort(0); // attributes
@@ -214,7 +234,7 @@ final class JvmClassWriter
 
             bytes.addShort(0); // attributes
         }
-        catch (UnsupportedEncodingException e)
+        catch(UnsupportedEncodingException e)
         {
             e.printStackTrace();
             return null;
@@ -226,32 +246,33 @@ final class JvmClassWriter
     /**
      * Builds a method descriptor.
      * 
-     * @param args The types.
+     * @param args
+     *            The types.
      * @return The method descriptor.
      */
     public static String buildDescriptor(Class<?>... args)
     {
         final StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < args.length; i++)
+        for(int i = 0; i < args.length; i++)
         {
             final Class<?> c = args[i];
-            if (c == void.class)
+            if(c == void.class)
                 sb.append('V');
-            else if (c == byte.class)
+            else if(c == byte.class)
                 sb.append('B');
-            else if (c == char.class)
+            else if(c == char.class)
                 sb.append('C');
-            else if (c == short.class)
+            else if(c == short.class)
                 sb.append('S');
-            else if (c == int.class)
+            else if(c == int.class)
                 sb.append('I');
-            else if (c == long.class)
+            else if(c == long.class)
                 sb.append('J');
-            else if (c == float.class)
+            else if(c == float.class)
                 sb.append('F');
-            else if (c == double.class)
+            else if(c == double.class)
                 sb.append('D');
-            else if (c == boolean.class)
+            else if(c == boolean.class)
                 sb.append('Z');
             else
             {

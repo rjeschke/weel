@@ -152,4 +152,20 @@ public final class WeelLibString
         
         runtime.load(start != end ? a.substring(start, end) : "");
     }
+
+    /**
+     * <code>toChar(v)</code>
+     * <p>
+     * Returns the number 'v' as a char (string).
+     * </p>
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(args = 1, returnsValue = true)
+    public final static void toChar(final WeelRuntime runtime)
+    {
+        final String s = Character.toString((char)runtime.popNumber());
+        runtime.load(s);
+    }
 }

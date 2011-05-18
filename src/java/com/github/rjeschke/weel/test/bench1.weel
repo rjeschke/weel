@@ -50,7 +50,7 @@ end
 sub iterat(width, height, imax)
     local x, y, vx, vy, i, zx, zy, tx, ty, tx1, ty1, col, cnum
 
-    par = {-2.5, 1.5, -1.5, 1.5}
+    par = {-1.5, 0.5, -1.5, 0.5}
     
     x_min = par[0]
     x_max = par[1]
@@ -98,7 +98,7 @@ sub main(args)
     println("===========");
     t = clock()
     n = size(args) > 1 ? toNum(args[1]) : 1000;
-    iterat(n, n, n)
+    iterat(n, n, 49)
     t = floor((clock() - t) * 100.0 + 0.5) / 100.0;
     println(t.." sec.");
 end

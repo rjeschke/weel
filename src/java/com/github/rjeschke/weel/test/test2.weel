@@ -1,0 +1,28 @@
+/*
+func test(a, b)
+    if a then
+        return b
+    else
+        return a
+    end
+end
+*/
+a = true || false;
+b = true && false;
+println(1 + 2 * 3);
+println("Hello".." ".."world!"..(1 + 2 * 3));
+println(a & b)
+
+a = 1;
+
+t = clock();
+for i = 0, 16777215 do
+    local b = a + a;
+end
+println(clock() - t);
+
+t = clock();
+for i = 0, 16777215 do
+    local b = 2 * a;
+end
+println(clock() - t);

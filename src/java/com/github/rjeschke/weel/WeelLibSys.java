@@ -378,20 +378,35 @@ public final class WeelLibSys
     @WeelRawMethod(args = 1, returnsValue = true)
     public final static void toNum(final WeelRuntime runtime)
     {
-        final String str = runtime.popString().toLowerCase();
-        if (str.length() > 2)
+        final Value val = runtime.pop();
+        if(val.type != ValueType.STRING)
         {
-            if (str.startsWith("0b"))
-                runtime.load(Integer.parseInt(str.substring(2), 2));
-            else if (str.startsWith("0o"))
-                runtime.load(Integer.parseInt(str.substring(2), 8));
-            else if (str.startsWith("0x"))
-                runtime.load(Integer.parseInt(str.substring(2), 16));
-            else
-                runtime.load(Double.parseDouble(str));
+            runtime.load(0);
         }
         else
-            runtime.load(Double.parseDouble(str));
+        {
+            try
+            {
+                final String str = val.string.toLowerCase();
+                if (str.length() > 2)
+                {
+                    if (str.startsWith("0b"))
+                        runtime.load(Integer.parseInt(str.substring(2), 2));
+                    else if (str.startsWith("0o"))
+                        runtime.load(Integer.parseInt(str.substring(2), 8));
+                    else if (str.startsWith("0x"))
+                        runtime.load(Integer.parseInt(str.substring(2), 16));
+                    else
+                        runtime.load(Double.parseDouble(str));
+                }
+                else
+                    runtime.load(Double.parseDouble(str));
+            }
+            catch(NumberFormatException e)
+            {
+                runtime.load(0);
+            }
+        }
     }
 
     /**

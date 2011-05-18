@@ -5,6 +5,7 @@
 package com.github.rjeschke.weel;
 
 import java.io.FileInputStream;
+import java.util.Arrays;
 
 /**
  * Weel command line invoker prototype.
@@ -30,19 +31,17 @@ public final class Run
                     .println("Usage: weel <script> [<script> ...] [-args args]");
             return;
         }
+//        System.out.println("Weel @(" + System.getProperty("java.vm.name")
+//                + " v" + System.getProperty("java.vm.version") + ")");
         final Weel weel = new Weel();
-        ValueMap vargs = null;
         try
         {
+            int as = -1;
             for (int i = 0; i < args.length; i++)
             {
                 if (args[i].toLowerCase().equals("-args"))
                 {
-                    vargs = new ValueMap();
-                    for (int n = i + 1, t = 0; n < args.length; n++, t++)
-                    {
-                        vargs.append(new Value(args[n]));
-                    }
+                    as = i + 1;
                     break;
                 }
                 String filename = args[i];
@@ -57,17 +56,13 @@ public final class Run
 
             weel.runStatic();
 
-            final WeelFunction main = weel.findFunction("main");
-            if (main != null)
-            {
-                if (main.arguments > 1)
-                    throw new WeelException(
-                            "main() should only take one argument");
-                final Value ret = main.arguments == 1 ? weel
-                        .invoke(main, vargs) : weel.invoke(main);
-                if (ret != null)
-                    System.out.println(ret);
-            }
+            final Value ret = as != -1 ? weel.runMain(Arrays.copyOfRange(args,
+                    as, args.length)) : weel.runMain();
+
+            System.out.flush();
+            
+            if (ret != null)
+                System.out.println(ret);
         }
         catch (final Exception e)
         {

@@ -11,6 +11,10 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.util.LinkedList;
 
+import com.github.rjeschke.weel.Value;
+import com.github.rjeschke.weel.Weel;
+import com.github.rjeschke.weel.WeelException;
+import com.github.rjeschke.weel.WeelFunction;
 import com.github.rjeschke.weel.Variable.Type;
 
 /**
@@ -27,17 +31,17 @@ final class Compiler
     /** Nested scopes. */
     LinkedList<Scope> scopes = new LinkedList<Scope>();
     /** The current CodeBlock. */
-    CodeBlock block;
+    WeelCode block;
     /** The current Scope. */
     Scope scope;
     /** The class writer. */
     JvmClassWriter classWriter;
     /** Flag indicating that we're in debug mode. (Used for assert(cond)). */
     private final boolean debugMode;
-    /** Anonymous function counter. */
-    private int anonCounter = 0;
     /** Flag indicating that we're used. */
     private boolean used = false;
+    /** Anonymous function counter. */
+    private int anonCounter = 0;
 
     /**
      * Constructor.
@@ -118,8 +122,10 @@ final class Compiler
             throw new WeelException("Open block: " + this.scope.type.toString());
         }
 
-        this.scope.block.closeBlock();
+        this.scope.block.closeBlock(this.debugMode);
 
+        this.blockToBytecode(this.block);
+        
         this.weel.classLoader.addClass(this.classWriter);
 
         this.weel.initAllInvokers();
@@ -139,9 +145,7 @@ final class Compiler
         this.weel.scriptClasses.add(this.classWriter.className);
 
         final Scope s = new Scope(this.weel, ScopeType.STATIC);
-        s.block = new CodeBlock(this.classWriter.createMethod("STATIC",
-                "(Lcom/github/rjeschke/weel/WeelRuntime;)V"));
-
+        s.block = new WeelCode(this.weel);
         this.addScope(s);
     }
 
@@ -413,7 +417,7 @@ final class Compiler
                 final String name = this.tokenizer.string;
                 if(expr == ExpressionType.ARRAY)
                 {
-                    this.block.callRuntime("getMap");
+                    this.block.add(new InstrGetMap());
                 }
                 else if(first && expr == ExpressionType.VARIABLE)
                 {
@@ -446,8 +450,8 @@ final class Compiler
                 this.checkToken(Token.BRACE_CLOSE);
                 this.tokenizer.next();
 
-                this.block.writeSpecialCall(name, paramc, getContext
-                        || this.wouldNeedReturnValue());
+                this.block.add(new InstrSpecialCall(name, paramc, getContext
+                        || this.wouldNeedReturnValue()));
 
                 oop = first = false;
                 expr = ExpressionType.FUNCTION;
@@ -475,12 +479,12 @@ final class Compiler
                     {
                         if(oop)
                         {
-                            this.block.callRuntime("getMapOop");
+                            this.block.add(new InstrGetMapOop());
                             paramc++;
                         }
                         else
                         {
-                            this.block.callRuntime("getMap");
+                            this.block.add(new InstrGetMap());
                         }
                         stackCall = true;
                     }
@@ -520,14 +524,15 @@ final class Compiler
                                         + paramc + ")"));
                     }
 
-                    this.writeCallFunction(func);
+                    this.block.add(new InstrCall(func));
 
                     if(getContext || this.wouldNeedReturnValue())
                     {
                         if(!func.returnsValue)
                         {
                             throw new WeelException(this.tokenizer.error("Sub "
-                                    + func.name + "(" + func.arguments
+                                    + func.getName() + "("
+                                    + func.getNumArguments()
                                     + ") doesn't return a value"));
                         }
                     }
@@ -535,14 +540,14 @@ final class Compiler
                     {
                         if(func.returnsValue)
                         {
-                            this.block.callRuntime("pop1");
+                            this.block.add(new InstrPop(1));
                         }
                     }
                 }
                 else
                 {
-                    this.block.doStackcall(paramc, getContext
-                            | this.wouldNeedReturnValue());
+                    this.block.add(new InstrStackCall(paramc, getContext
+                            | this.wouldNeedReturnValue()));
                 }
                 oop = first = false;
                 expr = ExpressionType.FUNCTION;
@@ -557,11 +562,11 @@ final class Compiler
                 else
                 {
                     if(expr == ExpressionType.ARRAY)
-                        this.block.callRuntime("getMap");
+                        this.block.add(new InstrGetMap());
                 }
                 this.tokenizer.next();
                 this.checkToken(Token.NAME);
-                this.block.load(this.tokenizer.string);
+                this.block.add(new InstrLoad(this.tokenizer.string));
                 this.tokenizer.next();
                 oop = true;
                 first = false;
@@ -576,11 +581,11 @@ final class Compiler
                 else
                 {
                     if(expr == ExpressionType.ARRAY)
-                        this.block.callRuntime("getMap");
+                        this.block.add(new InstrGetMap());
                 }
                 this.tokenizer.next();
                 this.checkToken(Token.NAME);
-                this.block.load(this.tokenizer.string);
+                this.block.add(new InstrLoad(this.tokenizer.string));
                 this.tokenizer.next();
                 oop = first = false;
                 expr = ExpressionType.ARRAY;
@@ -594,7 +599,7 @@ final class Compiler
                 else
                 {
                     if(expr == ExpressionType.ARRAY)
-                        this.block.callRuntime("getMap");
+                        this.block.add(new InstrGetMap());
                 }
                 this.tokenizer.next();
                 if(!getContext && this.tokenizer.token == Token.BRACKET_CLOSE)
@@ -678,8 +683,8 @@ final class Compiler
                 this.syntaxError();
             if(expr == ExpressionType.ARRAY)
             {
-                this.block.callRuntime("sdup2");
-                this.block.callRuntime("getMap");
+                this.block.add(new InstrSdup2());
+                this.block.add(new InstrGetMap());
             }
             else
             {
@@ -690,43 +695,43 @@ final class Compiler
             switch(op)
             {
             case ASSIGN_ADD:
-                this.block.callRuntime("add");
+                this.block.add(new InstrAlu2(Alu2InstrType.add));
                 break;
             case ASSIGN_DIV:
-                this.block.callRuntime("div");
+                this.block.add(new InstrAlu2(Alu2InstrType.div));
                 break;
             case ASSIGN_AND:
-                this.block.callRuntime("and");
+                this.block.add(new InstrAlu2(Alu2InstrType.and));
                 break;
             case ASSIGN_MODULO:
-                this.block.callRuntime("mod");
+                this.block.add(new InstrAlu2(Alu2InstrType.mod));
                 break;
             case ASSIGN_MUL:
-                this.block.callRuntime("mul");
+                this.block.add(new InstrAlu2(Alu2InstrType.mul));
                 break;
             case ASSIGN_OR:
-                this.block.callRuntime("or");
+                this.block.add(new InstrAlu2(Alu2InstrType.or));
                 break;
             case ASSIGN_SUB:
-                this.block.callRuntime("sub");
+                this.block.add(new InstrAlu2(Alu2InstrType.sub));
                 break;
             case ASSIGN_XOR:
-                this.block.callRuntime("xor");
+                this.block.add(new InstrAlu2(Alu2InstrType.xor));
                 break;
             case ASSIGN_STRCAT:
-                this.block.callRuntime("strcat");
+                this.block.add(new InstrAlu2(Alu2InstrType.strcat));
                 break;
             case ASSIGN_MAPCAT:
-                this.block.callRuntime("mapcat2");
+                this.block.add(new InstrAlu2(Alu2InstrType.mapcat2));
                 break;
             case ASSIGN_SHL:
-                this.block.callRuntime("shl");
+                this.block.add(new InstrAlu2(Alu2InstrType.shl));
                 break;
             case ASSIGN_SHR:
-                this.block.callRuntime("shr");
+                this.block.add(new InstrAlu2(Alu2InstrType.shr));
                 break;
             case ASSIGN_USHR:
-                this.block.callRuntime("ushr");
+                this.block.add(new InstrAlu2(Alu2InstrType.ushr));
                 break;
             default:
                 break;
@@ -734,13 +739,13 @@ final class Compiler
             if(expr == ExpressionType.ARRAY)
             {
                 if(getContext)
-                    this.block.callRuntime("sdups");
-                this.block.callRuntime("setMap");
+                    this.block.add(new InstrSdups());
+                this.block.add(new InstrSetMap());
             }
             else
             {
                 if(getContext)
-                    this.block.callRuntime("sdup");
+                    this.block.add(new InstrSdup());
                 this.writeSetVariable(var);
             }
             break;
@@ -751,17 +756,17 @@ final class Compiler
             if(expr == ExpressionType.ARRAY)
             {
                 if(getContext)
-                    this.block.callRuntime("sdups");
+                    this.block.add(new InstrSdups());
 
                 if(append)
-                    this.block.callRuntime("appendMap");
+                    this.block.add(new InstrAppendMap());
                 else
-                    this.block.callRuntime("setMap");
+                    this.block.add(new InstrSetMap());
             }
             else if(expr == ExpressionType.VARIABLE)
             {
                 if(getContext)
-                    this.block.callRuntime("sdup");
+                    this.block.add(new InstrSdup());
                 this.writeSetVariable(var);
             }
             else
@@ -777,7 +782,7 @@ final class Compiler
             }
             else if(getContext && expr == ExpressionType.ARRAY)
             {
-                this.block.callRuntime("getMap");
+                this.block.add(new InstrGetMap());
             }
             else if(expr != ExpressionType.FUNCTION)
             {
@@ -800,26 +805,26 @@ final class Compiler
         switch(this.tokenizer.token)
         {
         case NUMBER:
-            this.block.load(this.tokenizer.number);
+            this.block.add(new InstrLoad(this.tokenizer.number));
             this.tokenizer.next();
             break;
         case STRING:
-            this.block.load(this.tokenizer.string);
+            this.block.add(new InstrLoad(this.tokenizer.string));
             this.tokenizer.next();
             break;
         case RESERVED:
             switch(this.tokenizer.reserved)
             {
             case TRUE:
-                this.block.load(-1);
+                this.block.add(new InstrLoad(-1));
                 this.tokenizer.next();
                 break;
             case FALSE:
-                this.block.load(0);
+                this.block.add(new InstrLoad(0));
                 this.tokenizer.next();
                 break;
             case NULL:
-                this.block.callRuntime("load");
+                this.block.add(new InstrLoad());
                 this.tokenizer.next();
                 break;
             case THIS:
@@ -835,22 +840,22 @@ final class Compiler
             break;
         case CURLY_BRACE_OPEN:
         {
-            this.block.callRuntime("createMap");
+            this.block.add(new InstrCreateMap());
             this.tokenizer.next();
             while(this.tokenizer.token != Token.CURLY_BRACE_CLOSE)
             {
-                this.block.callRuntime("sdup");
+                this.block.add(new InstrSdup());
                 switch(this.tokenizer.token)
                 {
                 case DOT:
                     this.tokenizer.next();
                     this.checkToken(Token.NAME);
-                    this.block.load(this.tokenizer.string);
+                    this.block.add(new InstrLoad(this.tokenizer.string));
                     this.tokenizer.next();
                     this.checkToken(Token.ASSIGN);
                     this.tokenizer.next();
                     this.parseExpression();
-                    this.block.callRuntime("setMap");
+                    this.block.add(new InstrSetMap());
                     break;
                 case BRACKET_OPEN:
                     this.tokenizer.next();
@@ -860,7 +865,7 @@ final class Compiler
                     this.checkToken(Token.ASSIGN);
                     this.tokenizer.next();
                     this.parseExpression();
-                    this.block.callRuntime("setMap");
+                    this.block.add(new InstrSetMap());
                     break;
                 case NAME:
                 {
@@ -868,10 +873,10 @@ final class Compiler
                     final String name = this.tokenizer.string;
                     if(this.tokenizer.next() == Token.ASSIGN)
                     {
-                        this.block.load(name);
+                        this.block.add(new InstrLoad(name));
                         this.tokenizer.next();
                         this.parseExpression();
-                        this.block.callRuntime("setMap");
+                        this.block.add(new InstrSetMap());
                     }
                     else
                     {
@@ -889,13 +894,13 @@ final class Compiler
                         }
                         this.tokenizer.ungetToken(prev);
                         this.parseExpression();
-                        this.block.callRuntime("appendMap");
+                        this.block.add(new InstrAppendMap());
                     }
                     break;
                 }
                 default:
                     this.parseExpression();
-                    this.block.callRuntime("appendMap");
+                    this.block.add(new InstrAppendMap());
                     break;
                 }
                 if(this.tokenizer.token == Token.CURLY_BRACE_CLOSE)
@@ -951,17 +956,18 @@ final class Compiler
 
             if(this.tokenizer.token == Token.TERNARY)
             {
-                this.block.callRuntime("popBoolean", "()Z");
-                final int first = this.block.writeJmp(JvmOp.IFEQ, 0);
+                final int first = this.block.registerLabel();
+                final int second = this.block.registerLabel();
+                this.block.add(new InstrPopBool());
+                this.block.add(new InstrIfEq(first));
                 this.tokenizer.next();
                 this.parseExpression();
                 this.checkToken(Token.COLON);
                 this.tokenizer.next();
-                final int second = this.block.writeJmp(JvmOp.GOTO, 0);
-                this.block.writeShortAt(first, this.block.getPc() - first + 1);
+                this.block.add(new InstrGoto(second));
+                this.block.add(new InstrLabel(first));
                 this.parseExpression();
-                this.block
-                        .writeShortAt(second, this.block.getPc() - second + 1);
+                this.block.add(new InstrLabel(second));
             }
             else if(this.tokenizer.token == Token.DOUBLE_COLON
                     && allowDoubleColon)
@@ -978,7 +984,6 @@ final class Compiler
      *            The priority.
      * @return The last operator token.
      */
-    // TODO static expression evaluation
     private Token parseExpression(final int prio)
     {
         this.checkExpr();
@@ -996,13 +1001,13 @@ final class Compiler
                 this.tokenizer.next();
                 if(this.tokenizer.token == Token.NUMBER)
                 {
-                    this.block.load(-this.tokenizer.number);
+                    this.block.add(new InstrLoad(-this.tokenizer.number));
                     this.tokenizer.next();
                 }
                 else
                 {
                     this.parseExpression(Tokenizer.UOPR_PRIORITY);
-                    this.block.callRuntime("neg");
+                    this.block.add(new InstrNeg());
                 }
                 break;
             default:
@@ -1013,10 +1018,10 @@ final class Compiler
                 switch(tok)
                 {
                 case LOGICAL_NOT:
-                    this.block.callRuntime("lnot");
+                    this.block.add(new InstrLnot());
                     break;
                 case BINARY_NOT:
-                    this.block.callRuntime("not");
+                    this.block.add(new InstrNot());
                     break;
                 default:
                     break;
@@ -1040,13 +1045,15 @@ final class Compiler
             // Short circuit logical and/or
             if(bop == Token.LOGICAL_AND)
             {
-                this.block.callRuntime("testPopFalse", "()Z");
-                taddr = this.block.writeJmp(JvmOp.IFNE, 0);
+                this.block.add(new InstrTestPopf());
+                taddr = this.block.registerLabel();
+                this.block.add(new InstrIfNe(taddr));
             }
             else if(bop == Token.LOGICAL_OR)
             {
-                this.block.callRuntime("testPopTrue", "()Z");
-                taddr = this.block.writeJmp(JvmOp.IFNE, 0);
+                this.block.add(new InstrTestPopt());
+                taddr = this.block.registerLabel();
+                this.block.add(new InstrIfNe(taddr));
             }
 
             Token nbop = this.parseExpression(this.tokenizer
@@ -1055,65 +1062,65 @@ final class Compiler
             switch(bop)
             {
             case ADD:
-                this.block.callRuntime("add");
+                this.block.add(new InstrAlu2(Alu2InstrType.add));
                 break;
             case SUB:
-                this.block.callRuntime("sub");
+                this.block.add(new InstrAlu2(Alu2InstrType.sub));
                 break;
             case MUL:
-                this.block.callRuntime("mul");
+                this.block.add(new InstrAlu2(Alu2InstrType.mul));
                 break;
             case DIV:
-                this.block.callRuntime("div");
+                this.block.add(new InstrAlu2(Alu2InstrType.div));
                 break;
             case LOGICAL_AND:
             case LOGICAL_OR:
-                this.block.writeShortAt(taddr, this.block.getPc() - taddr + 1);
+                this.block.add(new InstrLabel(taddr));
                 break;
             case EQUAL:
-                this.block.callRuntime("cmpEq");
+                this.block.add(new InstrAlu2(Alu2InstrType.cmpEq));
                 break;
             case NOT_EQUAL:
-                this.block.callRuntime("cmpNe");
+                this.block.add(new InstrAlu2(Alu2InstrType.cmpNe));
                 break;
             case GREATER:
-                this.block.callRuntime("cmpGt");
+                this.block.add(new InstrAlu2(Alu2InstrType.cmpGt));
                 break;
             case GREATER_EQUAL:
-                this.block.callRuntime("cmpGe");
+                this.block.add(new InstrAlu2(Alu2InstrType.cmpGe));
                 break;
             case LESS:
-                this.block.callRuntime("cmpLt");
+                this.block.add(new InstrAlu2(Alu2InstrType.cmpLt));
                 break;
             case LESS_EQUAL:
-                this.block.callRuntime("cmpLe");
+                this.block.add(new InstrAlu2(Alu2InstrType.cmpLe));
                 break;
             case STRING_CONCAT:
-                this.block.callRuntime("strcat");
+                this.block.add(new InstrAlu2(Alu2InstrType.strcat));
                 break;
             case MAP_CONCAT:
-                this.block.callRuntime("mapcat");
+                this.block.add(new InstrAlu2(Alu2InstrType.mapcat));
                 break;
             case MODULO:
-                this.block.callRuntime("mod");
+                this.block.add(new InstrAlu2(Alu2InstrType.mod));
                 break;
             case BINARY_AND:
-                this.block.callRuntime("and");
+                this.block.add(new InstrAlu2(Alu2InstrType.and));
                 break;
             case BINARY_OR:
-                this.block.callRuntime("or");
+                this.block.add(new InstrAlu2(Alu2InstrType.or));
                 break;
             case BINARY_XOR:
-                this.block.callRuntime("xor");
+                this.block.add(new InstrAlu2(Alu2InstrType.xor));
                 break;
             case SHL:
-                this.block.callRuntime("shl");
+                this.block.add(new InstrAlu2(Alu2InstrType.shl));
                 break;
             case SHR:
-                this.block.callRuntime("shr");
+                this.block.add(new InstrAlu2(Alu2InstrType.shr));
                 break;
             case USHR:
-                this.block.callRuntime("ushr");
+                this.block.add(new InstrAlu2(Alu2InstrType.ushr));
                 break;
             default:
                 break;
@@ -1170,7 +1177,7 @@ final class Compiler
             throw new WeelException(this.tokenizer
                     .error("'break' without suitable scope"));
         }
-        s.addBreak(s.block.writeJmp(JvmOp.GOTO, 0));
+        this.block.add(new InstrGoto(s.addBreak()));
         this.tokenizer.next();
     }
 
@@ -1179,13 +1186,13 @@ final class Compiler
      */
     private void addContinue()
     {
-        final Scope s = this.scope.getBreakScope();
+        final Scope s = this.scope.getContinueScope();
         if(s == null)
         {
             throw new WeelException(this.tokenizer
                     .error("'continue' without suitable scope"));
         }
-        s.addContinue(s.block.writeJmp(JvmOp.GOTO, 0));
+        this.block.add(new InstrGoto(s.addContinue()));
         this.tokenizer.next();
     }
 
@@ -1207,20 +1214,21 @@ final class Compiler
         }
         if(this.scope.hasCase)
         {
-            cont = this.block.writeJmp(JvmOp.GOTO, 0);
-            final int pc = this.scope.removeContinue();
-            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
+            cont = this.block.registerLabel();
+            this.block.add(new InstrGoto(cont));
+            this.block.add(new InstrLabel(this.scope.continueLabel));
+            this.scope.continueLabel = -1;
         }
-        this.block.callRuntime("sdup");
+        this.block.add(new InstrSdup());
         this.tokenizer.next();
         this.parseExpression();
         this.checkToken(Token.COLON);
         this.tokenizer.next();
-        this.block.callRuntime("cmpEqual", "()Z");
-        this.scope.addContinue(this.block.writeJmp(JvmOp.IFEQ, 0));
+        this.block.add(new InstrCmpEqual());
+        this.block.add(new InstrIfEq(this.scope.addContinue()));
         if(this.scope.hasCase)
         {
-            this.block.writeShortAt(cont, this.block.getPc() - cont + 1);
+            this.block.add(new InstrLabel(cont));
         }
         this.scope.hasCase = true;
     }
@@ -1241,8 +1249,8 @@ final class Compiler
         }
         if(this.scope.hasCase)
         {
-            final int pc = this.scope.removeContinue();
-            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
+            this.block.add(new InstrLabel(this.scope.continueLabel));
+            this.scope.continueLabel = -1;
         }
 
         this.tokenizer.next();
@@ -1268,15 +1276,15 @@ final class Compiler
      */
     private void closeSwitch()
     {
-        for(final int pc : this.scope.continues)
+        if(this.scope.continueLabel != -1)
         {
-            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
+            this.block.add(new InstrLabel(this.scope.continueLabel));
         }
-        for(final int pc : this.scope.breaks)
+        if(this.scope.breakLabel != -1)
         {
-            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
+            this.block.add(new InstrLabel(this.scope.breakLabel));
         }
-        this.block.callRuntime("pop1");
+        this.block.add(new InstrPop(1));
         this.removeScope();
         this.tokenizer.next();
     }
@@ -1300,7 +1308,7 @@ final class Compiler
         this.checkToken(Token.ASSIGN);
         this.tokenizer.next();
         this.parseExpression();
-        this.block.callRuntime("sloc", var.index);
+        this.block.add(new InstrVarStore(VarInstrType.LOCAL, var.index));
         this.checkToken(Token.COMMA);
         this.tokenizer.next();
         this.parseExpression();
@@ -1311,13 +1319,14 @@ final class Compiler
         }
         else
         {
-            this.block.load(1);
+            this.block.add(new InstrLoad(1));
         }
         this.checkReserved(ReservedWord.DO);
         this.tokenizer.next();
-        this.block.callRuntime("beginForLoop", "(I)Z", var.index);
-        this.scope.addBreak(this.block.writeJmp(JvmOp.IFEQ, 0));
-        this.scope.startPc = this.block.getPc();
+        this.block.add(new InstrBeginFor(var.index));
+        this.block.add(new InstrIfEq(this.scope.addBreak()));
+        this.scope.start = this.block.registerLabel();
+        this.block.add(new InstrLabel(this.scope.start));
         this.scope.localIndex = var.index;
     }
 
@@ -1326,18 +1335,17 @@ final class Compiler
      */
     private void closeFor()
     {
-        for(final int pc : this.scope.continues)
+        if(this.scope.continueLabel != -1)
         {
-            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
+            this.block.add(new InstrLabel(this.scope.continueLabel));
         }
-        this.block.callRuntime("endForLoop", "(I)Z", this.scope.localIndex);
-        this.block
-                .writeJmp(JvmOp.IFNE, this.scope.startPc - this.block.getPc());
-        for(final int pc : this.scope.breaks)
+        this.block.add(new InstrEndFor(this.scope.localIndex));
+        this.block.add(new InstrIfNe(this.scope.start));
+        if(this.scope.breakLabel != -1)
         {
-            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
+            this.block.add(new InstrLabel(this.scope.breakLabel));
         }
-        this.block.callRuntime("pop", 2);
+        this.block.add(new InstrPop(2));
         this.removeScope();
         this.tokenizer.next();
     }
@@ -1375,7 +1383,7 @@ final class Compiler
                 throw new WeelException(this.tokenizer
                         .error("Illegal use of 'this'"));
             }
-            this.block.callRuntime("lloc", 0);
+            this.block.add(new InstrVarLoad(VarInstrType.LOCAL, 0));
         }
         else
         {
@@ -1389,15 +1397,15 @@ final class Compiler
         this.checkReserved(ReservedWord.DO);
         this.tokenizer.next();
 
-        this.block.callRuntime("prepareForEach");
-        this.scope.startPc = this.block.getPc();
-        this.block.callRuntime("doForEach", "()Z");
-        this.scope.addBreak(this.block.writeJmp(JvmOp.IFEQ, 0));
+        this.block.add(new InstrPrepareForEach());
+        this.block.add(new InstrLabel(this.scope.addContinue()));
+        this.block.add(new InstrDoForEach());
+        this.block.add(new InstrIfEq(this.scope.addBreak()));
         this.writeSetVariable(val);
         if(key != null)
             this.writeSetVariable(key);
         else
-            this.block.callRuntime("pop1");
+            this.block.add(new InstrPop(1));
     }
 
     /**
@@ -1405,16 +1413,12 @@ final class Compiler
      */
     private void closeForEach()
     {
-        this.scope.addContinue(this.block.writeJmp(JvmOp.GOTO, 0));
-        for(final int pc : this.scope.continues)
+        this.block.add(new InstrGoto(this.scope.addContinue()));
+        if(this.scope.breakLabel != -1)
         {
-            this.block.writeShortAt(pc, this.scope.startPc - pc + 1);
+            this.block.add(new InstrLabel(this.scope.breakLabel));
         }
-        for(final int pc : this.scope.breaks)
-        {
-            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
-        }
-        this.block.callRuntime("pop1");
+        this.block.add(new InstrPop(1));
         this.removeScope();
         this.tokenizer.next();
     }
@@ -1426,7 +1430,8 @@ final class Compiler
     {
         this.addScope(new Scope(this.scope, ScopeType.DO));
         this.tokenizer.next();
-        this.scope.startPc = this.block.getPc();
+        this.scope.start = this.block.registerLabel();
+        this.block.add(new InstrLabel(this.scope.start));
     }
 
     /**
@@ -1434,11 +1439,11 @@ final class Compiler
      */
     private void closeDo()
     {
-        for(final int pc : this.scope.breaks)
+        if(this.scope.breakLabel != -1)
         {
-            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
+            this.block.add(new InstrLabel(this.scope.breakLabel));
         }
-        if(!this.scope.continues.isEmpty())
+        if(this.scope.continueLabel != -1)
             throw new WeelException(this.tokenizer
                     .error("Misplaced 'continue'"));
         this.removeScope();
@@ -1450,19 +1455,17 @@ final class Compiler
      */
     private void closeDoUntil()
     {
-        for(final int pc : this.scope.continues)
+        if(this.scope.continueLabel != -1)
         {
-            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
+            this.block.add(new InstrLabel(this.scope.continueLabel));
         }
         this.tokenizer.next();
         this.parseExpression();
-        this.block.callRuntime("popBoolean", "()Z");
-        this.block
-                .writeJmp(JvmOp.IFEQ, this.scope.startPc - this.block.getPc());
-
-        for(final int pc : this.scope.breaks)
+        this.block.add(new InstrPopBool());
+        this.block.add(new InstrIfEq(this.scope.start));
+        if(this.scope.breakLabel != -1)
         {
-            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
+            this.block.add(new InstrLabel(this.scope.breakLabel));
         }
         this.removeScope();
     }
@@ -1474,12 +1477,12 @@ final class Compiler
     {
         this.addScope(new Scope(this.scope, ScopeType.WHILE));
         this.tokenizer.next();
-        this.scope.startPc = this.block.getPc();
+        this.block.add(new InstrLabel(this.scope.addContinue()));
         this.parseExpression();
         this.checkReserved(ReservedWord.DO);
         this.tokenizer.next();
-        this.block.callRuntime("popBoolean", "()Z");
-        this.scope.addBreak(this.block.writeJmp(JvmOp.IFEQ, 0));
+        this.block.add(new InstrPopBool());
+        this.block.add(new InstrIfEq(this.scope.addBreak()));
     }
 
     /**
@@ -1487,15 +1490,8 @@ final class Compiler
      */
     private void closeWhile()
     {
-        this.scope.addContinue(this.block.writeJmp(JvmOp.GOTO, 0));
-        for(final int pc : this.scope.continues)
-        {
-            this.block.writeShortAt(pc, this.scope.startPc - pc + 1);
-        }
-        for(final int pc : this.scope.breaks)
-        {
-            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
-        }
+        this.block.add(new InstrGoto(this.scope.continueLabel));
+        this.block.add(new InstrLabel(this.scope.breakLabel));
         this.removeScope();
         this.tokenizer.next();
     }
@@ -1510,8 +1506,8 @@ final class Compiler
         this.checkReserved(ReservedWord.THEN);
         this.tokenizer.next();
         this.addScope(new Scope(this.scope, ScopeType.IF));
-        this.block.callRuntime("popBoolean", "()Z");
-        this.scope.addContinue(this.block.writeJmp(JvmOp.IFEQ, 0));
+        this.block.add(new InstrPopBool());
+        this.block.add(new InstrIfEq(this.scope.addContinue()));
     }
 
     /**
@@ -1525,16 +1521,16 @@ final class Compiler
         if(this.scope.hasElse)
             throw new WeelException(this.tokenizer
                     .error("'elseif' after 'else'"));
-        this.scope.addBreak(this.block.writeJmp(JvmOp.GOTO, 0));
-        final int cont = this.scope.removeContinue();
-        this.block.writeShortAt(cont, this.block.getPc() - cont + 1);
+        this.block.add(new InstrGoto(this.scope.addBreak()));
+        this.block.add(new InstrLabel(this.scope.continueLabel));
+        this.scope.continueLabel = -1;
 
         this.tokenizer.next();
         this.parseExpression();
         this.checkReserved(ReservedWord.THEN);
         this.tokenizer.next();
-        this.block.callRuntime("popBoolean", "()Z");
-        this.scope.addContinue(this.block.writeJmp(JvmOp.IFEQ, 0));
+        this.block.add(new InstrPopBool());
+        this.block.add(new InstrIfEq(this.scope.addContinue()));
     }
 
     /**
@@ -1549,9 +1545,9 @@ final class Compiler
 
         this.tokenizer.next();
         this.scope.hasElse = true;
-        this.scope.addBreak(this.block.writeJmp(JvmOp.GOTO, 0));
-        final int cont = this.scope.removeContinue();
-        this.block.writeShortAt(cont, this.block.getPc() - cont + 1);
+        this.block.add(new InstrGoto(this.scope.addBreak()));
+        this.block.add(new InstrLabel(this.scope.continueLabel));
+        this.scope.continueLabel = -1;
     }
 
     /**
@@ -1559,13 +1555,13 @@ final class Compiler
      */
     private void closeIf()
     {
-        for(final int pc : this.scope.continues)
+        if(this.scope.continueLabel != -1)
         {
-            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
+            this.block.add(new InstrLabel(this.scope.continueLabel));
         }
-        for(final int pc : this.scope.breaks)
+        if(this.scope.breakLabel != -1)
         {
-            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
+            this.block.add(new InstrLabel(this.scope.breakLabel));
         }
         this.tokenizer.next();
         this.removeScope();
@@ -1584,7 +1580,8 @@ final class Compiler
         this.addScope(new Scope(this.scope,
                 this.tokenizer.reserved == ReservedWord.SUB ? ScopeType.SUB
                         : ScopeType.FUNC));
-        this.block = this.scope.block = new CodeBlock();
+        this.block = this.scope.block = new WeelCode(this.weel);
+        this.block.source = this.tokenizer.error("");
         this.block.isAnonymousFunction = anonymous;
 
         final WeelFunction func = this.block.function = new WeelFunction();
@@ -1658,12 +1655,6 @@ final class Compiler
                     + func));
         }
 
-        func.clazz = this.classWriter.className;
-        func.javaName = anonymous ? "$anon$" + this.anonCounter++ : func.name
-                + "$" + func.arguments;
-        this.block.setMethodWriter(this.classWriter.createMethod(func.javaName,
-                "(Lcom/github/rjeschke/weel/WeelRuntime;)V"));
-
         this.weel.addFunction(func.name + "#" + func.arguments, func,
                 !anonymous);
         this.block.isAlternateSyntax = alternate;
@@ -1684,11 +1675,10 @@ final class Compiler
             func.returnsValue = true;
         }
 
-        for(final int pc : this.scope.breaks)
+        if(this.scope.breakLabel != -1)
         {
-            this.block.writeShortAt(pc, this.block.getPc() - pc + 1);
+            this.block.add(new InstrLabel(this.scope.breakLabel));
         }
-        this.block.closeBlock();
 
         if(!this.block.cvarIndex.isEmpty())
         {
@@ -1700,23 +1690,27 @@ final class Compiler
             }
         }
 
+        this.block.closeBlock(this.debugMode);
+
+        this.blockToBytecode(this.block);
+        
         this.removeScope();
         if(anonymous)
         {
             this.removeScope();
             if(func.envLocals != null)
-                this.block.callRuntime("createClosure", func.index);
+                this.block.add(new InstrCreateClosure(func.index));
             else
-                this.block.callRuntime("loadFunc", func.index);
+                this.block.add(new InstrLoadFunc(func.index));
         }
         this.tokenizer.next();
 
         if(oopVar != null)
         {
             this.writeGetVariable(oopVar);
-            this.block.load(oopIndex);
-            this.block.callRuntime("loadFunc", func.index);
-            this.block.callRuntime("setMap");
+            this.block.add(new InstrLoad(oopIndex));
+            this.block.add(new InstrLoadFunc(func.index));
+            this.block.add(new InstrSetMap());
         }
     }
 
@@ -1733,7 +1727,7 @@ final class Compiler
         }
         this.block.hasExit = true;
         this.writeExitPops();
-        this.scope.addBreak(this.block.writeJmp(JvmOp.GOTO, 0));
+        this.block.add(new InstrGoto(this.scope.addBreak()));
         this.tokenizer.next();
     }
 
@@ -1752,7 +1746,7 @@ final class Compiler
         this.writeExitPops();
         this.tokenizer.next();
         this.parseExpression();
-        this.scope.addBreak(this.block.writeJmp(JvmOp.GOTO, 0));
+        this.block.add(new InstrGoto(this.scope.addBreak()));
     }
 
     /**
@@ -1778,7 +1772,7 @@ final class Compiler
             {
                 this.tokenizer.next();
                 this.parseExpression();
-                this.block.callRuntime("sloc", index);
+                this.block.add(new InstrVarStore(VarInstrType.LOCAL, index));
             }
             if(this.tokenizer.token == Token.COMMA)
             {
@@ -1829,7 +1823,7 @@ final class Compiler
             this.block = outer.block;
 
             this.parseExpression();
-            this.block.callRuntime("sloc", lidx);
+            this.block.add(new InstrVarStore(VarInstrType.LOCAL, lidx));
 
             this.scope = old;
             this.block = old.block;
@@ -1865,7 +1859,7 @@ final class Compiler
             {
                 this.tokenizer.next();
                 this.parseExpression();
-                this.block.callRuntime("sglob", index);
+                this.block.add(new InstrVarStore(VarInstrType.GLOBAL, index));
             }
             if(this.tokenizer.token == Token.COMMA)
             {
@@ -1898,7 +1892,7 @@ final class Compiler
             {
                 this.tokenizer.next();
                 this.parseExpression();
-                this.block.callRuntime("spriv", index);
+                this.block.add(new InstrVarStore(VarInstrType.PRIVATE, index));
             }
             if(this.tokenizer.token == Token.COMMA)
             {
@@ -2027,20 +2021,20 @@ final class Compiler
         switch(var.type)
         {
         case LOCAL:
-            this.block.callRuntime("lloc", var.index);
+            this.block.add(new InstrVarLoad(VarInstrType.LOCAL, var.index));
             break;
         case GLOBAL:
-            this.block.callRuntime("lglob", var.index);
+            this.block.add(new InstrVarLoad(VarInstrType.GLOBAL, var.index));
             break;
         case PRIVATE:
-            this.block.callRuntime("lpriv", var.index);
+            this.block.add(new InstrVarLoad(VarInstrType.PRIVATE, var.index));
             break;
         case CVAR:
-            this.block.callRuntime("linenv", var.index);
+            this.block.add(new InstrVarLoad(VarInstrType.CVAR, var.index));
             break;
         default:
             if(var.function != null)
-                this.block.callRuntime("loadFunc", var.function.index);
+                this.block.add(new InstrLoadFunc(var.function.index));
             else
                 this.syntaxError();
             break;
@@ -2115,40 +2109,20 @@ final class Compiler
         switch(var.type)
         {
         case LOCAL:
-            this.block.callRuntime("sloc", var.index);
+            this.block.add(new InstrVarStore(VarInstrType.LOCAL, var.index));
             break;
         case GLOBAL:
-            this.block.callRuntime("sglob", var.index);
+            this.block.add(new InstrVarStore(VarInstrType.GLOBAL, var.index));
             break;
         case PRIVATE:
-            this.block.callRuntime("spriv", var.index);
+            this.block.add(new InstrVarStore(VarInstrType.PRIVATE, var.index));
             break;
         case CVAR:
-            this.block.callRuntime("sinenv", var.index);
+            this.block.add(new InstrVarStore(VarInstrType.CVAR, var.index));
             break;
         default:
             this.syntaxError();
         }
-    }
-
-    /**
-     * Write a function call.
-     * 
-     * @param func
-     *            The WeelFunction.
-     */
-    private void writeCallFunction(final WeelFunction func)
-    {
-        this.block.code.add(JvmOp.ALOAD_0);
-
-        this.block.code.add(JvmOp.INVOKESTATIC);
-
-        this.block.code.addShort(this.classWriter.addMethodRefConstant(
-                func.clazz, func.javaName,
-                "(Lcom/github/rjeschke/weel/WeelRuntime;)V"));
-        if(func.returnsValue)
-            this.block.push();
-        this.block.pop(func.arguments);
     }
 
     /**
@@ -2176,13 +2150,9 @@ final class Compiler
             }
             s = s.parent;
         }
-        if(pops == 1)
+        if(pops > 0)
         {
-            this.block.callRuntime("pop1");
-        }
-        else if(pops > 1)
-        {
-            this.block.callRuntime("pop", pops);
+            this.block.add(new InstrPop(pops));
         }
     }
 
@@ -2191,15 +2161,7 @@ final class Compiler
      */
     private void parseAssert()
     {
-        CodeBlock old = this.block;
-        if(!this.debugMode)
-        {
-            final JvmClassWriter temp = new JvmClassWriter(
-                    "com.github.rjeschke.weel.scripts.Assert");
-
-            this.block = this.scope.block = new CodeBlock(temp.createMethod(
-                    "STATIC", "(Lcom/github/rjeschke/weel/WeelRuntime;)V"));
-        }
+        this.block.add(new InstrBegAssert());
         this.parseExpression();
         String message = null;
         if(this.tokenizer.token == Token.COMMA)
@@ -2211,23 +2173,41 @@ final class Compiler
         }
         this.checkToken(Token.BRACE_CLOSE);
         this.tokenizer.next();
-        if(!this.debugMode)
+        this.block.add(new InstrAssert((message != null) ? this.tokenizer
+                .error("Assert failed (%s)", message) : this.tokenizer
+                .error("Assert failed")));
+        this.block.add(new InstrEndAssert());
+    }
+
+    private void blockToBytecode(final WeelCode b)
+    {
+        JvmMethodWriter mw;
+        if(b.function == null)
         {
-            this.block = this.scope.block = old;
+            if(b.instrs.size() == 0)
+            {
+                return;
+            }
+            mw = this.classWriter.createMethod("STATIC",
+                    "(Lcom/github/rjeschke/weel/WeelRuntime;)V");
         }
         else
         {
-            this.block.code.add(JvmOp.ALOAD_0);
-            if(message != null)
-                this.block.ldcStr(this.tokenizer.error("Assert failed (%s)",
-                        message));
-            else
-                this.block.ldcStr(this.tokenizer.error("Assert failed"));
-            this.block.code.add(JvmOp.INVOKEVIRTUAL);
-            this.block.code.addShort(this.classWriter.addMethodRefConstant(
-                    "com.github.rjeschke.weel.WeelRuntime", "weelAssert",
-                    "(Ljava/lang/String;)V"));
-            this.block.pop();
+            b.function.clazz = this.classWriter.className;
+            b.function.javaName = b.isAnonymousFunction ? "$anon$"
+                    + this.anonCounter++ : b.function.name + "$"
+                    + b.function.arguments;
+            mw = this.classWriter.createMethod(b.function.javaName,
+                    "(Lcom/github/rjeschke/weel/WeelRuntime;)V");
         }
+        
+        for(int i = 0; i < b.instrs.size(); i++)
+        {
+            b.instrs.get(i).write(mw);
+        }
+        
+        mw.addOp(JvmOp.RETURN);
+        
+        mw.resolveLabels();
     }
 }

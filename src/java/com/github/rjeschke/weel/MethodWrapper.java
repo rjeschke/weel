@@ -47,204 +47,164 @@ class MethodWrapper
      */
     public String wrap(final Method m, final WeelFunction func)
     {
-        for (int i = 0; i < m.getParameterTypes().length; i++)
+        for(int i = 0; i < m.getParameterTypes().length; i++)
         {
-            if (m.getParameterTypes()[i] == com.github.rjeschke.weel.WeelRuntime.class)
+            if(m.getParameterTypes()[i] == com.github.rjeschke.weel.WeelRuntime.class)
                 func.arguments--;
         }
 
         final String mname = "wrap$" + m.getName() + "$" + func.arguments;
         final JvmMethodWriter mw = this.classWriter.createMethod(mname,
                 "(Lcom/github/rjeschke/weel/WeelRuntime;)V");
-        final ByteList bl = mw.code;
 
-        mw.maxStack = 3;
-        bl.add(JvmOp.ALOAD_0);
-        mw.ldcInt(func.arguments);
-        mw.ldcInt(0);
-        bl.add(JvmOp.INVOKEVIRTUAL);
-        bl.addShort(this.classWriter.addMethodRefConstant(
-                "com.github.rjeschke.weel.WeelRuntime", "openFrame", "(II)V"));
+        mw.aload(0);
+        mw.ldc(func.arguments);
+        mw.ldc(0);
+        mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime", "openFrame",
+                "(II)V");
 
-        int sp = m.getParameterTypes().length > 0 ? 2 : 0;
         final boolean returns;
 
-        if (m.getReturnType() != void.class)
+        if(m.getReturnType() != void.class)
         {
             returns = true;
-            bl.add(JvmOp.ALOAD_0);
-            sp++;
+            mw.aload(0);
         }
         else
         {
             returns = false;
         }
 
-        for (int i = 0, p = 0; i < m.getParameterTypes().length; i++)
+        for(int i = 0, p = 0; i < m.getParameterTypes().length; i++)
         {
             final Class<?> t = m.getParameterTypes()[i];
-            if (t == com.github.rjeschke.weel.WeelRuntime.class)
+            if(t == com.github.rjeschke.weel.WeelRuntime.class)
             {
-                sp++;
-                bl.add(JvmOp.ALOAD_0);
+                mw.aload(0);
                 continue;
             }
-            bl.add(JvmOp.ALOAD_0);
-            mw.ldcInt(p++);
-            bl.add(JvmOp.INVOKEVIRTUAL);
-            if (t == double.class)
+            mw.aload(0);
+            mw.ldc(p++);
+            if(t == double.class)
             {
-                sp += 2;
-                bl.addShort(this.classWriter.addMethodRefConstant(
-                        "com.github.rjeschke.weel.WeelRuntime", "getNumberLocal",
-                        "(I)D"));
+                mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime",
+                        "getNumberLocal", "(I)D");
             }
-            else if (t == int.class)
+            else if(t == int.class)
             {
-                sp += 2;
-                bl.addShort(this.classWriter.addMethodRefConstant(
-                        "com.github.rjeschke.weel.WeelRuntime", "getNumberLocal",
-                        "(I)D"));
-                bl.add(JvmOp.D2I);
+                mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime",
+                        "getNumberLocal", "(I)D");
+                mw.addOp(JvmOp.D2I);
+                mw.curStack--;
             }
-            else if (t == boolean.class)
+            else if(t == boolean.class)
             {
-                sp++;
-                bl.addShort(this.classWriter.addMethodRefConstant(
-                        "com.github.rjeschke.weel.WeelRuntime", "getBooleanLocal",
-                "(I)Z"));
+                mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime",
+                        "getBooleanLocal", "(I)Z");
             }
-            else if (t == String.class)
+            else if(t == String.class)
             {
-                sp++;
-                bl.addShort(this.classWriter.addMethodRefConstant(
-                        "com.github.rjeschke.weel.WeelRuntime", "getStringLocal",
-                        "(I)Ljava/lang/String;"));
+                mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime",
+                        "getStringLocal", "(I)Ljava/lang/String;");
             }
-            else if (t == WeelFunction.class)
+            else if(t == WeelFunction.class)
             {
-                sp++;
-                bl.addShort(this.classWriter.addMethodRefConstant(
-                        "com.github.rjeschke.weel.WeelRuntime", "getFunctionLocal",
-                        "(I)Lcom/github/rjeschke/weel/WeelFunction;"));
+                mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime",
+                        "getFunctionLocal",
+                        "(I)Lcom/github/rjeschke/weel/WeelFunction;");
             }
-            else if (t == Value.class)
+            else if(t == Value.class)
             {
-                sp++;
-                bl.addShort(this.classWriter.addMethodRefConstant(
-                        "com.github.rjeschke.weel.WeelRuntime", "getValueLocal",
-                        "(I)Lcom/github/rjeschke/weel/Value;"));
+                mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime",
+                        "getValueLocal", "(I)Lcom/github/rjeschke/weel/Value;");
             }
-            else if (t == ValueMap.class)
+            else if(t == ValueMap.class)
             {
-                sp++;
-                bl.addShort(this.classWriter.addMethodRefConstant(
-                        "com.github.rjeschke.weel.WeelRuntime", "getMapLocal",
-                        "(I)Lcom/github/rjeschke/weel/ValueMap;"));
+                mw
+                        .invokeVirtual("com.github.rjeschke.weel.WeelRuntime",
+                                "getMapLocal",
+                                "(I)Lcom/github/rjeschke/weel/ValueMap;");
             }
             else
             {
-                sp++;
-                bl.addShort(this.classWriter.addMethodRefConstant(
-                        "com.github.rjeschke.weel.WeelRuntime", "getObjectLocal",
-                        "(I)Ljava/lang/Object;"));
-                if (t != Object.class)
+                mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime",
+                        "getObjectLocal", "(I)Ljava/lang/Object;");
+                if(t != Object.class)
                 {
-                    bl.add(JvmOp.CHECKCAST);
-                    bl.addShort(this.classWriter.addConstant(new JvmConstant(
-                            JvmConstant.CONSTANT_Class, this.classWriter
-                                    .addConstant(new JvmConstant(t
-                                            .getCanonicalName().replace('.',
-                                                    '/'))))));
+                    mw.addOp(JvmOp.CHECKCAST);
+                    mw.code.addShort(this.classWriter
+                            .addConstant(new JvmConstant(
+                                    JvmConstant.CONSTANT_Class,
+                                    this.classWriter
+                                            .addConstant(new JvmConstant(t
+                                                    .getCanonicalName()
+                                                    .replace('.', '/'))))));
                 }
             }
         }
 
-        mw.maxStack = Math.max(mw.maxStack, sp);
+        mw.invokeStatic(m.getDeclaringClass().getCanonicalName(), m.getName(),
+                "(" + JvmClassWriter.buildDescriptor(m.getParameterTypes())
+                        + ")"
+                        + JvmClassWriter.buildDescriptor(m.getReturnType()));
 
-        bl.add(JvmOp.INVOKESTATIC);
-        bl.addShort(this.classWriter.addMethodRefConstant(m.getDeclaringClass()
-                .getCanonicalName(), m.getName(), "("
-                + JvmClassWriter.buildDescriptor(m.getParameterTypes()) + ")"
-                + JvmClassWriter.buildDescriptor(m.getReturnType())));
-
-        if (returns)
+        if(returns)
         {
-            sp = 1;
             final Class<?> t = m.getReturnType();
-            bl.add(JvmOp.INVOKEVIRTUAL);
-            if (t == double.class)
+            if(t == double.class)
             {
-                sp += 2;
-                bl.addShort(this.classWriter.addMethodRefConstant(
-                        "com.github.rjeschke.weel.WeelRuntime", "load", "(D)V"));
+                mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime",
+                        "load", "(D)V");
             }
-            else if (t == int.class)
+            else if(t == int.class)
             {
-                sp++;
-                bl.addShort(this.classWriter.addMethodRefConstant(
-                        "com.github.rjeschke.weel.WeelRuntime", "load", "(I)V"));
+                mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime",
+                        "load", "(I)V");
             }
-            else if (t == boolean.class)
+            else if(t == boolean.class)
             {
-                sp++;
-                bl.addShort(this.classWriter.addMethodRefConstant(
-                        "com.github.rjeschke.weel.WeelRuntime", "load", "(Z)V"));
+                mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime",
+                        "load", "(Z)V");
             }
-            else if (t == String.class)
+            else if(t == String.class)
             {
-                sp++;
-                bl.addShort(this.classWriter.addMethodRefConstant(
-                        "com.github.rjeschke.weel.WeelRuntime", "load",
-                        "(Ljava/lang/String;)V"));
+                mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime",
+                        "load", "(Ljava/lang/String;)V");
             }
-            else if (t == ValueMap.class)
+            else if(t == ValueMap.class)
             {
-                sp++;
-                bl.addShort(this.classWriter.addMethodRefConstant(
-                        "com.github.rjeschke.weel.WeelRuntime", "load",
-                        "(Lcom/github/rjeschke/weel/ValueMap;)V"));
+                mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime",
+                        "load", "(Lcom/github/rjeschke/weel/ValueMap;)V");
             }
-            else if (t == Value.class)
+            else if(t == Value.class)
             {
-                sp++;
-                bl.addShort(this.classWriter.addMethodRefConstant(
-                        "com.github.rjeschke.weel.WeelRuntime", "load",
-                        "(Lcom/github/rjeschke/weel/Value;)V"));
+                mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime",
+                        "load", "(Lcom/github/rjeschke/weel/Value;)V");
             }
-            else if (t == WeelFunction.class)
+            else if(t == WeelFunction.class)
             {
-                sp++;
-                bl.addShort(this.classWriter.addMethodRefConstant(
-                        "com.github.rjeschke.weel.WeelRuntime", "load",
-                        "(Lcom/github/rjeschke/weel/WeelFunction;)V"));
+                mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime",
+                        "load", "(Lcom/github/rjeschke/weel/WeelFunction;)V");
             }
             else
             {
-                sp++;
-                bl.addShort(this.classWriter.addMethodRefConstant(
-                        "com.github.rjeschke.weel.WeelRuntime", "load",
-                        "(Ljava/lang/Object;)V"));
+                mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime",
+                        "load", "(Ljava/lang/Object;)V");
             }
 
-            mw.maxStack = Math.max(mw.maxStack, sp);
-
-            bl.add(JvmOp.ALOAD_0);
-            mw.ldcInt(1);
-            bl.add(JvmOp.INVOKEVIRTUAL);
-            bl.addShort(this.classWriter
-                    .addMethodRefConstant("com.github.rjeschke.weel.WeelRuntime",
-                            "closeFrameRet", "(I)V"));
+            mw.aload(0);
+            mw.ldc(1);
+            mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime",
+                    "closeFrameRet", "(I)V");
         }
         else
         {
-            bl.add(JvmOp.ALOAD_0);
-            mw.ldcInt(0);
-            bl.add(JvmOp.INVOKEVIRTUAL);
-            bl.addShort(this.classWriter.addMethodRefConstant(
-                    "com.github.rjeschke.weel.WeelRuntime", "closeFrame", "(I)V"));
+            mw.aload(0);
+            mw.ldc(0);
+            mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime",
+                    "closeFrame", "(I)V");
         }
-        bl.add(JvmOp.RETURN);
+        mw.addOp(JvmOp.RETURN);
 
         return mname;
     }

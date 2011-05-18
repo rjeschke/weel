@@ -51,6 +51,21 @@ public final class WeelLibCon
     }
 
     /**
+     * <code>printb(v)</code>
+     * <p>
+     * Prints the given raw byte.
+     * </p>
+     * 
+     * @param runtime
+     *            The Weel Runtime.
+     */
+    @WeelRawMethod(args = 1)
+    public final static void printb(final WeelRuntime runtime)
+    {
+        System.out.write((int)runtime.popNumber());
+    }
+
+    /**
      * <code>println()</code>
      * <p>
      * Prints a new line.

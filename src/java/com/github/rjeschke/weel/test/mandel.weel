@@ -5,7 +5,7 @@ private height = 600;
 // Maximum iteration depth
 private imax = 1000;
 // fparams number
-private number = 23;
+private number = 20;
 // Number of threads
 private numthreads = 2;
 
@@ -105,6 +105,7 @@ sub iterat(y)
     end
 end
 
+
 t = clock();
 
 for i = 1, numthreads do
@@ -126,16 +127,7 @@ while sema->available() do
     sleep(100);
 end
 t = clock() - t;
-println("Using "..numthreads.." threads: "..t.." seconds.");
+println(t.." seconds.");
 
 image->toPng("/home/rjeschke/mandel.png");
 
-/*
-t = clock();
-local y;
-for y = 0, height -1 do
-    iterat(y);
-end
-t = clock() - t;
-println("Single threaded: "..t.." seconds.");
-*/

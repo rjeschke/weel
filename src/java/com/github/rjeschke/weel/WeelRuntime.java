@@ -436,6 +436,90 @@ public final class WeelRuntime
     }
 
     /**
+     * Compares for equality.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ... </code>
+     * </p>
+     * 
+     * @return <code>true</code> if condition is met.
+     */
+    public boolean cmpEqPop()
+    {
+        return this.cmpEqual();
+    }
+
+    /**
+     * Compares for inequality.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ... </code>
+     * </p>
+     * 
+     * @return <code>true</code> if condition is met.
+     */
+    public boolean cmpNePop()
+    {
+        return !this.cmpEqual();
+    }
+
+    /**
+     * Compares for greater than.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ... </code>
+     * </p>
+     * 
+     * @return <code>true</code> if condition is met.
+     */
+    public boolean cmpGtPop()
+    {
+        return this.cmp() > 0;
+    }
+
+    /**
+     * Compares for greater or equal.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ... </code>
+     * </p>
+     * 
+     * @return <code>true</code> if condition is met.
+     */
+    public boolean cmpGePop()
+    {
+        return this.cmp() >= 0;
+    }
+
+    /**
+     * Compares for less than.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ... </code>
+     * </p>
+     * 
+     * @return <code>true</code> if condition is met.
+     */
+    public boolean cmpLtPop()
+    {
+        return this.cmp() < 0;
+    }
+
+    /**
+     * Compares for less or equal.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ... </code>
+     * </p>
+     * 
+     * @return <code>true</code> if condition is met.
+     */
+    public boolean cmpLePop()
+    {
+        return this.cmp() <= 0;
+    }
+
+    /**
      * Compares two values for equality.
      * 
      * <p>
@@ -1080,8 +1164,6 @@ public final class WeelRuntime
      */
     public void closeFrameRet(final int depth)
     {
-        if(this.sp - this.frameStart[this.fp] < this.frameSize[this.fp])
-            this.stack[++this.sp].setNull();
         this.stack[this.sp].copyTo(this.stack[this.frameStart[this.fp]]);
         final int pops = this.frameSize[this.fp--];
         for(int i = -depth; i < pops; i++)

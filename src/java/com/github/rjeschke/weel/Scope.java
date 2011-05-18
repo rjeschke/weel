@@ -5,8 +5,8 @@
 package com.github.rjeschke.weel;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 
+import com.github.rjeschke.weel.Weel;
 import com.github.rjeschke.weel.Variable.Type;
 
 /**
@@ -25,19 +25,15 @@ class Scope
     /** The root. */
     final Scope root;
     /** The CodeBlock. */
-    CodeBlock block;
+    WeelCode block;
     /** Local name to index mapping. */
     final HashMap<String, Integer> locals = new HashMap<String, Integer>();
     /** Private name to index mapping. */
     final HashMap<String, Integer> privates = new HashMap<String, Integer>();
-    /** List of continue jumps. */
-    final LinkedList<Integer> continues = new LinkedList<Integer>();
-    /** List of break jumps. */
-    final LinkedList<Integer> breaks = new LinkedList<Integer>();
     /** Various flags. */
     boolean hasElse, hasDefault, hasCase;
-    /** Starting pc for loops. */
-    int startPc;
+    /** Starting label for loops. */
+    int start;
     /** Local variable index for FOR loops. */
     int localIndex;
     /** OOP variable for functions. */
@@ -46,6 +42,10 @@ class Scope
     String oopIndex;
     /** Is this a 'real-oop' function. */
     boolean isOop;
+    /** Break label. */
+    int breakLabel = -1;
+    /** Continue label. */
+    int continueLabel = -1;
     
     /**
      * Constructor.
@@ -190,44 +190,26 @@ class Scope
 
     /**
      * Adds a break.
-     * 
-     * @param pc
-     *            Program counter.
      */
-    void addBreak(final int pc)
+    int addBreak()
     {
-        this.breaks.add(pc);
-    }
-
-    /**
-     * Removes a break.
-     * 
-     * @return The break's PC.
-     */
-    int removeBreak()
-    {
-        return this.breaks.removeLast();
+        if(this.breakLabel == -1)
+        {
+            this.breakLabel = this.block.registerLabel();
+        }
+        return this.breakLabel;
     }
 
     /**
      * Adds a continue.
-     * 
-     * @param pc
-     *            Program counter.
      */
-    void addContinue(final int pc)
+    int addContinue()
     {
-        this.continues.add(pc);
-    }
-
-    /**
-     * Removes a continue.
-     * 
-     * @return The continue's PC.
-     */
-    int removeContinue()
-    {
-        return this.continues.removeLast();
+        if(this.continueLabel == -1)
+        {
+            this.continueLabel = this.block.registerLabel();
+        }
+        return this.continueLabel;
     }
 
     /**

@@ -52,7 +52,7 @@ func ms:filter(fc)
     return ret;
 end
 
-func ms:print()
+sub ms:print()
     assert(isMap(this),
         "Value is not a map");
     
@@ -63,7 +63,7 @@ func ms:print()
             print(", "..this[i]);
         end
     end
-    println("}");
+    println("}"); 
 end
 
 funcReg("map", ms);

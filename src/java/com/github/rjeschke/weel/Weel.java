@@ -63,17 +63,14 @@ public final class Weel
     /** Debug mode flag. */
     boolean debugMode = false;
 
-    private final static Class<?>[] STDLIB = {
-        WeelLibMath.class, WeelLibString.class, WeelLibCon.class,
-        WeelLibMap.class, WeelLibOop.class, WeelLibSys.class,
-        WeelUnit.class
-    };
-    
-    private final static Class<?>[] JCLASSES = {
-        WeelStringBuilder.class,
-        WeelImage.class,
-        WeelThread.class, WeelLock.class, WeelSemaphore.class
-    };
+    private final static Class<?>[] STDLIB =
+    { WeelLibMath.class, WeelLibString.class, WeelLibCon.class,
+            WeelLibMap.class, WeelLibOop.class, WeelLibSys.class,
+            WeelUnit.class };
+
+    private final static Class<?>[] JCLASSES =
+    { WeelStringBuilder.class, WeelImage.class, WeelThread.class,
+            WeelLock.class, WeelSemaphore.class };
 
     /** ThreadLocal variable for Weel Runtimes associated with this Weel class. */
     private final ThreadLocal<WeelRuntime> runtime = new ThreadLocal<WeelRuntime>()
@@ -96,12 +93,12 @@ public final class Weel
     public Weel()
     {
         // Import standard library
-        for(final Class<?> c : STDLIB)
+        for (final Class<?> c : STDLIB)
         {
             this.importFunctions(c);
         }
-        // Import classes 
-        for(final Class<?> c : JCLASSES)
+        // Import classes
+        for (final Class<?> c : JCLASSES)
         {
             this.importFunctions(c);
         }
@@ -222,10 +219,8 @@ public final class Weel
     /**
      * Compiles a file given as a Java resource.
      * 
-     * @param input
+     * @param resource
      *            The resource (e.g. <code>my.scripts.Script</code>)
-     * @param filename
-     *            The filename used in error messages.
      */
     public void compileResource(final String resource)
     {
@@ -255,7 +250,14 @@ public final class Weel
             try
             {
                 final Class<?> clazz = this.classLoader.findClass(name);
-                clazz.getMethod("STATIC", WeelRuntime.class).invoke(null, runtime);
+                for(final Method m : clazz.getMethods())
+                {
+                    if(m.getName().equals("STATIC"))
+                    {
+                        m.invoke(null, runtime);
+                        break;
+                    }
+                }
             }
             catch (Exception e)
             {
@@ -270,6 +272,58 @@ public final class Weel
     }
 
     /**
+     * Runs the main function/sub (if exists).
+     * 
+     * @return The return value of 'main' or null.
+     */
+    public Value runMain()
+    {
+        return this.runMain((String[])null);
+    }
+    
+    /**
+     * Runs the main function/sub (if exists).
+     * 
+     * @param args
+     *            Program arguments.
+     * @return The return value of 'main' or null.
+     */
+    public Value runMain(final String... args)
+    {
+        final WeelFunction main = this.findFunction("main");
+        final ValueMap vargs = new ValueMap();
+        if(args != null)
+        {
+            for (final String s : args)
+            {
+                vargs.append(new Value(s));
+            }
+        }
+        if (main != null)
+        {
+            if (main.arguments > 1)
+            {
+                throw new WeelException("main() should only take one argument");
+            }
+            try
+            {
+                return main.arguments == 1 ? this.invoke(main, vargs) : this
+                        .invoke(main);
+            }
+            catch (Exception e)
+            {
+                if (e instanceof WeelException)
+                    throw (WeelException) e;
+                if (e.getCause() != null
+                        && e.getCause() instanceof WeelException)
+                    throw (WeelException) e.getCause();
+                throw new WeelException(e);
+            }
+        }
+        return null;
+    }
+
+    /**
      * Gets a Runtime object local to the current Thread.
      * 
      * @return A Runtime.
@@ -279,6 +333,17 @@ public final class Weel
     public WeelRuntime getRuntime()
     {
         return this.runtime.get();
+    }
+
+    /**
+     * Gets a temporary Runtime object for optimization purposes.
+     * 
+     * @return A Runtime.
+     * @see com.github.rjeschke.weel.WeelRuntime
+     */
+    WeelRuntime getTempRuntime()
+    {
+        return new WeelRuntime(this);
     }
 
     /**

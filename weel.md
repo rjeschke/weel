@@ -5,6 +5,7 @@ See LICENSE.txt for licensing information.
 [$PROFILE$]: extended "Will look horrible when processed as standard Markdown"
 
 *****************************************************************************
+
 *   [Overview](#overview)
 *   [Weel and Runtime](#weelruntime)
 *   [Types, names and others](#typesandstuff)
@@ -976,6 +977,40 @@ So it's all a little bit cheating ... but it works ... and it's fast.
     
     This is currently a good guess, I'll benchmark this as soon as the
     rest is stable.
+
+*****************************************************************************
+
+### Benchmarks                      {#bench}
+
+Based on <http://shootout.alioth.debian.org/>, JRuby and Weel both run on
+Java(TM) SE Runtime Environment (build 1.6.0_24-b07)/Java HotSpot(TM) Server 
+VM (build 19.1-b02, mixed mode) without any additional parameters.
+
+Benchmarked on an Athlon X2 2500MHz, Ubuntu 10.04 32 Bit, 2GiB RAM. Result is
+running time in seconds (full, i.e. creating a process, compiling and executing).
+
+I'll post some more results later. 
+
+<table>
+ <tr>
+   <th>n = 2000</th>
+   <th>Weel</th>
+   <th>Lua 5.1.4</th>
+   <th>JRuby 1.6.1</th>
+ </tr>
+ <tr>
+  <td>mandel</td>
+  <td>18.011</td>
+  <td>17.459</td>
+  <td>86.267</td>
+ </tr>
+ <tr>
+  <td>spectral-norm</td>
+  <td>33.415</td>
+  <td>53.703</td>
+  <td>237.102</td>
+ </tr>
+</table>
     
 *****************************************************************************
 
