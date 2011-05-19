@@ -6,6 +6,8 @@ package com.github.rjeschke.weel;
 
 class InstrSetMap implements Instr
 {
+    Value key = null;
+    
     /** @see Instr#getType() */
     @Override
     public Op getType()
@@ -17,6 +19,8 @@ class InstrSetMap implements Instr
     @Override
     public String toString()
     {
+        if(this.key != null)
+            return "SETMAP " + this.key;
         return "SETMAP";
     }
 
@@ -25,6 +29,22 @@ class InstrSetMap implements Instr
     public void write(JvmMethodWriter mw)
     {
         mw.aload(0);
-        mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime", "setMap", "()V");
+        if(this.key != null)
+        {
+            if(this.key.type == ValueType.NUMBER)
+            {
+                mw.ldc((int)this.key.number);
+                mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime", "setMap", "(I)V");
+            }
+            else
+            {
+                mw.ldc(this.key.string);
+                mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime", "setMap", "(Ljava/lang/String;)V");
+            }
+        }
+        else
+        {
+            mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime", "setMap", "()V");
+        }
     }
 }

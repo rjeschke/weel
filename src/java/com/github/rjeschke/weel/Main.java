@@ -17,8 +17,8 @@ public class Main
             weel.setDebugMode(false);
 
 //            weel.compileResource("com.github.rjeschke.weel.test.bench_fib_recursive");
-//            weel.compileResource("com.github.rjeschke.weel.test.bench1");
-            weel.compileResource("com.github.rjeschke.weel.test.mandel");
+            weel.compileResource("com.github.rjeschke.weel.test.bench1");
+//            weel.compileResource("com.github.rjeschke.weel.test.mandel");
 //            weel.compileResource("com.github.rjeschke.weel.test.test2");
 //            weel.compileResource("com.github.rjeschke.weel.test.wunitArith");
 

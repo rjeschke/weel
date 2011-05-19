@@ -567,6 +567,7 @@ final class Compiler
                 this.tokenizer.next();
                 this.checkToken(Token.NAME);
                 this.block.add(new InstrLoad(this.tokenizer.string));
+                this.block.add(new InstrKey());
                 this.tokenizer.next();
                 oop = true;
                 first = false;
@@ -586,6 +587,7 @@ final class Compiler
                 this.tokenizer.next();
                 this.checkToken(Token.NAME);
                 this.block.add(new InstrLoad(this.tokenizer.string));
+                this.block.add(new InstrKey());
                 this.tokenizer.next();
                 oop = first = false;
                 expr = ExpressionType.ARRAY;
@@ -612,6 +614,7 @@ final class Compiler
                 else
                 {
                     this.parseExpression();
+                    this.block.add(new InstrKey());
                     this.checkToken(Token.BRACKET_CLOSE);
                     this.tokenizer.next();
                 }
@@ -851,6 +854,7 @@ final class Compiler
                     this.tokenizer.next();
                     this.checkToken(Token.NAME);
                     this.block.add(new InstrLoad(this.tokenizer.string));
+                    this.block.add(new InstrKey());
                     this.tokenizer.next();
                     this.checkToken(Token.ASSIGN);
                     this.tokenizer.next();
@@ -860,6 +864,7 @@ final class Compiler
                 case BRACKET_OPEN:
                     this.tokenizer.next();
                     this.parseExpression();
+                    this.block.add(new InstrKey());
                     this.checkToken(Token.BRACKET_CLOSE);
                     this.tokenizer.next();
                     this.checkToken(Token.ASSIGN);
@@ -874,6 +879,7 @@ final class Compiler
                     if(this.tokenizer.next() == Token.ASSIGN)
                     {
                         this.block.add(new InstrLoad(name));
+                        this.block.add(new InstrKey());
                         this.tokenizer.next();
                         this.parseExpression();
                         this.block.add(new InstrSetMap());
@@ -1709,6 +1715,7 @@ final class Compiler
         {
             this.writeGetVariable(oopVar);
             this.block.add(new InstrLoad(oopIndex));
+            this.block.add(new InstrKey());
             this.block.add(new InstrLoadFunc(func.index));
             this.block.add(new InstrSetMap());
         }

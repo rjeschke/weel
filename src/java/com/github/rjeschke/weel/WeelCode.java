@@ -173,6 +173,7 @@ class WeelCode
         this.resolveLabels();
         // Refactor
         this.refactor();
+
         // Resolve labels again 
         this.resolveLabels();
 
@@ -214,6 +215,8 @@ class WeelCode
             System.out.println("STATIC");
         for (Instr i : this.instrs)
         {
+            if(i.getType() == Op.KEY)
+                continue;
             if (i.getType() != Op.LABEL)
             {
                 if (i.getType() == Op.BEGASSERT || i.getType() == Op.ENDASSERT)
@@ -238,10 +241,61 @@ class WeelCode
             redo = false;
             for (int i = 0; i < this.instrs.size() - 1; i++)
             {
+                final Instr y = i > 1 ? this.instrs.get(i - 2) : null;
+                final Instr z = i > 0 ? this.instrs.get(i - 1) : null;
                 final Instr a = this.instrs.get(i);
                 final Instr b = this.instrs.get(i + 1);
                 switch (a.getType())
                 {
+                case SETMAP:
+                {
+                    final InstrSetMap sm = (InstrSetMap)a;
+                    if(sm.key == null)
+                    {
+                        int p = i;
+                        while(p >= 0 && this.instrs.get(p).getType() != Op.KEY)
+                        {
+                            p--;
+                        }
+                        if(p > 0 && this.instrs.get(p - 1).getType() == Op.LOAD)
+                        {
+                            final Value v = ((InstrLoad)this.instrs.get(p - 1)).value.clone();
+                            if(v.type == ValueType.NUMBER || v.type == ValueType.STRING)
+                            {
+                                sm.key = v;
+                                this.instrs.remove(p - 1);
+                                redo = true;
+                            }
+                        }
+                    }
+                    break;
+                }
+                case GETMAP:
+                    if(z != null && z.getType() == Op.KEY && y != null && y.getType() == Op.LOAD)
+                    {
+                        final Value v = ((InstrLoad)y).value.clone();
+                        final InstrGetMap gm = (InstrGetMap)a;
+                        if(gm.key == null && (v.type == ValueType.STRING || v.type == ValueType.NUMBER))
+                        {
+                            gm.key = v;
+                            this.instrs.remove(i - 2);
+                            redo = true;
+                        }
+                    }
+                    break;
+                case GETMAPOOP:
+                    if(z != null && z.getType() == Op.KEY && y != null && y.getType() == Op.LOAD)
+                    {
+                        final Value v = ((InstrLoad)y).value.clone();
+                        final InstrGetMapOop gm = (InstrGetMapOop)a;
+                        if(gm.key == null && v.type == ValueType.STRING)
+                        {
+                            gm.key = v;
+                            this.instrs.remove(i - 2);
+                            redo = true;
+                        }
+                    }
+                    break;
                 case GOTO:
                     if (b.getType() == Op.GOTO)
                     {
@@ -259,16 +313,16 @@ class WeelCode
                         }
                     }
                     break;
-                case IFEQ:
-                    if (b.getType() == Op.GOTO)
-                    {
-                        // Replace IFEQ followed by GOTO with IFNE
-                        this.instrs
-                                .set(i, new InstrIfNe(((InstrGoto) b).index));
-                        this.instrs.remove(i + 1);
-                        redo = true;
-                    }
-                    break;
+//                case IFEQ:
+//                    if (b.getType() == Op.GOTO)
+//                    {
+//                        // Replace IFEQ followed by GOTO with IFNE
+//                        this.instrs
+//                                .set(i, new InstrIfNe(((InstrGoto) b).index));
+//                        this.instrs.remove(i + 1);
+//                        redo = true;
+//                    }
+//                    break;
                 case IFNE:
                     if (b.getType() == Op.GOTO)
                     {
@@ -502,6 +556,28 @@ class WeelCode
                 }
                 break;
             }
+            case GETMAP:
+                if(((InstrGetMap)in).key == null)
+                {
+                    cur--;
+                }
+                break;
+            case SETMAP:
+                if(((InstrSetMap)in).key == null)
+                {
+                    cur -= 3;
+                }
+                else
+                {
+                    cur -= 2;
+                }
+                break;
+            case GETMAPOOP:
+                if(((InstrGetMapOop)in).key != null)
+                {
+                    cur++;
+                }
+                break;
             default:
                 cur += in.getType().getDelta();
                 break;

@@ -66,10 +66,10 @@ public final class Run
         }
         catch (final Exception e)
         {
-            if (e instanceof WeelException)
-                System.err.println(e.toString());
-            else
-                e.printStackTrace();
+//            if (e instanceof WeelException)
+//                System.err.println(e.toString());
+//            else
+            e.printStackTrace();
         }
     }
 }

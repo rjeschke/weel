@@ -34,6 +34,7 @@ See LICENSE.txt for licensing information.
     +   [Internal function naming](#intnames)
     +   [Compilation](#compilation)
 *   [Performance hints](#performance)
+*   [Benchmarks](#bench)
 
 *****************************************************************************
 
@@ -982,36 +983,113 @@ So it's all a little bit cheating ... but it works ... and it's fast.
 
 ### Benchmarks                      {#bench}
 
-Based on <http://shootout.alioth.debian.org/>, JRuby and Weel both run on
-Java(TM) SE Runtime Environment (build 1.6.0_24-b07)/Java HotSpot(TM) Server 
-VM (build 19.1-b02, mixed mode) without any additional parameters.
+Some benchmarks based on <http://shootout.alioth.debian.org/>, JRuby and Weel 
+both run on Java(TM) SE Runtime Environment (build 1.6.0_24-b07) and the Java 
+HotSpot(TM) Server VM (build 19.1-b02, mixed mode) without any additional 
+parameters.
 
 Benchmarked on an Athlon X2 2500MHz, Ubuntu 10.04 32 Bit, 2GiB RAM. Result is
 running time in seconds (full, i.e. creating a process, compiling and executing).
 
-I'll post some more results later. 
-
-<table>
+<table style="width: 90%; padding: 4px;">
  <tr>
-   <th>n = 2000</th>
-   <th>Weel</th>
-   <th>Lua 5.1.4</th>
-   <th>JRuby 1.6.1</th>
+   <th style="text-align: left;">Benchmark</th>
+   <th style="text-align: left;">Weel</th>
+   <th style="text-align: left;">JRuby 1.6.1</th>
+   <th style="text-align: left;">Lua 5.1.4</th>
  </tr>
  <tr>
-  <td>mandel</td>
-  <td>18.011</td>
-  <td>17.459</td>
-  <td>86.267</td>
+  <td>mandel, N = 500</td>
+  <td>1.725</td>
+  <td>5.983</td>
+  <td>1.101</td>
  </tr>
  <tr>
-  <td>spectral-norm</td>
-  <td>33.415</td>
-  <td>53.703</td>
-  <td>237.102</td>
+  <td>mandel, N = 1000</td>
+  <td>4.904</td>
+  <td>21.485</td>
+  <td>4.334</td>
+ </tr>
+ <tr>
+  <td>mandel, N = 3000</td>
+  <td>38.134</td>
+  <td>188.75</td>
+  <td>39.122</td>
+ </tr>
+ <tr>
+  <td>spectral-norm, N = 500</td>
+  <td>2.499</td>
+  <td>14.802</td>
+  <td>3.41</td>
+ </tr>
+ <tr>
+  <td>spectral-norm, N = 1000</td>
+  <td>8.518</td>
+  <td>56.79</td>
+  <td>13.557</td>
+ </tr>
+ <tr>
+  <td>spectral-norm, N = 2000</td>
+  <td>32.642</td>
+  <td>234.372</td>
+  <td>53.419</td>
+ </tr>
+ <tr>
+  <td>n-body, N = 50000</td>
+  <td>1.41</td>
+  <td>2.77</td>
+  <td>0.688</td>
+ </tr>
+ <tr>
+  <td>n-body, N = 500000</td>
+  <td>8.848</td>
+  <td>20.249</td>
+  <td>6.761</td>
+ </tr>
+ <tr>
+  <td>n-body, N = 5000000</td>
+  <td>82.05</td>
+  <td>195.718</td>
+  <td>67.548</td>
+ </tr>
+ <tr>
+  <td>binary-trees, N = 10</td>
+  <td>1.722</td>
+  <td>0.922</td>
+  <td>0.233</td>
+ </tr>
+ <tr>
+  <td>binary-trees, N = 12</td>
+  <td>2.903</td>
+  <td>1.589</td>
+  <td>1.272</td>
+ </tr>
+ <tr>
+  <td>binary-trees, N = 15</td>
+  <td>15.086</td>
+  <td>14.742</td>
+  <td>13.528</td>
+ </tr>
+ <tr>
+  <td>thread-ring, N = 5000</td>
+  <td>2.729</td>
+  <td>0.933</td>
+  <td>---</td>
+ </tr>
+ <tr>
+  <td>thread-ring, N = 50000</td>
+  <td>3.432</td>
+  <td>1.616</td>
+  <td>---</td>
+ </tr>
+ <tr>
+  <td>thread-ring, N = 500000</td>
+  <td>10.223</td>
+  <td>8.126</td>
+  <td>---</td>
  </tr>
 </table>
-    
+
 *****************************************************************************
 
 [Lua]: http://www.lua.org/ "The Programming Language Lua"

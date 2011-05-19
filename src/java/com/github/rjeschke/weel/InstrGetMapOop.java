@@ -6,6 +6,8 @@ package com.github.rjeschke.weel;
 
 class InstrGetMapOop implements Instr
 {
+    Value key = null;
+    
     /** @see Instr#getType() */
     @Override
     public Op getType()
@@ -17,6 +19,8 @@ class InstrGetMapOop implements Instr
     @Override
     public String toString()
     {
+        if(this.key != null)
+            return "GETMAPOOP " + this.key;
         return "GETMAPOOP";
     }
 
@@ -25,6 +29,14 @@ class InstrGetMapOop implements Instr
     public void write(JvmMethodWriter mw)
     {
         mw.aload(0);
-        mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime", "getMapOop", "()V");
+        if(this.key != null)
+        {
+            mw.ldc(this.key.getString());
+            mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime", "getMapOop", "(Ljava/lang/String;)V");
+        }
+        else
+        {
+            mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime", "getMapOop", "()V");
+        }
     }
 }

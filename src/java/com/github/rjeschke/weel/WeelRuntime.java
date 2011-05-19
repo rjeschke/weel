@@ -1306,6 +1306,40 @@ public final class WeelRuntime
     }
 
     /**
+     * Gets a value from a map.
+     * 
+     * <p>
+     * <code>..., map &rArr; ..., value</code>
+     * </p>
+     * 
+     * @param index The index.
+     * @throws WeelException
+     *             If the 'map' is not a ValueMap.
+     */
+    public void getMap(final int index)
+    {
+        final ValueMap map = this.stack[this.sp].getMap();
+        map.get(index, this.stack[this.sp]);
+    }
+
+    /**
+     * Gets a value from a map.
+     * 
+     * <p>
+     * <code>..., map &rArr; ..., value</code>
+     * </p>
+     * 
+     * @param index The index.
+     * @throws WeelException
+     *             If the 'map' is not a ValueMap.
+     */
+    public void getMap(final String index)
+    {
+        final ValueMap map = this.stack[this.sp].getMap();
+        map.get(index, this.stack[this.sp]);
+    }
+
+    /**
      * Gets a value from a map prepared for OOP calls.
      * 
      * <p>
@@ -1320,6 +1354,25 @@ public final class WeelRuntime
         final ValueMap map = this.stack[this.sp - 1].getMap();
         map.get(this.stack[this.sp], this.stack[this.sp - 1]);
         this.stack[this.sp].type = ValueType.MAP;
+        this.stack[this.sp].map = map;
+    }
+
+    /**
+     * Gets a value from a map prepared for OOP calls.
+     * 
+     * <p>
+     * <code>..., map &rArr; ..., value, map</code>
+     * </p>
+     * 
+     * @param index The index.
+     * @throws WeelException
+     *             If the 'map' is not a ValueMap.
+     */
+    public void getMapOop(final String index)
+    {
+        final ValueMap map = this.stack[this.sp].getMap();
+        map.get(index, this.stack[this.sp]);
+        this.stack[++this.sp].type = ValueType.MAP;
         this.stack[this.sp].map = map;
     }
 
@@ -1340,6 +1393,42 @@ public final class WeelRuntime
         this.sp -= 3;
     }
 
+    /**
+     * Sets a value in a map.
+     * 
+     * <p>
+     * <code>..., map, value &rArr; ...</code>
+     * </p>
+     * 
+     * @param index The index.
+     * @throws WeelException
+     *             If the 'map' is not a ValueMap.
+     */
+    public void setMap(final int index)
+    {
+        final ValueMap map = this.stack[this.sp - 1].getMap();
+        map.set(index, this.stack[this.sp]);
+        this.sp -= 2;
+    }
+
+    /**
+     * Sets a value in a map.
+     * 
+     * <p>
+     * <code>..., map, value &rArr; ...</code>
+     * </p>
+     * 
+     * @param index The index.
+     * @throws WeelException
+     *             If the 'map' is not a ValueMap.
+     */
+    public void setMap(final String index)
+    {
+        final ValueMap map = this.stack[this.sp - 1].getMap();
+        map.set(index, this.stack[this.sp]);
+        this.sp -= 2;
+    }
+    
     /**
      * Appends a value to a map.
      * 

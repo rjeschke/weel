@@ -30,7 +30,7 @@ enum Op
     
     OFRAME(0), CFRAME(0), CFRAMERET(0),
     
-    IFEQ(0), IFNE(0), GOTO(0), LABEL(0);
+    IFEQ(0), IFNE(0), GOTO(0), LABEL(0), KEY(0);
     
     private int delta;
     

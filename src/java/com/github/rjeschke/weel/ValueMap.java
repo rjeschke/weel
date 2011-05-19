@@ -110,7 +110,11 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
         }
         else
         {
-            this.get(new Value(index), out);
+            final Integer idx2 = this.intKeys.get(index);
+            if (idx2 != null)
+                this.data.get(idx2).copyTo(out);
+            else
+                out.setNull();
         }
         return out;
     }
@@ -126,7 +130,35 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
      */
     public Value get(final String index)
     {
-        return this.get(new Value(index));
+        return this.get(index, new Value());
+    }
+
+    /**
+     * Get the value at the given index.
+     * 
+     * @param index
+     *            The index.
+     * @param out
+     *            The output Value.
+     * @return out.
+     * @throws WeelException
+     *             If the index is invalid.
+     */
+    public Value get(final String index, final Value out)
+    {
+        if(this.ordered)
+        {
+            out.setNull();
+        }
+        else
+        {
+            final Integer idx2 = this.strKeys.get(index);
+            if (idx2 != null)
+                this.data.get(idx2).copyTo(out);
+            else
+                out.setNull();
+        }
+        return out;
     }
 
     /**
@@ -252,7 +284,22 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
      */
     public void set(final String index, final Value value)
     {
-        this.set(new Value(index), value);
+        if (this.ordered)
+        {
+            this.unorder();
+        }
+        final Integer idx = this.strKeys.get(index);
+        if (idx != null)
+        {
+            value.copyTo(this.data.get(idx));
+        }
+        else
+        {
+            this.strKeys.put(index, this.size);
+            this.keys.add(new Value(index));
+            this.data.add(value.clone());
+            this.size++;
+        }
     }
 
     /**
@@ -267,7 +314,39 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
      */
     public void set(final int index, final Value value)
     {
-        this.set(new Value(index), value);
+        if (this.ordered && index >= 0 && index <= this.size)
+        {
+            if (index == this.size)
+            {
+                this.keys.add(new Value(index));
+                this.data.add(value.clone());
+                this.size++;
+            }
+            else
+            {
+                value.copyTo(this.data.get(index));
+            }
+        }
+        else
+        {
+            if (this.ordered)
+            {
+                this.unorder();
+            }
+            final Integer index2 = this.intKeys.get(index);
+            if (index2 != null)
+            {
+                value.copyTo(this.data.get(index2));
+            }
+            else
+            {
+                this.intKeys.put(index, this.size);
+                this.keys.add(new Value(index));
+                this.data.add(value.clone());
+                this.highestIntKey = index;
+                this.size++;
+            }
+        }
     }
 
     /**
