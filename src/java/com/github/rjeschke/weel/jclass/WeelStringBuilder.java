@@ -58,6 +58,20 @@ public final class WeelStringBuilder
     }
 
     /**
+     * Appends a char (given as a number) to this StringBuilder.
+     * 
+     * @param thiz This.
+     * @param value The char.
+     * @see java.lang.StringBuilder#append(String)
+     */
+    @WeelMethod
+    public final static void appendChar(final ValueMap thiz, final Value value)
+    {
+        final StringBuilder sb = WeelOop.getInstance(thiz, StringBuilder.class);
+        sb.append((char)value.getNumber());
+    }
+    
+    /**
      * Sets the length of this StringBuilder to 0.
      * 
      * @param thiz This.

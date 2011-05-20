@@ -1,28 +1,17 @@
-/*
-func test(a, b)
-    if a then
-        return b
-    else
-        return a
-    end
-end
-*/
-a = true || false;
-b = true && false;
-println(1 + 2 * 3);
-println("Hello".." ".."world!"..(1 + 2 * 3));
-println(a & b)
+local a;
 
-a = 1;
+println((a = 1) + 2)
+println(a);
 
-t = clock();
-for i = 0, 16777215 do
-    local b = a + a;
-end
-println(clock() - t);
+arr = {0, 1};
 
-t = clock();
-for i = 0, 16777215 do
-    local b = 2 * a;
-end
-println(clock() - t);
+println(arr[false ? 0 : 1])
+
+println(1 + 2 * 3 - 7 * 0.5 * 33 / 9.2 + 100 - 12 * 100.1111)
+
+println(strFormat("Hallo %s ... \n this is %d times %f\n", {"world!", 3, 0.5}));
+printf("en", "Hallo %s ... this is %08x times %f\n", {"world!", 33232, 0.5});
+
+println(strPadRight(strPadLeft("Hello world!", "+-", 40), "-+/#*", 80));
+
+printf("%C%c%c%c%c %c%c%c%c%c!\n", strChars("helloworld"));

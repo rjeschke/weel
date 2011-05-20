@@ -15,7 +15,7 @@ import com.github.rjeschke.weel.annotations.WeelMethod;
  * 
  * @author René Jeschke <rene_jeschke@yahoo.de>
  */
-@WeelClass(name = "java.SyncVar", usesOop = true)
+@WeelClass(name = "weel.SyncVar", usesOop = true)
 public final class WeelSyncVar
 {
     @WeelMethod
@@ -27,7 +27,8 @@ public final class WeelSyncVar
     /**
      * Get the value, blocks until a value was written.
      * 
-     * @param thiz This.
+     * @param thiz
+     *            This.
      * @return The value.
      */
     @WeelMethod
@@ -40,8 +41,10 @@ public final class WeelSyncVar
     /**
      * Sets the value.
      * 
-     * @param thiz This.
-     * @param value The value.
+     * @param thiz
+     *            This.
+     * @param value
+     *            The value.
      */
     @WeelMethod
     public final static void set(final ValueMap thiz, final Value value)
@@ -49,7 +52,7 @@ public final class WeelSyncVar
         final SyncVar sv = WeelOop.getInstance(thiz, SyncVar.class);
         sv.set(value);
     }
-    
+
     /**
      * Synchronized variable.
      * 
@@ -69,7 +72,7 @@ public final class WeelSyncVar
         {
             //
         }
-        
+
         /**
          * Gets the value.
          * 
@@ -77,11 +80,11 @@ public final class WeelSyncVar
          */
         public Value get()
         {
-            if(this.lock == null)
+            if (this.lock == null)
             {
                 this.lock = new Object();
             }
-            synchronized(this.lock)
+            synchronized (this.lock)
             {
                 try
                 {
@@ -94,15 +97,20 @@ public final class WeelSyncVar
                 return this.value;
             }
         }
-        
+
         /**
          * Sets the value.
          * 
-         * @param value The value.
+         * @param value
+         *            The value.
          */
         public void set(Value value)
         {
-            synchronized(this.lock)
+            if (this.lock == null)
+            {
+                this.lock = new Object();
+            }
+            synchronized (this.lock)
             {
                 this.value = value;
                 this.lock.notifyAll();

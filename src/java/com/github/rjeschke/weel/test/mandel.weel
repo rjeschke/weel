@@ -94,7 +94,7 @@ sub iterat(y)
             tx1 = tx * tx;
             ty1 = ty * ty;
             zx = tx1 - ty1;
-            zy = 2 * tx * ty;
+            zy = tx * ty * 2;
             if (tx1 + ty1) > 4 then
                 break;
             end
@@ -126,7 +126,9 @@ end
 while sema->available() do
     sleep(100);
 end
+
 t = clock() - t;
+
 println(t.." seconds.");
 
 image->toPng("/home/rjeschke/mandel.png");

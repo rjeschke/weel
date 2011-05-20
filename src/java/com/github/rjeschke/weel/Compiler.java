@@ -36,8 +36,6 @@ final class Compiler
     Scope scope;
     /** The class writer. */
     JvmClassWriter classWriter;
-    /** Flag indicating that we're in debug mode. (Used for assert(cond)). */
-    private final boolean debugMode;
     /** Flag indicating that we're used. */
     private boolean used = false;
     /** Anonymous function counter. */
@@ -52,21 +50,6 @@ final class Compiler
     public Compiler(final Weel weel)
     {
         this.weel = weel;
-        this.debugMode = weel.debugMode;
-    }
-
-    /**
-     * Constructor.
-     * 
-     * @param weel
-     *            The Weel.
-     * @param debug
-     *            Flag indicating that we're in debug mode.
-     */
-    public Compiler(final Weel weel, final boolean debug)
-    {
-        this.weel = weel;
-        this.debugMode = debug;
     }
 
     /**
@@ -122,7 +105,7 @@ final class Compiler
             throw new WeelException("Open block: " + this.scope.type.toString());
         }
 
-        this.scope.block.closeBlock(this.debugMode);
+        this.scope.block.closeBlock(this.weel.debugMode, this.weel.dumpCode);
 
         this.blockToBytecode(this.block);
         
@@ -1696,7 +1679,7 @@ final class Compiler
             }
         }
 
-        this.block.closeBlock(this.debugMode);
+        this.block.closeBlock(this.weel.debugMode, this.weel.dumpCode);
 
         this.blockToBytecode(this.block);
         

@@ -20,6 +20,7 @@ import com.github.rjeschke.weel.jclass.WeelImage;
 import com.github.rjeschke.weel.jclass.WeelLock;
 import com.github.rjeschke.weel.jclass.WeelSemaphore;
 import com.github.rjeschke.weel.jclass.WeelStringBuilder;
+import com.github.rjeschke.weel.jclass.WeelBlockingQueue;
 import com.github.rjeschke.weel.jclass.WeelSyncVar;
 import com.github.rjeschke.weel.jclass.WeelThread;
 
@@ -63,6 +64,8 @@ public final class Weel
     final static AtomicLong scriptCounter = new AtomicLong();
     /** Debug mode flag. */
     boolean debugMode = false;
+    /** Debug mode flag. */
+    boolean dumpCode = false;
 
     private final static Class<?>[] STDLIB =
     { WeelLibMath.class, WeelLibString.class, WeelLibCon.class,
@@ -71,7 +74,8 @@ public final class Weel
 
     private final static Class<?>[] JCLASSES =
     { WeelStringBuilder.class, WeelImage.class, WeelThread.class,
-            WeelLock.class, WeelSemaphore.class, WeelSyncVar.class };
+            WeelLock.class, WeelSemaphore.class, WeelBlockingQueue.class,
+            WeelSyncVar.class };
 
     /** ThreadLocal variable for Weel Runtimes associated with this Weel class. */
     private final ThreadLocal<WeelRuntime> runtime = new ThreadLocal<WeelRuntime>()
@@ -120,6 +124,17 @@ public final class Weel
     public void setDebugMode(final boolean enable)
     {
         this.debugMode = enable;
+    }
+
+    /**
+     * Enables or disables dumping of generated intermediate byte code.
+     * 
+     * @param enable
+     *            On or off?
+     */
+    public void enableCodeDump(final boolean enable)
+    {
+        this.dumpCode = enable;
     }
 
     /**
@@ -251,14 +266,8 @@ public final class Weel
             try
             {
                 final Class<?> clazz = this.classLoader.findClass(name);
-                for(final Method m : clazz.getMethods())
-                {
-                    if(m.getName().equals("STATIC"))
-                    {
-                        m.invoke(null, runtime);
-                        break;
-                    }
-                }
+                clazz.getMethod("STATIC", WeelRuntime.class).invoke(null,
+                        runtime);
             }
             catch (Exception e)
             {
@@ -279,9 +288,9 @@ public final class Weel
      */
     public Value runMain()
     {
-        return this.runMain((String[])null);
+        return this.runMain((String[]) null);
     }
-    
+
     /**
      * Runs the main function/sub (if exists).
      * 
@@ -293,7 +302,7 @@ public final class Weel
     {
         final WeelFunction main = this.findFunction("main");
         final ValueMap vargs = new ValueMap();
-        if(args != null)
+        if (args != null)
         {
             for (final String s : args)
             {

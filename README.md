@@ -38,7 +38,7 @@ For more informations have a look [here](http://rjeschke.github.com/weel/).
 ### TODO
 
 *   Switch to Apache v2 license
-*   Finish standard library (String and map functions mainly)
+*   Finish standard library (Map/IO functions)
 *   Add mechanism for user library registering and loading on demand
 *   Map some more useful Java classes to Weel
 *   Library documentation
@@ -61,11 +61,14 @@ creates the jars in the 'release' folder.
     
         java -cp <path-to-weel-jar-or-build-classes> com.github.rjeschke.weel.Run <args>
         
-        <args>:  <script> [<script> ...] [-args args]
+        <args>:  <script> [<script> ...] [--debug] [--dump] [-- args]
 
     Run searches for a sub/func called main, with 0 or 1 arguments, which gets called (if
-    exists) after all static code was run. The arguments (all after `-args`) will be supplied
+    exists) after all static code was run. The arguments (all after `--`) will be supplied
     as a list.
+    
+    *   `--debug` enables asserts (which would otherwise be stripped away)
+    *   `--dump` dumps the generated intermediate code in human readable form to stdout
     
 2.  Usage from Java
 

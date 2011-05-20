@@ -23,7 +23,7 @@ class WeelCode
     /** Closure variables indices. */
     ArrayList<Integer> cvarIndex = new ArrayList<Integer>();
     /** Variable index to closure index mapping. */
-    HashMap<Integer, Integer> cvarMap = new HashMap<Integer, Integer>();
+    private HashMap<Integer, Integer> cvarMap = new HashMap<Integer, Integer>();
     /** Closure variable name to index mapping. */
     final HashMap<String, Integer> cvars = new HashMap<String, Integer>();
     /** Instructions. */
@@ -41,14 +41,12 @@ class WeelCode
      * Relevant only for automatically typed anonymous functions.
      */
     boolean hasExit;
-    /** Current stack position. */
-    int currentStack;
     /** Maximum stack depth. */
-    int maxStack;
+    private int maxStack;
     /** Label counter */
-    int labels = 0;
+    private int labels = 0;
     /** Label lines. */
-    int[] lines;
+    private int[] lines;
     /** Starting position in source code. */
     String source = null;
 
@@ -141,8 +139,11 @@ class WeelCode
      * 
      * @param debugMode
      *            Flag indicating that we're in debug mode.
+     * @param dumpCode
+     *            Flag indicating that we should dump the generated code to
+     *            stdout.
      */
-    public void closeBlock(final boolean debugMode)
+    public void closeBlock(final boolean debugMode, final boolean dumpCode)
     {
         // Remove asserts if !debugMode
         if (!debugMode)
@@ -164,17 +165,13 @@ class WeelCode
                 }
             }
         }
-        // Nothing left? Return
-        if (this.instrs.size() == 0)
-        {
-            return;
-        }
-        // Resolve labels 
+
+        // Resolve labels
         this.resolveLabels();
         // Refactor
         this.refactor();
 
-        // Resolve labels again 
+        // Resolve labels again
         this.resolveLabels();
 
         // Calculate maximum stack depth, check for return value
@@ -201,6 +198,11 @@ class WeelCode
 
         // Finally resolve labels again
         this.resolveLabels();
+
+        if (dumpCode)
+        {
+            this.dump();
+        }
     }
 
     /**
@@ -215,7 +217,7 @@ class WeelCode
             System.out.println("STATIC");
         for (Instr i : this.instrs)
         {
-            if(i.getType() == Op.KEY)
+            if (i.getType() == Op.KEY)
                 continue;
             if (i.getType() != Op.LABEL)
             {
@@ -249,18 +251,21 @@ class WeelCode
                 {
                 case SETMAP:
                 {
-                    final InstrSetMap sm = (InstrSetMap)a;
-                    if(sm.key == null)
+                    final InstrSetMap sm = (InstrSetMap) a;
+                    if (sm.key == null)
                     {
                         int p = i;
-                        while(p >= 0 && this.instrs.get(p).getType() != Op.KEY)
+                        while (p >= 0 && this.instrs.get(p).getType() != Op.KEY)
                         {
                             p--;
                         }
-                        if(p > 0 && this.instrs.get(p - 1).getType() == Op.LOAD)
+                        if (p > 0
+                                && this.instrs.get(p - 1).getType() == Op.LOAD)
                         {
-                            final Value v = ((InstrLoad)this.instrs.get(p - 1)).value.clone();
-                            if(v.type == ValueType.NUMBER || v.type == ValueType.STRING)
+                            final Value v = ((InstrLoad) this.instrs.get(p - 1)).value
+                                    .clone();
+                            if (v.type == ValueType.NUMBER
+                                    || v.type == ValueType.STRING)
                             {
                                 sm.key = v;
                                 this.instrs.remove(p - 1);
@@ -271,11 +276,13 @@ class WeelCode
                     break;
                 }
                 case GETMAP:
-                    if(z != null && z.getType() == Op.KEY && y != null && y.getType() == Op.LOAD)
+                    if (z != null && z.getType() == Op.KEY && y != null
+                            && y.getType() == Op.LOAD)
                     {
-                        final Value v = ((InstrLoad)y).value.clone();
-                        final InstrGetMap gm = (InstrGetMap)a;
-                        if(gm.key == null && (v.type == ValueType.STRING || v.type == ValueType.NUMBER))
+                        final Value v = ((InstrLoad) y).value.clone();
+                        final InstrGetMap gm = (InstrGetMap) a;
+                        if (gm.key == null
+                                && (v.type == ValueType.STRING || v.type == ValueType.NUMBER))
                         {
                             gm.key = v;
                             this.instrs.remove(i - 2);
@@ -284,11 +291,12 @@ class WeelCode
                     }
                     break;
                 case GETMAPOOP:
-                    if(z != null && z.getType() == Op.KEY && y != null && y.getType() == Op.LOAD)
+                    if (z != null && z.getType() == Op.KEY && y != null
+                            && y.getType() == Op.LOAD)
                     {
-                        final Value v = ((InstrLoad)y).value.clone();
-                        final InstrGetMapOop gm = (InstrGetMapOop)a;
-                        if(gm.key == null && v.type == ValueType.STRING)
+                        final Value v = ((InstrLoad) y).value.clone();
+                        final InstrGetMapOop gm = (InstrGetMapOop) a;
+                        if (gm.key == null && v.type == ValueType.STRING)
                         {
                             gm.key = v;
                             this.instrs.remove(i - 2);
@@ -313,16 +321,16 @@ class WeelCode
                         }
                     }
                     break;
-//                case IFEQ:
-//                    if (b.getType() == Op.GOTO)
-//                    {
-//                        // Replace IFEQ followed by GOTO with IFNE
-//                        this.instrs
-//                                .set(i, new InstrIfNe(((InstrGoto) b).index));
-//                        this.instrs.remove(i + 1);
-//                        redo = true;
-//                    }
-//                    break;
+//                 case IFEQ:
+//                 if (b.getType() == Op.GOTO)
+//                 {
+//                 // Replace IFEQ followed by GOTO with IFNE
+//                 this.instrs
+//                 .set(i, new InstrIfNe(((InstrGoto) b).index));
+//                 this.instrs.remove(i + 1);
+//                 redo = true;
+//                 }
+//                 break;
                 case IFNE:
                     if (b.getType() == Op.GOTO)
                     {
@@ -363,80 +371,82 @@ class WeelCode
                             break;
                         default:
                         {
-                            final Instr l0 = this.instrs.get(i - 2);
                             final Instr l1 = this.instrs.get(i - 1);
-                            if (l0.getType() == Op.LOAD
-                                    && ((InstrLoad) l0).value.isNumber()
-                                    && l1.getType() == Op.LOAD
+                            if (l1.getType() == Op.LOAD
                                     && ((InstrLoad) l1).value.isNumber())
                             {
-                                rt.load(((InstrLoad) l0).value.getNumber());
-                                rt.load(((InstrLoad) l1).value.getNumber());
-                                switch (alu.type)
+                                final Instr l0 = this.instrs.get(i - 2);
+                                if (l0.getType() == Op.LOAD
+                                        && ((InstrLoad) l0).value.isNumber())
                                 {
-                                case strcat:
-                                case mapcat:
-                                case mapcat2:
-                                    break;
-                                case add:
-                                    rt.add();
-                                    break;
-                                case sub:
-                                    rt.sub();
-                                    break;
-                                case mul:
-                                    rt.mul();
-                                    break;
-                                case div:
-                                    rt.mul();
-                                    break;
-                                case mod:
-                                    rt.mod();
-                                    break;
-                                case and:
-                                    rt.and();
-                                    break;
-                                case or:
-                                    rt.or();
-                                    break;
-                                case xor:
-                                    rt.xor();
-                                    break;
-                                case shl:
-                                    rt.shl();
-                                    break;
-                                case shr:
-                                    rt.shr();
-                                    break;
-                                case ushr:
-                                    rt.ushr();
-                                    break;
-                                case cmpEq:
-                                    rt.cmpEq();
-                                    break;
-                                case cmpNe:
-                                    rt.cmpNe();
-                                    break;
-                                case cmpGt:
-                                    rt.cmpGt();
-                                    break;
-                                case cmpGe:
-                                    rt.cmpGe();
-                                    break;
-                                case cmpLt:
-                                    rt.cmpLt();
-                                    break;
-                                case cmpLe:
-                                    rt.cmpLe();
-                                    break;
+                                    rt.load(((InstrLoad) l0).value.getNumber());
+                                    rt.load(((InstrLoad) l1).value.getNumber());
+                                    switch (alu.type)
+                                    {
+                                    case strcat:
+                                    case mapcat:
+                                    case mapcat2:
+                                        break;
+                                    case add:
+                                        rt.add();
+                                        break;
+                                    case sub:
+                                        rt.sub();
+                                        break;
+                                    case mul:
+                                        rt.mul();
+                                        break;
+                                    case div:
+                                        rt.mul();
+                                        break;
+                                    case mod:
+                                        rt.mod();
+                                        break;
+                                    case and:
+                                        rt.and();
+                                        break;
+                                    case or:
+                                        rt.or();
+                                        break;
+                                    case xor:
+                                        rt.xor();
+                                        break;
+                                    case shl:
+                                        rt.shl();
+                                        break;
+                                    case shr:
+                                        rt.shr();
+                                        break;
+                                    case ushr:
+                                        rt.ushr();
+                                        break;
+                                    case cmpEq:
+                                        rt.cmpEq();
+                                        break;
+                                    case cmpNe:
+                                        rt.cmpNe();
+                                        break;
+                                    case cmpGt:
+                                        rt.cmpGt();
+                                        break;
+                                    case cmpGe:
+                                        rt.cmpGe();
+                                        break;
+                                    case cmpLt:
+                                        rt.cmpLt();
+                                        break;
+                                    case cmpLe:
+                                        rt.cmpLe();
+                                        break;
+                                    }
+                                    this.instrs.set(i - 2, new InstrLoad(rt
+                                            .popNumber()));
+                                    this.instrs.remove(i - 1);
+                                    this.instrs.remove(i - 1);
+                                    redo = true;
                                 }
-                                this.instrs.set(i - 2, new InstrLoad(rt
-                                        .popNumber()));
-                                this.instrs.remove(i - 1);
-                                this.instrs.remove(i - 1);
-                                redo = true;
+                                break;
                             }
-                            break;
                         }
                         }
                     }
@@ -557,13 +567,13 @@ class WeelCode
                 break;
             }
             case GETMAP:
-                if(((InstrGetMap)in).key == null)
+                if (((InstrGetMap) in).key == null)
                 {
                     cur--;
                 }
                 break;
             case SETMAP:
-                if(((InstrSetMap)in).key == null)
+                if (((InstrSetMap) in).key == null)
                 {
                     cur -= 3;
                 }
@@ -573,7 +583,7 @@ class WeelCode
                 }
                 break;
             case GETMAPOOP:
-                if(((InstrGetMapOop)in).key != null)
+                if (((InstrGetMapOop) in).key != null)
                 {
                     cur++;
                 }

@@ -50,7 +50,7 @@ Weel ...
 *   ... has type bound dynamic functions *(something like mix-ins/traits for
     Weel's base types)*
 *   ... supports multi-threading
-*   ... can export pre-compiled binaries
+*   ... can export pre-compiled binaries (not now, but it will)
 *   ... does not depend on any libraries except the Java(TM) runtime
 *   ... can easily be extended by Java(TM) methods
 *   ... has built-in OOP functionality
@@ -956,8 +956,12 @@ So it's all a little bit cheating ... but it works ... and it's fast.
 
 ### Performance hints               {#performance}
 
-*   At the moment static expressions won't result in a static value, so
-    `a = 1 + 2` evaluates to `a = 1 + 2` and not `a = 3`.
+*   Static expressions:
+    +   `a = 1 + 2 * 3` gets compiled as `a = 7`
+    +   `a = b + 2 * 3` gets compiled as `a = b + 6`
+    +   `a = 1 + b + 2` gets compiled as `a = 1 + b + 2`
+    
+    No term reordering is performed, so be careful which expressions you use
 *   local and closure variables are faster than global variables.
 *   `a = 2 * b` is faster than `a = b + b`.
 *   `a += 1` is exactly the same as writing `a = a + 1` --- it just is less 
@@ -970,11 +974,11 @@ So it's all a little bit cheating ... but it works ... and it's fast.
     operations.
 *   Function calling speed (decreasing from top to bottom):
     
-    +   Static Weel/Java(TM) function calls (1.00)
-    +   Static Java(TM) nice function calls (1.08)
-    +   Dynamic calls (1.18)
-    +   Dynamic calls with overload resolving (1.62)
-    +   Type bound functions (9.30) ?
+    +   Static Weel/Java(TM) function calls
+    +   Static Java(TM) nice function calls
+    +   Dynamic calls
+    +   Dynamic calls with overload resolving
+    +   Type bound functions
     
     This is currently a good guess, I'll benchmark this as soon as the
     rest is stable.
@@ -983,110 +987,110 @@ So it's all a little bit cheating ... but it works ... and it's fast.
 
 ### Benchmarks                      {#bench}
 
-Some benchmarks based on <http://shootout.alioth.debian.org/>, JRuby and Weel 
-both run on Java(TM) SE Runtime Environment (build 1.6.0_24-b07) and the Java 
-HotSpot(TM) Server VM (build 19.1-b02, mixed mode) without any additional 
-parameters.
+Here are some benchmarks based on <http://shootout.alioth.debian.org/>, JRuby 
+and Weel both run on Java(TM) SE Runtime Environment (build 1.6.0_24-b07) and 
+the Java HotSpot(TM) Server VM (build 19.1-b02, mixed mode) without any additional 
+parameters (JRuby is started with `--server`).
 
-Benchmarked on an Athlon X2 2500MHz, Ubuntu 10.04 32 Bit, 2GiB RAM. Result is
-running time in seconds (full, i.e. creating a process, compiling and executing).
+Benchmarked on an Athlon X2 2500MHz, Ubuntu x86 10.04, 2GiB RAM. Result is
+running time in seconds (full, i.e. creating the process, compiling and executing).
 
 <table style="width: 90%; padding: 4px;">
  <tr>
    <th style="text-align: left;">Benchmark</th>
-   <th style="text-align: left;">Weel</th>
-   <th style="text-align: left;">JRuby 1.6.1</th>
-   <th style="text-align: left;">Lua 5.1.4</th>
+   <th colspan="2">Weel</th>
+   <th colspan="2">JRuby 1.6.1</th>
+   <th colspan="2">Lua 5.1.4</th>
  </tr>
  <tr>
   <td>mandel, N = 500</td>
-  <td>1.725</td>
-  <td>5.983</td>
-  <td>1.101</td>
+  <td>1.79</td><td>(x1.62)</td>
+  <td>5.34</td><td>(x4.82)</td>
+  <td>1.11</td><td>(x1.00)</td>
  </tr>
  <tr>
-  <td>mandel, N = 1000</td>
-  <td>4.904</td>
-  <td>21.485</td>
-  <td>4.334</td>
+  <td>mandel, N = 2000</td>
+  <td>17.43</td><td>(x1.00)</td>
+  <td>59.40</td><td>(x3.41)</td>
+  <td>17.70</td><td>(x1.02)</td>
  </tr>
  <tr>
-  <td>mandel, N = 3000</td>
-  <td>38.134</td>
-  <td>188.75</td>
-  <td>39.122</td>
+  <td>mandel, N = 4000</td>
+  <td>69.92</td><td>(x1.00)</td>
+  <td>226.60</td><td>(x3.24)</td>
+  <td>70.21</td><td>(x1.00)</td>
  </tr>
  <tr>
   <td>spectral-norm, N = 500</td>
-  <td>2.499</td>
-  <td>14.802</td>
-  <td>3.41</td>
+  <td>2.88</td><td>(x1.00)</td>
+  <td>12.88</td><td>(x4.48)</td>
+  <td>3.44</td><td>(x1.20)</td>
  </tr>
  <tr>
   <td>spectral-norm, N = 1000</td>
-  <td>8.518</td>
-  <td>56.79</td>
-  <td>13.557</td>
+  <td>8.83</td><td>(x1.00)</td>
+  <td>44.37</td><td>(x5.03)</td>
+  <td>13.50</td><td>(x1.53)</td>
  </tr>
  <tr>
   <td>spectral-norm, N = 2000</td>
-  <td>32.642</td>
-  <td>234.372</td>
-  <td>53.419</td>
+  <td>33.99</td><td>(x1.00)</td>
+  <td>184.80</td><td>(x5.44)</td>
+  <td>54.08</td><td>(x1.59)</td>
  </tr>
  <tr>
   <td>n-body, N = 50000</td>
-  <td>1.41</td>
-  <td>2.77</td>
-  <td>0.688</td>
+  <td>1.57</td><td>(x2.22)</td>
+  <td>3.58</td><td>(x5.06)</td>
+  <td>0.71</td><td>(x1.00)</td>
  </tr>
  <tr>
   <td>n-body, N = 500000</td>
-  <td>8.848</td>
-  <td>20.249</td>
-  <td>6.761</td>
+  <td>8.81</td><td>(x1.31)</td>
+  <td>17.54</td><td>(x2.60)</td>
+  <td>6.74</td><td>(x1.00)</td>
  </tr>
  <tr>
   <td>n-body, N = 5000000</td>
-  <td>82.05</td>
-  <td>195.718</td>
-  <td>67.548</td>
- </tr>
- <tr>
-  <td>binary-trees, N = 10</td>
-  <td>1.722</td>
-  <td>0.922</td>
-  <td>0.233</td>
+  <td>84.56</td><td>(x1.25)</td>
+  <td>158.12</td><td>(x2.34)</td>
+  <td>67.71</td><td>(x1.00)</td>
  </tr>
  <tr>
   <td>binary-trees, N = 12</td>
-  <td>2.903</td>
-  <td>1.589</td>
-  <td>1.272</td>
+  <td>3.39</td><td>(x2.67)</td>
+  <td>2.63</td><td>(x2.08)</td>
+  <td>1.27</td><td>(x1.00)</td>
  </tr>
  <tr>
-  <td>binary-trees, N = 15</td>
-  <td>15.086</td>
-  <td>14.742</td>
-  <td>13.528</td>
+  <td>binary-trees, N = 14</td>
+  <td>9.26</td><td>(x1.73)</td>
+  <td>5.35</td><td>(x1.00)</td>
+  <td>6.54</td><td>(x1.22)</td>
+ </tr>
+ <tr>
+  <td>binary-trees, N = 16</td>
+  <td>53.32</td><td>(x3.24)</td>
+  <td>16.43</td><td>(x1.00)</td>
+  <td>32.25</td><td>(x1.96)</td>
  </tr>
  <tr>
   <td>thread-ring, N = 5000</td>
-  <td>2.729</td>
-  <td>0.933</td>
-  <td>---</td>
+  <td>3.05</td><td>(x2.53)</td>
+  <td>1.21</td><td>(x1.00)</td>
+  <td>---</td><td>---</td>
  </tr>
  <tr>
   <td>thread-ring, N = 50000</td>
-  <td>3.432</td>
-  <td>1.616</td>
-  <td>---</td>
+  <td>3.74</td><td>(x1.88)</td>
+  <td>1.99</td><td>(x1.00)</td>
+  <td>---</td><td>---</td>
  </tr>
  <tr>
   <td>thread-ring, N = 500000</td>
-  <td>10.223</td>
-  <td>8.126</td>
-  <td>---</td>
+  <td>11.43</td><td>(x1.34)</td>
+  <td>8.56</td><td>(x1.00)</td>
+  <td>---</td><td>---</td>
  </tr>
 </table>
 
