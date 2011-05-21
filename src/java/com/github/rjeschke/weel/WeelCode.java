@@ -321,16 +321,16 @@ class WeelCode
                         }
                     }
                     break;
-//                 case IFEQ:
-//                 if (b.getType() == Op.GOTO)
-//                 {
-//                 // Replace IFEQ followed by GOTO with IFNE
-//                 this.instrs
-//                 .set(i, new InstrIfNe(((InstrGoto) b).index));
-//                 this.instrs.remove(i + 1);
-//                 redo = true;
-//                 }
-//                 break;
+                case IFEQ:
+                    if(b.getType() == Op.GOTO)
+                    {
+                        // Replace IFEQ followed by GOTO with IFNE
+                        this.instrs
+                                .set(i, new InstrIfNe(((InstrGoto) b).index));
+                        this.instrs.remove(i + 1);
+                        redo = true;
+                    }
+                    break;
                 case IFNE:
                     if (b.getType() == Op.GOTO)
                     {

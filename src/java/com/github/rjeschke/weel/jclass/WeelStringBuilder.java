@@ -18,6 +18,11 @@ import com.github.rjeschke.weel.annotations.WeelMethod;
 @WeelClass(name = "java.StringBuilder", usesOop = true)
 public final class WeelStringBuilder
 {
+    private WeelStringBuilder()
+    {
+        //
+    }
+    
     /**
      * Constructor.
      * 

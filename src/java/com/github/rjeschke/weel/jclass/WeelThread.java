@@ -21,6 +21,11 @@ import com.github.rjeschke.weel.annotations.WeelMethod;
 @WeelClass(name = "java.Thread", usesOop = true)
 public final class WeelThread
 {
+    private WeelThread()
+    {
+        //
+    }
+    
     /**
      * Constructor.
      * 

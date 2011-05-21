@@ -67,7 +67,7 @@ public final class WeelLibSys
         final int size = (int) runtime.popNumber();
         final ValueMap ret = new ValueMap();
         final Value val = new Value();
-        for (int i = 0; i < size; i++)
+        for(int i = 0; i < size; i++)
             ret.append(val);
         runtime.load(ret);
     }
@@ -87,7 +87,7 @@ public final class WeelLibSys
         final Value val = runtime.pop();
         final int size = (int) runtime.popNumber();
         final ValueMap ret = new ValueMap();
-        for (int i = 0; i < size; i++)
+        for(int i = 0; i < size; i++)
             ret.append(val);
         runtime.load(ret);
     }
@@ -105,6 +105,21 @@ public final class WeelLibSys
     public final static void isNull(final WeelRuntime runtime)
     {
         runtime.load(runtime.popType() == ValueType.NULL ? -1 : 0);
+    }
+
+    /**
+     * <code>isNotNull(a)</code>
+     * <p>
+     * Returns <code>true</code> if 'a' is not null.
+     * </p>
+     * 
+     * @param runtime
+     *            The Weel runtime.
+     */
+    @WeelRawMethod(args = 1, returnsValue = true)
+    public final static void isNotNull(final WeelRuntime runtime)
+    {
+        runtime.load(runtime.popType() != ValueType.NULL ? -1 : 0);
     }
 
     /**
@@ -243,7 +258,7 @@ public final class WeelLibSys
         final int args = (int) runtime.popNumber();
         final String name = runtime.popString();
         final WeelFunction func = runtime.getMother().findFunction(name, args);
-        if (func != null)
+        if(func != null)
             runtime.load(func);
         else
             runtime.load();
@@ -265,29 +280,29 @@ public final class WeelLibSys
         final String typeName = runtime.popString().toUpperCase();
         final ValueType type = ValueType.fromString(typeName);
 
-        if (type == null)
+        if(type == null)
         {
             throw new WeelException("Unknown type '" + typeName + "'");
         }
 
         final TypeFunctions funcs = runtime.mother.typeFunctions[type.ordinal()];
 
-        if (funcs == null)
+        if(funcs == null)
         {
             throw new WeelException("Unsupported type '" + type + "'");
         }
 
-        for (final Entry<Value, Value> e : map)
+        for(final Entry<Value, Value> e : map)
         {
             final String key = e.getKey().toString().toLowerCase();
-            if (e.getValue().isFunction())
+            if(e.getValue().isFunction())
             {
                 final String name;
                 final WeelFunction func = e.getValue().function;
-                if (key.endsWith("_"))
+                if(key.endsWith("_"))
                 {
                     int i = key.length() - 2;
-                    while (i > 0 && key.charAt(i) == '_')
+                    while(i > 0 && key.charAt(i) == '_')
                     {
                         --i;
                     }
@@ -297,7 +312,7 @@ public final class WeelLibSys
                 {
                     name = key + "#" + func.arguments;
                 }
-                if (funcs.findFunction(name) != null)
+                if(funcs.findFunction(name) != null)
                 {
                     throw new WeelException("Duplicate function '" + key + "("
                             + func.arguments + ")' for type '" + type + "'");
@@ -347,18 +362,18 @@ public final class WeelLibSys
         final String typeName = runtime.popString().toUpperCase();
 
         final ValueType type = ValueType.fromString(typeName);
-        if (type == null)
+        if(type == null)
         {
             throw new WeelException("Unknown type '" + typeName + "'");
         }
 
         final TypeFunctions funcs = runtime.mother.typeFunctions[type.ordinal()];
-        if (funcs == null)
+        if(funcs == null)
         {
             throw new WeelException("Unsupported type '" + type + "'");
         }
 
-        if (funcs.findFunction(iname) != null)
+        if(funcs.findFunction(iname) != null)
         {
             throw new WeelException("Duplicate function '" + name + "("
                     + func.arguments + ")' for type '" + type + "'");
@@ -388,13 +403,13 @@ public final class WeelLibSys
             try
             {
                 final String str = val.string.toLowerCase();
-                if (str.length() > 2)
+                if(str.length() > 2)
                 {
-                    if (str.startsWith("0b"))
+                    if(str.startsWith("0b"))
                         runtime.load(Integer.parseInt(str.substring(2), 2));
-                    else if (str.startsWith("0o"))
+                    else if(str.startsWith("0o"))
                         runtime.load(Integer.parseInt(str.substring(2), 8));
-                    else if (str.startsWith("0x"))
+                    else if(str.startsWith("0x"))
                         runtime.load(Integer.parseInt(str.substring(2), 16));
                     else
                         runtime.load(Double.parseDouble(str));
@@ -456,7 +471,7 @@ public final class WeelLibSys
             Thread.sleep((long) runtime.popNumber());
             runtime.load(true);
         }
-        catch (InterruptedException e)
+        catch(InterruptedException e)
         {
             runtime.load(false);
         }

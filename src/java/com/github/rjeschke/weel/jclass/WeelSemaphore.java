@@ -19,6 +19,11 @@ import com.github.rjeschke.weel.annotations.WeelMethod;
 @WeelClass(name = "java.Semaphore", usesOop = true)
 public class WeelSemaphore
 {
+    private WeelSemaphore()
+    {
+        //
+    }
+    
     /**
      * Constructor.
      * 

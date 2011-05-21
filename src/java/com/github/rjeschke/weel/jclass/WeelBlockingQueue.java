@@ -20,6 +20,11 @@ import com.github.rjeschke.weel.annotations.WeelMethod;
 @WeelClass(name = "java.BlockingQueue", usesOop = true)
 public final class WeelBlockingQueue
 {
+    private WeelBlockingQueue()
+    {
+        // empty
+    }
+    
     @WeelMethod
     public final static void ctor(final ValueMap thiz)
     {

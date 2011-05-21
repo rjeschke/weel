@@ -18,6 +18,11 @@ import com.github.rjeschke.weel.annotations.WeelMethod;
 @WeelClass(name = "weel.SyncVar", usesOop = true)
 public final class WeelSyncVar
 {
+    private WeelSyncVar()
+    {
+        //
+    }
+    
     @WeelMethod
     public final static void ctor(final ValueMap thiz)
     {

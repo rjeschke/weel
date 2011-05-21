@@ -19,6 +19,10 @@ import com.github.rjeschke.weel.annotations.WeelMethod;
 @WeelClass(name = "java.lock", usesOop = true)
 public final class WeelLock
 {
+    private WeelLock()
+    {
+        // empty
+    }
     /**
      * Constructor.
      * @param thiz This.

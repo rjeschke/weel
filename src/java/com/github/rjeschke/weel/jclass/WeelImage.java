@@ -24,6 +24,10 @@ import com.github.rjeschke.weel.annotations.WeelMethod;
 @WeelClass(name = "java.Image", usesOop = true)
 public final class WeelImage
 {
+    private WeelImage()
+    {
+        // image
+    }
     /**
      * Constructor.
      * 
