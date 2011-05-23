@@ -29,16 +29,21 @@ public final class Run
     {
         if (args.length == 0)
         {
-            System.out
-                    .println("Usage: weel <script> [<script> ...] [--debug] [--dump] [-- args]");
+            printUsage();
             return;
         }
 
-        final Weel weel = new Weel();
         ArrayList<String> input = new ArrayList<String>();
+        
+        int vstack = Weel.DEFAULT_VALUE_STACK_SIZE;
+        int fstack = Weel.DEFAULT_FRAME_STACK_SIZE;
+        int cstack = Weel.DEFAULT_CLOSURE_STACK_SIZE;
+        boolean debugMode = false;
+        boolean dumpCode = false;
+        int as = -1;
+        
         try
         {
-            int as = -1;
             for (int i = 0; i < args.length; i++)
             {
                 final String a = args[i];
@@ -52,11 +57,23 @@ public final class Run
                     final String o = a.substring(2).toLowerCase();
                     if(o.equals("debug"))
                     {
-                        weel.setDebugMode(true);
+                        debugMode = true;
                     }
                     else if(o.equals("dump"))
                     {
-                        weel.enableCodeDump(true);
+                        dumpCode = true;
+                    }
+                    else if(o.equals("vstack"))
+                    {
+                        vstack = parseSize(args[++i]);
+                    }
+                    else if(o.equals("fstack"))
+                    {
+                        fstack = parseSize(args[++i]);
+                    }
+                    else if(o.equals("cstack"))
+                    {
+                        cstack = parseSize(args[++i]);
                     }
                     else
                     {
@@ -78,11 +95,6 @@ public final class Run
                     }
                     input.add(f.toString());
                 }
-                if (args[i].equals("--"))
-                {
-                    as = i + 1;
-                    break;
-                }
             }
 
             if(input.size() == 0)
@@ -90,6 +102,18 @@ public final class Run
                 System.out.println("No input file specified.");
                 System.exit(-1);
             }
+        }
+        catch(Exception e)
+        {
+            printUsage();
+            System.exit(-1);
+        }
+        
+        try
+        {
+            final Weel weel = new Weel(vstack, fstack, cstack);
+            weel.setDebugMode(debugMode);
+            weel.enableCodeDump(dumpCode);
             
             for(final String filename : input)
             {
@@ -115,5 +139,27 @@ public final class Run
 //            else
             e.printStackTrace();
         }
+    }
+    
+    private static void printUsage()
+    {
+        System.out.println("Usage: weel <script> [<script> ...] [options] [-- args]");
+        System.out.println("---");
+        System.out.println("Options:");
+        System.out.println("--debug    : Enabled debug mode (asserts)");
+        System.out.println("--dump     : Dump generated intermediate code");
+        System.out.println("--vstack n : Sets the value stack size to 'n' slots");
+        System.out.println("--fstack n : Sets the frame stack size to 'n' slots");
+        System.out.println("--cstack n : Sets the closure function stack size to 'n' slots");
+    }
+    
+    private static int parseSize(final String sz)
+    {
+        final String s = sz.toLowerCase();
+        if(s.endsWith("m"))
+            return Integer.parseInt(sz.substring(0, sz.length() - 1)) << 20;
+        if(s.endsWith("k"))
+            return Integer.parseInt(sz.substring(0, sz.length() - 1)) << 10;
+        return Integer.parseInt(sz);
     }
 }

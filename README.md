@@ -23,7 +23,7 @@ dynamically typed languages running on the JVM *( I'll prove this later ;-) )*.
 
 ### Development state
 
-*somewhere between alpha and beta, but more on the beta side*
+*beta*
 
 ### Features
 

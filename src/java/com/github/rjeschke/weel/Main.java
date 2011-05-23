@@ -38,7 +38,7 @@ public class Main
             
 //            weel.runMain("10", "5000");
             //weel.runMain("10000", "15");
-//            weel.runMain("5", "37");
+//            weel.runMain("5", "38");
             //weel.getRuntime().wipeStack();
 //            WeelUnit.runTests(weel);
             if(weel.getRuntime().getStackPointer() != -1)

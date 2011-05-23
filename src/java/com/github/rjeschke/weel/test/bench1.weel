@@ -72,7 +72,7 @@ sub iterat(width, height, imax)
                 tx1 = tx * tx
                 ty1 = ty * ty
                 zx = tx1 - ty1
-                zy = 2 * tx * ty
+                zy = tx * ty * 2
                 
                 if (tx1 + ty1) > 4 then
                     break;

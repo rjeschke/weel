@@ -91,4 +91,16 @@ public class WeelLibOop
     {
         callNew(runtime, 4);
     }
+    
+    /**
+     * <code>new(class, arg0, arg1, arg2, arg3, arg4)</code>
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(name = "new", args = 6, returnsValue = true)
+    public final static void weelNew6(final WeelRuntime runtime)
+    {
+        callNew(runtime, 5);
+    }
 }

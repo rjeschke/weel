@@ -7,22 +7,18 @@ package com.github.rjeschke.weel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * Weel map implementation.
  * 
  * @author René Jeschke <rene_jeschke@yahoo.de>
  */
-// FIXME this class needs improvement!
-public final class ValueMap implements Iterable<Entry<Value, Value>>
+public final class ValueMap
 {
     /** Integer keys. */
-    private Map<Integer, Integer> intKeys = new HashMap<Integer, Integer>();
+    private HashMap<Integer, Integer> intKeys = new HashMap<Integer, Integer>();
     /** String keys. */
-    private Map<String, Integer> strKeys = new HashMap<String, Integer>();
+    private HashMap<String, Integer> strKeys = new HashMap<String, Integer>();
     /** The size. */
     int size;
     /** Is this map ordered? */
@@ -146,7 +142,7 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
      */
     public Value get(final String index, final Value out)
     {
-        if(this.ordered)
+        if (this.ordered)
         {
             out.setNull();
         }
@@ -195,7 +191,7 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
         }
         else if (index.type == ValueType.STRING)
         {
-            final Integer idx = this.strKeys.get(index.string);
+            final Integer idx = this.strKeys.get(index.object);
             if (idx != null)
                 this.data.get(idx).copyTo(out);
             else
@@ -253,7 +249,7 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
         {
             if (this.ordered)
                 return false;
-            return this.strKeys.containsKey(key.string);
+            return this.strKeys.containsKey(key.object);
         }
         throw new WeelException("Illegal map index type: " + key.type);
     }
@@ -267,7 +263,8 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
         // There can only be integer keys inside the map right now
         for (int i = 0; i < this.size; i++)
         {
-            this.intKeys.put((int) this.keys.get(i).number, i);
+            this.keys.add(new Value(i));
+            this.intKeys.put(i, i);
         }
         this.highestIntKey = this.size - 1;
     }
@@ -318,7 +315,6 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
         {
             if (index == this.size)
             {
-                this.keys.add(new Value(index));
                 this.data.add(value.clone());
                 this.size++;
             }
@@ -368,7 +364,6 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
             {
                 if (idx == this.size)
                 {
-                    this.keys.add(new Value(idx));
                     this.data.add(value.clone());
                     this.size++;
                 }
@@ -404,14 +399,14 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
             {
                 this.unorder();
             }
-            final Integer idx = this.strKeys.get(index.string);
+            final Integer idx = this.strKeys.get(index.object);
             if (idx != null)
             {
                 value.copyTo(this.data.get(idx));
             }
             else
             {
-                this.strKeys.put(index.string, this.size);
+                this.strKeys.put((String)index.object, this.size);
                 this.keys.add(index.clone());
                 this.data.add(value.clone());
                 this.size++;
@@ -433,7 +428,6 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
     {
         if (this.ordered)
         {
-            this.keys.add(new Value(this.size));
             this.data.add(value.clone());
         }
         else
@@ -450,10 +444,12 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
     public ValueMap clone()
     {
         final ValueMap ret = new ValueMap();
-        for (final Entry<Value, Value> e : this)
+        final Value k = new Value();
+        final Value v = new Value();
+        for (final ValueMapIterator i = new ValueMapIterator(this); i
+                .next(k, v);)
         {
-            ret.set(e.getKey(), e.getValue().isMap() ? new Value(e.getValue()
-                    .getMap().clone()) : e.getValue());
+            ret.set(k, v.isMap() ? new Value(v.getMap().clone()) : v);
         }
         return ret;
     }
@@ -471,62 +467,14 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
         return this;
     }
 
-    /** @see java.lang.Iterable#iterator() */
-    @Override
-    public Iterator<Entry<Value, Value>> iterator()
+    /**
+     * Creates an iterator.
+     * 
+     * @return The iterator.
+     */
+    public ValueMapIterator createIterator()
     {
         return new ValueMapIterator(this);
-    }
-
-    /**
-     * Entry implementation.
-     * 
-     * @author René Jeschke <rene_jeschke@yahoo.de>
-     */
-    private final static class ValueMapEntry implements Entry<Value, Value>
-    {
-        /** This Entry's key. */
-        private final Value key;
-        /** This Entry's value. */
-        private Value value;
-
-        /**
-         * Constructor.
-         * 
-         * @param key
-         *            The key.
-         * @param value
-         *            The value.
-         */
-        public ValueMapEntry(final Value key, final Value value)
-        {
-            this.key = key.clone();
-            this.value = value.clone();
-        }
-
-        /** @see java.util.Map.Entry#getKey() */
-        @Override
-        public Value getKey()
-        {
-            return this.key;
-        }
-
-        /** @see java.util.Map.Entry#getValue() */
-        @Override
-        public Value getValue()
-        {
-            return this.value;
-        }
-
-        /** @see java.util.Map.Entry#setValue(Object) */
-        @Override
-        public Value setValue(Value value)
-        {
-            final Value old = this.value;
-            this.value = value.clone();
-            return old;
-        }
-
     }
 
     /**
@@ -534,51 +482,51 @@ public final class ValueMap implements Iterable<Entry<Value, Value>>
      * 
      * @author René Jeschke <rene_jeschke@yahoo.de>
      */
-    private final static class ValueMapIterator implements
-            Iterator<Entry<Value, Value>>
+
+    public final static class ValueMapIterator
     {
         /** The ValueMap. */
         private final ValueMap map;
-        /** The current cursor position. */
+        /** Current cursor. */
         private int cursor = 0;
 
         /**
          * Constructor.
          * 
          * @param map
-         *            The ValueMap.
+         *            The ValueMap to iterate over.
          */
-        public ValueMapIterator(final ValueMap map)
+        ValueMapIterator(final ValueMap map)
         {
             this.map = map;
         }
 
-        /** @see java.util.Iterator#hasNext() */
-        @Override
-        public boolean hasNext()
-        {
-            return this.cursor != this.map.size;
-        }
-
-        /** @see java.util.Iterator#next() */
-        @Override
-        public Entry<Value, Value> next()
-        {
-            Entry<Value, Value> ret = new ValueMapEntry(this.map.keys
-                    .get(this.cursor), this.map.data.get(this.cursor));
-            this.cursor++;
-            return ret;
-        }
-
         /**
-         * @see java.util.Iterator#remove()
-         * @throws IllegalStateException
-         *             ValueMaps can not be modified using iterators.
+         * Gets the next key-value pair.
+         * 
+         * @param key
+         *            The key.
+         * @param value
+         *            The value.
+         * @return <code>false</code> if there are no more elements.
          */
-        @Override
-        public void remove()
+        public boolean next(final Value key, final Value value)
         {
-            throw new IllegalStateException("Can't modify ValueMaps.");
+            if (this.cursor < this.map.size)
+            {
+                if (this.map.ordered)
+                {
+                    key.type = ValueType.NUMBER;
+                    key.number = this.cursor;
+                }
+                else
+                {
+                    this.map.keys.get(this.cursor).copyTo(key);
+                }
+                this.map.data.get(this.cursor++).copyTo(value);
+                return true;
+            }
+            return false;
         }
     }
 

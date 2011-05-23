@@ -4,7 +4,7 @@
  */
 package com.github.rjeschke.weel;
 
-import java.util.Map.Entry;
+import com.github.rjeschke.weel.ValueMap.ValueMapIterator;
 
 /**
  * Weel unit test.
@@ -56,10 +56,12 @@ public class WeelUnitTest
             this.invoke(before.getFunction(), rt);
         }
         
-        for (Entry<Value, Value> e : this.me)
+        final Value k = new Value();
+        final Value val = new Value();
+        final ValueMapIterator it = this.me.createIterator();
+        while(it.next(k, val))
         {
-            final String key = e.getKey().toString();
-            final Value val = e.getValue();
+            final String key = k.toString();
             if (val.isFunction())
             {
                 final WeelFunction func = val.getFunction();

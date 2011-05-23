@@ -5,7 +5,7 @@ private height = 600;
 // Maximum iteration depth
 private imax = 1000;
 // fparams number
-private number = 20;
+private number = 23;
 // Number of threads
 private numthreads = 2;
 

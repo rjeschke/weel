@@ -4,8 +4,7 @@
  */
 package com.github.rjeschke.weel;
 
-import java.util.Map.Entry;
-
+import com.github.rjeschke.weel.ValueMap.ValueMapIterator;
 import com.github.rjeschke.weel.annotations.WeelRawMethod;
 
 /**
@@ -292,13 +291,17 @@ public final class WeelLibSys
             throw new WeelException("Unsupported type '" + type + "'");
         }
 
-        for(final Entry<Value, Value> e : map)
+        final Value vkey = new Value();
+        final Value val = new Value();
+        final ValueMapIterator it = map.createIterator();
+        
+        while(it.next(vkey, val))
         {
-            final String key = e.getKey().toString().toLowerCase();
-            if(e.getValue().isFunction())
+            final String key = vkey.toString().toLowerCase();
+            if(val.isFunction())
             {
                 final String name;
-                final WeelFunction func = e.getValue().function;
+                final WeelFunction func = (WeelFunction)val.object;
                 if(key.endsWith("_"))
                 {
                     int i = key.length() - 2;
@@ -338,10 +341,10 @@ public final class WeelLibSys
         final boolean ret = runtime.popBoolean();
         final int args = (int) runtime.popNumber();
         final Value val = runtime.pop();
-
+        
         runtime.load(val.type == ValueType.FUNCTION
-                && val.function.returnsValue == ret
-                && val.function.arguments == args);
+                && ((WeelFunction)val.object).returnsValue == ret
+                && ((WeelFunction)val.object).arguments == args);
     }
 
     /**
@@ -402,7 +405,7 @@ public final class WeelLibSys
         {
             try
             {
-                final String str = val.string.toLowerCase();
+                final String str = ((String)val.object).toLowerCase();
                 if(str.length() > 2)
                 {
                     if(str.startsWith("0b"))

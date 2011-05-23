@@ -5,8 +5,8 @@
 package com.github.rjeschke.weel;
 
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map.Entry;
+
+import com.github.rjeschke.weel.ValueMap.ValueMapIterator;
 
 /**
  * Weel runtime.
@@ -26,22 +26,16 @@ import java.util.Map.Entry;
  */
 public final class WeelRuntime
 {
-    /** Default size of the operand stack. */
-    public final static int DEFAULT_VALUE_STACK_SIZE = 8192;
-    /** Default size of the function frame stack. */
-    public final static int DEFAULT_FRAME_STACK_SIZE = 4096;
-    /** Default size of the virtual function stack. */
-    public final static int DEFAULT_VIRTUAL_STACK_SIZE = 256;
     /** The creating Weel instance. */
     final Weel mother;
     /** The Weel stack. */
-    private final Value[] stack = new Value[DEFAULT_VALUE_STACK_SIZE];
+    private final Value[] stack;
     /** Weel function frame start. */
-    private final int[] frameStart = new int[DEFAULT_FRAME_STACK_SIZE];
+    private final int[] frameStart;
     /** Weel function frame size. */
-    private final int[] frameSize = new int[DEFAULT_FRAME_STACK_SIZE];
-    /** Weel virtual function stack. */
-    private final WeelFunction[] virtualFunctions = new WeelFunction[DEFAULT_VIRTUAL_STACK_SIZE];
+    private final int[] frameSize;
+    /** Weel closure function stack. */
+    private final WeelFunction[] closureFunctions;
     /** The Weel stack pointer. */
     private int sp = -1;
     /** The Weel frame pointer. */
@@ -67,8 +61,16 @@ public final class WeelRuntime
         this.globals = weel.globals;
         this.privates = weel.privates;
         this.typeFunctions = weel.typeFunctions;
+
+        this.stack = new Value[weel.valueStackSize];
+        this.frameStart = new int[weel.frameStackSize];
+        this.frameSize = new int[weel.frameStackSize];
+        this.closureFunctions = new WeelFunction[weel.closureStackSize];
+        
         for (int i = 0; i < this.stack.length; i++)
+        {
             this.stack[i] = new Value();
+        }
     }
 
     /**
@@ -214,7 +216,7 @@ public final class WeelRuntime
      */
     public void linenv(final int index)
     {
-        this.virtualFunctions[this.vp].environment[index]
+        this.closureFunctions[this.vp].environment[index]
                 .copyTo(this.stack[++this.sp]);
     }
 
@@ -231,7 +233,7 @@ public final class WeelRuntime
     public void sinenv(final int index)
     {
         this.stack[this.sp--]
-                .copyTo(this.virtualFunctions[this.vp].environment[index]);
+                .copyTo(this.closureFunctions[this.vp].environment[index]);
     }
 
     /**
@@ -345,7 +347,7 @@ public final class WeelRuntime
         case NUMBER:
             return Double.compare(a.number, b.number);
         case STRING:
-            return a.string.compareTo(b.string);
+            return ((String) a.object).compareTo((String) b.object);
         default:
             throw new WeelException("Can't compare values of type: " + a.type);
         }
@@ -366,6 +368,23 @@ public final class WeelRuntime
     }
 
     /**
+     * Compares for equality.
+     * 
+     * <p>
+     * <code>..., value &rArr; ..., result </code>
+     * </p>
+     * 
+     * @param operand
+     *            Number to compare to.
+     */
+    public void cmpEq(final double operand)
+    {
+        final Value a = this.stack[this.sp];
+        a.number = Double.compare(a.number, operand) == 0 ? -1 : 0;
+        a.type = ValueType.NUMBER;
+    }
+
+    /**
      * Compares for inequality.
      * 
      * <p>
@@ -377,6 +396,23 @@ public final class WeelRuntime
         final boolean res = this.cmpEqual();
         this.stack[++this.sp].type = ValueType.NUMBER;
         this.stack[this.sp].number = res ? 0 : -1;
+    }
+
+    /**
+     * Compares for inequality.
+     * 
+     * <p>
+     * <code>..., value &rArr; ..., result </code>
+     * </p>
+     * 
+     * @param operand
+     *            Number to compare to.
+     */
+    public void cmpNe(final double operand)
+    {
+        final Value a = this.stack[this.sp];
+        a.number = Double.compare(a.number, operand) == 0 ? 0 : -1;
+        a.type = ValueType.NUMBER;
     }
 
     /**
@@ -394,6 +430,23 @@ public final class WeelRuntime
     }
 
     /**
+     * Compares for greater than.
+     * 
+     * <p>
+     * <code>..., value &rArr; ..., result </code>
+     * </p>
+     * 
+     * @param operand
+     *            Number to compare to.
+     */
+    public void cmpGt(final double operand)
+    {
+        final Value a = this.stack[this.sp];
+        a.number = Double.compare(a.number, operand) > 0 ? -1 : 0;
+        a.type = ValueType.NUMBER;
+    }
+
+    /**
      * Compares for greater or equal.
      * 
      * <p>
@@ -405,6 +458,23 @@ public final class WeelRuntime
         final int res = this.cmp();
         this.stack[++this.sp].type = ValueType.NUMBER;
         this.stack[this.sp].number = res >= 0 ? -1 : 0;
+    }
+
+    /**
+     * Compares for greater or equal.
+     * 
+     * <p>
+     * <code>..., value &rArr; ..., result </code>
+     * </p>
+     * 
+     * @param operand
+     *            Number to compare to.
+     */
+    public void cmpGe(final double operand)
+    {
+        final Value a = this.stack[this.sp];
+        a.number = Double.compare(a.number, operand) >= 0 ? -1 : 0;
+        a.type = ValueType.NUMBER;
     }
 
     /**
@@ -422,6 +492,23 @@ public final class WeelRuntime
     }
 
     /**
+     * Compares for less than.
+     * 
+     * <p>
+     * <code>..., value &rArr; ..., result </code>
+     * </p>
+     * 
+     * @param operand
+     *            Number to compare to.
+     */
+    public void cmpLt(final double operand)
+    {
+        final Value a = this.stack[this.sp];
+        a.number = Double.compare(a.number, operand) < 0 ? -1 : 0;
+        a.type = ValueType.NUMBER;
+    }
+
+    /**
      * Compares for less or equal.
      * 
      * <p>
@@ -433,6 +520,23 @@ public final class WeelRuntime
         final int res = this.cmp();
         this.stack[++this.sp].type = ValueType.NUMBER;
         this.stack[this.sp].number = res <= 0 ? -1 : 0;
+    }
+
+    /**
+     * Compares for less or equal.
+     * 
+     * <p>
+     * <code>..., value &rArr; ..., result </code>
+     * </p>
+     * 
+     * @param operand
+     *            Number to compare to.
+     */
+    public void cmpLe(final double operand)
+    {
+        final Value a = this.stack[this.sp];
+        a.number = Double.compare(a.number, operand) <= 0 ? -1 : 0;
+        a.type = ValueType.NUMBER;
     }
 
     /**
@@ -450,6 +554,22 @@ public final class WeelRuntime
     }
 
     /**
+     * Compares for equality.
+     * 
+     * <p>
+     * <code>..., value &rArr; ... </code>
+     * </p>
+     * 
+     * @param operand
+     *            Value to compare to.
+     * @return <code>true</code> if condition is met.
+     */
+    public boolean cmpEqPop(final double operand)
+    {
+        return Double.compare(this.stack[this.sp--].number, operand) == 0;
+    }
+
+    /**
      * Compares for inequality.
      * 
      * <p>
@@ -461,6 +581,22 @@ public final class WeelRuntime
     public boolean cmpNePop()
     {
         return !this.cmpEqual();
+    }
+
+    /**
+     * Compares for inequality.
+     * 
+     * <p>
+     * <code>..., value &rArr; ... </code>
+     * </p>
+     * 
+     * @param operand
+     *            Value to compare to.
+     * @return <code>true</code> if condition is met.
+     */
+    public boolean cmpNePop(final double operand)
+    {
+        return Double.compare(this.stack[this.sp--].number, operand) != 0;
     }
 
     /**
@@ -478,6 +614,22 @@ public final class WeelRuntime
     }
 
     /**
+     * Compares for greater than.
+     * 
+     * <p>
+     * <code>..., value &rArr; ... </code>
+     * </p>
+     * 
+     * @param operand
+     *            Value to compare to.
+     * @return <code>true</code> if condition is met.
+     */
+    public boolean cmpGtPop(final double operand)
+    {
+        return Double.compare(this.stack[this.sp--].number, operand) > 0;
+    }
+
+    /**
      * Compares for greater or equal.
      * 
      * <p>
@@ -489,6 +641,22 @@ public final class WeelRuntime
     public boolean cmpGePop()
     {
         return this.cmp() >= 0;
+    }
+
+    /**
+     * Compares for greater or equal.
+     * 
+     * <p>
+     * <code>..., value &rArr; ... </code>
+     * </p>
+     * 
+     * @param operand
+     *            Value to compare to.
+     * @return <code>true</code> if condition is met.
+     */
+    public boolean cmpGePop(final double operand)
+    {
+        return Double.compare(this.stack[this.sp--].number, operand) >= 0;
     }
 
     /**
@@ -506,6 +674,22 @@ public final class WeelRuntime
     }
 
     /**
+     * Compares for less than.
+     * 
+     * <p>
+     * <code>..., value &rArr; ... </code>
+     * </p>
+     * 
+     * @param operand
+     *            Value to compare to.
+     * @return <code>true</code> if condition is met.
+     */
+    public boolean cmpLtPop(final double operand)
+    {
+        return Double.compare(this.stack[this.sp--].number, operand) < 0;
+    }
+
+    /**
      * Compares for less or equal.
      * 
      * <p>
@@ -517,6 +701,22 @@ public final class WeelRuntime
     public boolean cmpLePop()
     {
         return this.cmp() <= 0;
+    }
+
+    /**
+     * Compares for less or equal.
+     * 
+     * <p>
+     * <code>..., value &rArr; ... </code>
+     * </p>
+     * 
+     * @param operand
+     *            Value to compare to.
+     * @return <code>true</code> if condition is met.
+     */
+    public boolean cmpLePop(final double operand)
+    {
+        return Double.compare(this.stack[this.sp--].number, operand) <= 0;
     }
 
     /**
@@ -544,11 +744,11 @@ public final class WeelRuntime
         case NUMBER:
             return a.number == b.number;
         case STRING:
-            return a.string.equals(b.string);
+            return ((String) a.object).equals(b.object);
         case MAP:
-            return a.map.equals(b.map);
+            return ((ValueMap) a.object).equals(b.object);
         case FUNCTION:
-            return a.function.equals(b.function);
+            return ((WeelFunction) a.object).equals(b.object);
         case OBJECT:
             return a.object.equals(b.object);
         }
@@ -601,7 +801,7 @@ public final class WeelRuntime
     {
         final ValueMap map = this.stack[this.sp].getMap();
         this.stack[this.sp].type = ValueType.OBJECT;
-        this.stack[this.sp].object = map.iterator();
+        this.stack[this.sp].object = map.createIterator();
     }
 
     /**
@@ -613,16 +813,12 @@ public final class WeelRuntime
      * 
      * @return <code>false</code> if there are no more elements.
      */
-    @SuppressWarnings("unchecked")
     public boolean doForEach()
     {
-        final Iterator<Entry<Value, Value>> iterator = (Iterator<Entry<Value, Value>>) this.stack[this.sp]
+        final ValueMapIterator iterator = (ValueMapIterator) this.stack[this.sp]
                 .getObject();
-        if (!iterator.hasNext())
+        if (!iterator.next(this.stack[this.sp + 1], this.stack[this.sp + 2]))
             return false;
-        final Entry<Value, Value> e = iterator.next();
-        e.getKey().copyTo(this.stack[this.sp + 1]);
-        e.getValue().copyTo(this.stack[this.sp + 2]);
         this.sp += 2;
         return true;
     }
@@ -638,7 +834,7 @@ public final class WeelRuntime
     {
         final Value b = this.stack[this.sp--];
         final Value a = this.stack[this.sp];
-        a.string = a.toString() + b.toString();
+        a.object = a.toString() + b.toString();
         a.type = ValueType.STRING;
     }
 
@@ -661,29 +857,30 @@ public final class WeelRuntime
 
         if (a.ordered && b.ordered)
         {
-            final Value v = new Value();
             for (int i = 0; i < a.size; i++)
             {
-                c.append(a.get(i, v));
+                c.append(a.data.get(i));
             }
             for (int i = 0; i < b.size; i++)
             {
-                c.append(b.get(i, v));
+                c.append(b.data.get(i));
             }
         }
         else
         {
-            for (final Entry<Value, Value> e : a)
+            ValueMapIterator it;
+            final Value k = new Value(), v = new Value();
+            for (it = a.createIterator(); it.next(k, v);)
             {
-                c.set(e.getKey(), e.getValue());
+                c.set(k, v);
             }
-            for (final Entry<Value, Value> e : b)
+            for (it = b.createIterator(); it.next(k, v);)
             {
-                c.set(e.getKey(), e.getValue());
+                c.set(k, v);
             }
         }
         this.stack[++this.sp].type = ValueType.MAP;
-        this.stack[this.sp].map = c;
+        this.stack[this.sp].object = c;
     }
 
     /**
@@ -713,9 +910,11 @@ public final class WeelRuntime
         }
         else
         {
-            for (final Entry<Value, Value> e : b)
+
+            final Value k = new Value(), v = new Value();
+            for (final ValueMapIterator it = b.createIterator(); it.next(k, v);)
             {
-                a.set(e.getKey(), e.getValue());
+                a.set(k, v);
             }
         }
     }
@@ -735,6 +934,21 @@ public final class WeelRuntime
     }
 
     /**
+     * Addition.
+     * 
+     * <p>
+     * <code>..., value &rArr; ..., value + operand</code>
+     * </p>
+     * 
+     * @param operand
+     *            Value to add.
+     */
+    public void add(final double operand)
+    {
+        this.stack[this.sp].number += operand;
+    }
+
+    /**
      * Subtraction.
      * 
      * <p>
@@ -749,17 +963,47 @@ public final class WeelRuntime
     }
 
     /**
+     * Subtraction.
+     * 
+     * <p>
+     * <code>..., value &rArr; ..., value - operand</code>
+     * </p>
+     * 
+     * @param operand
+     *            Value to subtract.
+     */
+    public void sub(final double operand)
+    {
+        this.stack[this.sp].number -= operand;
+    }
+
+    /**
      * Multiplication.
      * 
      * <p>
      * <code>..., value1, value2 &rArr; ..., value1 * value2 </code>
      * </p>
+     * 
+     * @param operand
+     *            Value to multiply with.
      */
     public void mul()
     {
         final Value b = this.stack[this.sp--];
         final Value a = this.stack[this.sp];
         a.number *= b.number;
+    }
+
+    /**
+     * Multiplication.
+     * 
+     * <p>
+     * <code>..., value &rArr; ..., value * operand</code>
+     * </p>
+     */
+    public void mul(final double operand)
+    {
+        this.stack[this.sp].number *= operand;
     }
 
     /**
@@ -777,6 +1021,21 @@ public final class WeelRuntime
     }
 
     /**
+     * Division.
+     * 
+     * <p>
+     * <code>..., value &rArr; ..., value / operand</code>
+     * </p>
+     * 
+     * @param operand
+     *            Value to divide by.
+     */
+    public void div(final double operand)
+    {
+        this.stack[this.sp].number /= operand;
+    }
+
+    /**
      * Modulo.
      * 
      * <p>
@@ -788,6 +1047,21 @@ public final class WeelRuntime
         final Value b = this.stack[this.sp--];
         final Value a = this.stack[this.sp];
         a.number %= b.number;
+    }
+
+    /**
+     * Modulo.
+     * 
+     * <p>
+     * <code>..., value &rArr; ..., value % operand</code>
+     * </p>
+     * 
+     * @param operand
+     *            Value to divide by.
+     */
+    public void mod(final double operand)
+    {
+        this.stack[this.sp].number %= operand;
     }
 
     /**
@@ -1017,7 +1291,7 @@ public final class WeelRuntime
         if (value != null)
         {
             this.stack[++this.sp].type = ValueType.STRING;
-            this.stack[this.sp].string = value;
+            this.stack[this.sp].object = value;
         }
         else
         {
@@ -1040,7 +1314,7 @@ public final class WeelRuntime
         if (value != null)
         {
             this.stack[++this.sp].type = ValueType.MAP;
-            this.stack[this.sp].map = value;
+            this.stack[this.sp].object = value;
         }
         else
         {
@@ -1063,7 +1337,7 @@ public final class WeelRuntime
         if (value != null)
         {
             this.stack[++this.sp].type = ValueType.FUNCTION;
-            this.stack[this.sp].function = value;
+            this.stack[this.sp].object = value;
         }
         else
         {
@@ -1122,7 +1396,7 @@ public final class WeelRuntime
     public void loadFunc(final int index)
     {
         this.stack[++this.sp].type = ValueType.FUNCTION;
-        this.stack[this.sp].function = this.mother.functions.get(index);
+        this.stack[this.sp].object = this.mother.functions.get(index);
     }
 
     /**
@@ -1201,7 +1475,7 @@ public final class WeelRuntime
             if (overloaded != null)
             {
                 // Yes, use it
-                func = this.stack[this.sp - args].function = overloaded;
+                func = (WeelFunction) (this.stack[this.sp - args].object = overloaded);
             }
             else
             {
@@ -1285,7 +1559,7 @@ public final class WeelRuntime
     public void createMap()
     {
         this.stack[++this.sp].type = ValueType.MAP;
-        this.stack[this.sp].map = new ValueMap();
+        this.stack[this.sp].object = new ValueMap();
     }
 
     /**
@@ -1356,7 +1630,7 @@ public final class WeelRuntime
         final ValueMap map = this.stack[this.sp - 1].getMap();
         map.get(this.stack[this.sp], this.stack[this.sp - 1]);
         this.stack[this.sp].type = ValueType.MAP;
-        this.stack[this.sp].map = map;
+        this.stack[this.sp].object = map;
     }
 
     /**
@@ -1376,7 +1650,27 @@ public final class WeelRuntime
         final ValueMap map = this.stack[this.sp].getMap();
         map.get(index, this.stack[this.sp]);
         this.stack[++this.sp].type = ValueType.MAP;
-        this.stack[this.sp].map = map;
+        this.stack[this.sp].object = map;
+    }
+
+    /**
+     * Gets a value from a map prepared for OOP calls.
+     * 
+     * <p>
+     * <code>..., map &rArr; ..., value, map</code>
+     * </p>
+     * 
+     * @param index
+     *            The index.
+     * @throws WeelException
+     *             If the 'map' is not a ValueMap.
+     */
+    public void getMapOop(final int index)
+    {
+        final ValueMap map = this.stack[this.sp].getMap();
+        map.get(index, this.stack[this.sp]);
+        this.stack[++this.sp].type = ValueType.MAP;
+        this.stack[this.sp].object = map;
     }
 
     /**
@@ -1701,7 +1995,7 @@ public final class WeelRuntime
     public void createClosure(final int index)
     {
         this.stack[++this.sp].type = ValueType.FUNCTION;
-        this.stack[this.sp].function = this.mother.functions.get(index)
+        this.stack[this.sp].object = this.mother.functions.get(index)
                 .cloneClosure(this);
     }
 
@@ -1820,7 +2114,7 @@ public final class WeelRuntime
      */
     void initVirtual(final WeelFunction function)
     {
-        this.virtualFunctions[++this.vp] = function;
+        this.closureFunctions[++this.vp] = function;
     }
 
     /**
@@ -1828,7 +2122,7 @@ public final class WeelRuntime
      */
     void exitVirtual()
     {
-        this.virtualFunctions[this.vp--] = null;
+        this.closureFunctions[this.vp--] = null;
     }
 
     /**
@@ -1852,6 +2146,6 @@ public final class WeelRuntime
      */
     Value ginenv(final int var)
     {
-        return this.virtualFunctions[this.vp].environment[var].clone();
+        return this.closureFunctions[this.vp].environment[var].clone();
     }
 }

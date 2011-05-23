@@ -43,6 +43,12 @@ import com.github.rjeschke.weel.jclass.WeelWriter;
  */
 public final class Weel
 {
+    /** Default size of the operand stack. */
+    public final static int DEFAULT_VALUE_STACK_SIZE = 8192;
+    /** Default size of the function frame stack. */
+    public final static int DEFAULT_FRAME_STACK_SIZE = 4096;
+    /** Default size of the closure function stack. */
+    public final static int DEFAULT_CLOSURE_STACK_SIZE = 256;
     /** Global variables. */
     final ArrayList<Value> globals = new ArrayList<Value>();
     /** Private variables. */
@@ -69,6 +75,12 @@ public final class Weel
     boolean debugMode = false;
     /** Debug mode flag. */
     boolean dumpCode = false;
+    /** Default size of the operand stack. */
+    final int valueStackSize;
+    /** Default size of the function frame stack. */
+    final int frameStackSize;
+    /** Default size of the closure function stack. */
+    final int closureStackSize;
 
     private final static Class<?>[] STDLIB =
     { WeelLibMath.class, WeelLibString.class, WeelLibCon.class,
@@ -93,13 +105,29 @@ public final class Weel
 
     /**
      * Constructor.
-     * 
-     * <p>
-     * Imports standard library functions.
-     * </p>
      */
     public Weel()
     {
+        this(DEFAULT_VALUE_STACK_SIZE, DEFAULT_FRAME_STACK_SIZE,
+                DEFAULT_CLOSURE_STACK_SIZE);
+    }
+
+    /**
+     * Constructor.
+     * 
+     * @param stackSize
+     *            Size of the operand stack in slots.
+     * @param fStackSize
+     *            Size of the frame stack in slots.
+     * @param cStackSize
+     *            Size of the closure function stack in slots.
+     */
+    public Weel(final int stackSize, final int fStackSize, final int cStackSize)
+    {
+        this.valueStackSize = stackSize;
+        this.frameStackSize = fStackSize;
+        this.closureStackSize = cStackSize;
+
         // Import standard library
         for (final Class<?> c : STDLIB)
         {

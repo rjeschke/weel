@@ -38,7 +38,7 @@ class InstrGetMap implements Instr
             }
             else
             {
-                mw.ldc(this.key.string);
+                mw.ldc((String)this.key.object);
                 mw.invokeVirtual("com.github.rjeschke.weel.WeelRuntime", "getMap", "(Ljava/lang/String;)V");
             }
         }

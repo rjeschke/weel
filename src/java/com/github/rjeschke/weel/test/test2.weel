@@ -15,3 +15,43 @@ printf("en", "Hallo %s ... this is %08x times %f\n", {"world!", 33232, 0.5});
 println(strPadRight(strPadLeft("Hello world!", "+-", 40), "-+/#*", 80));
 
 printf("%C%c%c%c%c %c%c%c%c%c!\n", strChars("helloworld"));
+
+list = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+
+foreach k, v in list do
+    println("list["..k.."] = "..v);
+end
+
+map = {a = 0, b = 1, c = 1, d = 2, e = 3}
+foreach k, v in map do
+    println("map["..k.."] = "..v);
+end
+
+list2 = list ++ map;
+foreach k, v in list2 do
+    println("list2["..k.."] = "..v);
+end
+
+map ++= list
+foreach k, v in map do
+    println("map["..k.."] = "..v);
+end
+
+local b = 2, c = 3, d = 4;
+
+//printf("en", "Time: %.5f seconds\n", {t0})
+
+t0 = clock();
+for i = 0, 16777215 * 40 do
+    a = 2 * b;
+end
+t0 = clock() - t0;
+printf("en", "Time: %.5f seconds\n", {t0})
+
+t0 = clock();
+for i = 0, 16777215 * 40 do
+    a = b * 2;
+end
+t0 = clock() - t0;
+printf("en", "Time: %.5f seconds\n", {t0})
+

@@ -548,8 +548,17 @@ final class Compiler
                         this.block.add(new InstrGetMap());
                 }
                 this.tokenizer.next();
-                this.checkToken(Token.NAME);
-                this.block.add(new InstrLoad(this.tokenizer.string));
+                if(this.tokenizer.token == Token.BRACKET_OPEN)
+                {
+                    this.tokenizer.next();
+                    this.parseExpression();
+                    this.checkToken(Token.BRACKET_CLOSE);
+                }
+                else
+                {
+                    this.checkToken(Token.NAME);
+                    this.block.add(new InstrLoad(this.tokenizer.string));
+                }
                 this.block.add(new InstrKey());
                 this.tokenizer.next();
                 oop = true;
@@ -1717,7 +1726,7 @@ final class Compiler
         }
         this.block.hasExit = true;
         this.writeExitPops();
-        this.block.add(new InstrGoto(this.scope.addBreak()));
+        this.block.add(new InstrGoto(s.addBreak()));
         this.tokenizer.next();
     }
 
@@ -1736,7 +1745,7 @@ final class Compiler
         this.writeExitPops();
         this.tokenizer.next();
         this.parseExpression();
-        this.block.add(new InstrGoto(this.scope.addBreak()));
+        this.block.add(new InstrGoto(s.addBreak()));
     }
 
     /**

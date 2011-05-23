@@ -67,7 +67,7 @@ public final class WeelOop
         final int ac = args.length + 1;
         if (ctor.type == ValueType.FUNCTION)
         {
-            WeelFunction f = ctor.function;
+            WeelFunction f = (WeelFunction)ctor.object;
             if (f.arguments != ac)
             {
                 f = runtime.getMother().findFunction(f.name, ac);

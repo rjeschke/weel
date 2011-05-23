@@ -4,8 +4,6 @@
  */
 package com.github.rjeschke.weel;
 
-import java.util.Map.Entry;
-
 import com.github.rjeschke.weel.annotations.WeelRawMethod;
 
 /**
@@ -29,9 +27,9 @@ public final class WeelLibMap
     {
         final ValueMap in = runtime.popMap();
         final ValueMap out = new ValueMap();
-        for (final Entry<Value, Value> e : in)
+        for(int i = 0; i < in.size; i++)
         {
-            out.append(e.getValue());
+            out.append(in.data.get(i));
         }
         runtime.load(out);
     }

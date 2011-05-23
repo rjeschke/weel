@@ -15,12 +15,6 @@ public final class Value
     ValueType type;
     /** This Value's double value. */
     double number;
-    /** This Value's String value. */
-    String string;
-    /** This Value's ValueMap. */
-    ValueMap map;
-    /** This Value's function. */
-    WeelFunction function;
     /** This Value's object. */
     Object object;
 
@@ -65,7 +59,7 @@ public final class Value
     public Value(final String value)
     {
         this.type = ValueType.STRING;
-        this.string = value;
+        this.object = value;
     }
 
     /**
@@ -77,7 +71,7 @@ public final class Value
     public Value(final ValueMap value)
     {
         this.type = ValueType.MAP;
-        this.map = value;
+        this.object = value;
     }
 
     /**
@@ -89,7 +83,7 @@ public final class Value
     public Value(final WeelFunction value)
     {
         this.type = ValueType.FUNCTION;
-        this.function = value;
+        this.object = value;
     }
 
     /**
@@ -111,9 +105,6 @@ public final class Value
     {
         this.type = ValueType.NULL;
         this.number = 0;
-        this.string = null;
-        this.map = null;
-        this.function = null;
         this.object = null;
     }
 
@@ -139,11 +130,11 @@ public final class Value
         case NULL:
             return false;
         case STRING:
-            return this.string.length() > 0;
+            return ((String)this.object).length() > 0;
         case NUMBER:
             return this.number != 0;
         case MAP:
-            return this.map.size != 0;
+            return ((ValueMap)this.object).size != 0;
         case OBJECT:
             return this.object != null;
         default:
@@ -161,9 +152,6 @@ public final class Value
     {
         other.type = this.type;
         other.number = this.number;
-        other.string = this.string;
-        other.map = this.map;
-        other.function = this.function;
         other.object = this.object;
     }
 
@@ -193,11 +181,11 @@ public final class Value
             return Double.toString(this.number);
         }
         case STRING:
-            return this.string;
+            return (String)this.object;
         case MAP:
-            return "map(" + this.map.size + ")";
+            return "map(" + ((ValueMap)this.object).size + ")";
         case FUNCTION:
-            return this.function.toString();
+            return ((WeelFunction)this.object).toString();
         case OBJECT:
             return this.object.toString();
         }
@@ -295,7 +283,7 @@ public final class Value
     {
         if (this.type != ValueType.STRING)
             throw new WeelException("Value is not a STRING");
-        return this.string;
+        return (String)this.object;
     }
 
     /**
@@ -307,7 +295,7 @@ public final class Value
     {
         if (this.type != ValueType.MAP)
             throw new WeelException("Value is not a MAP");
-        return this.map;
+        return (ValueMap)this.object;
     }
 
     /**
@@ -319,7 +307,7 @@ public final class Value
     {
         if (this.type != ValueType.FUNCTION)
             throw new WeelException("Value is not a FUNCTION");
-        return this.function;
+        return (WeelFunction)this.object;
     }
 
     /**
@@ -346,11 +334,11 @@ public final class Value
         case NUMBER:
             return Math.abs(this.number);
         case STRING:
-            return this.string.length();
+            return ((String)this.object).length();
         case MAP:
-            return this.map.size();
+            return ((ValueMap)this.object).size();
         case FUNCTION:
-            return this.function.arguments;
+            return ((WeelFunction)this.object).arguments;
         default:
             return 0;
         }

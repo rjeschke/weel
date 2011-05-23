@@ -322,7 +322,7 @@ class WeelCode
                     }
                     break;
                 case IFEQ:
-                    if(b.getType() == Op.GOTO)
+                    if (b.getType() == Op.GOTO)
                     {
                         // Replace IFEQ followed by GOTO with IFNE
                         this.instrs
@@ -376,7 +376,17 @@ class WeelCode
                                     && ((InstrLoad) l1).value.isNumber())
                             {
                                 final Instr l0 = this.instrs.get(i - 2);
-                                if (l0.getType() == Op.LOAD
+
+                                if (l0.getType() != Op.LOAD
+                                        && alu.value == null
+                                        && InstrAlu2.OVERLOADED
+                                                .contains(alu.type))
+                                {
+                                    alu.value = ((InstrLoad) l1).value;
+                                    this.instrs.remove(i - 1);
+                                    redo = true;
+                                }
+                                else if (l0.getType() == Op.LOAD
                                         && ((InstrLoad) l0).value.isNumber())
                                 {
                                     rt.load(((InstrLoad) l0).value.getNumber());
@@ -462,7 +472,9 @@ class WeelCode
                         case cmpNe:
                             if (b.getType() == Op.POPBOOL)
                             {
-                                this.instrs.set(i, new InstrCmpPop(alu.type));
+                                final InstrCmpPop icp = new InstrCmpPop(alu.type);
+                                icp.value = alu.value;
+                                this.instrs.set(i, icp);
                                 this.instrs.remove(i + 1);
                                 redo = true;
                             }
@@ -504,6 +516,10 @@ class WeelCode
             final Instr in = this.instrs.get(i);
             switch (in.getType())
             {
+            case ALU2:
+                if (((InstrAlu2) in).value == null)
+                    cur--;
+                break;
             case POP:
                 cur -= ((InstrPop) in).pops;
                 break;
@@ -587,6 +603,9 @@ class WeelCode
                 {
                     cur++;
                 }
+                break;
+            case CMPPOP:
+                cur -= ((InstrCmpPop)in).value == null ? 2 : 1;
                 break;
             default:
                 cur += in.getType().getDelta();
