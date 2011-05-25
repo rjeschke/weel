@@ -5,7 +5,7 @@
 package com.github.rjeschke.weel;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.WeakHashMap;
 
 /**
  * Simple ClassLoader implementation for loading compiled Weel classes.
@@ -15,7 +15,7 @@ import java.util.HashMap;
 final class WeelLoader extends ClassLoader
 {
     /** HashMap containing class name to class mapping. */
-    private HashMap<String, Class<?>> classes = new HashMap<String, Class<?>>();
+    private WeakHashMap<String, Class<?>> classes = new WeakHashMap<String, Class<?>>();
     /** Class data. */
     ArrayList<ClassData> classData = new ArrayList<ClassData>();
 
@@ -25,6 +25,14 @@ final class WeelLoader extends ClassLoader
     public WeelLoader()
     {
         super(WeelLoader.class.getClassLoader());
+    }
+    
+    /**
+     * Constructor.
+     */
+    WeelLoader(final WeelLoader loader)
+    {
+        super(loader);
     }
 
     /**
@@ -36,7 +44,7 @@ final class WeelLoader extends ClassLoader
      *            The bytecode.
      * @return The ready-to-use class.
      */
-    public Class<?> addClass(final String name, final byte[] code)
+    public synchronized Class<?> addClass(final String name, final byte[] code)
     {
         if (this.classes.containsKey(name))
         {
@@ -55,7 +63,7 @@ final class WeelLoader extends ClassLoader
      *            The class writer.
      * @return The ready-to-use class.
      */
-    public Class<?> addClass(final JvmClassWriter writer)
+    public synchronized Class<?> addClass(final JvmClassWriter writer)
     {
         return this.addClass(writer.className, writer.build());
     }

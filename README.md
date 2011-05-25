@@ -39,6 +39,7 @@ For more informations have a look [here](http://rjeschke.github.com/weel/).
 
 *   Switch to Apache v2 license
 *   Finish standard library (Map/IO functions)
+*   Add a security mechanism to control which libraries/functions get loaded
 *   Add mechanism for user library registering and loading on demand
 *   Map some more useful Java classes to Weel
 *   Library documentation

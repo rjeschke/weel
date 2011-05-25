@@ -34,7 +34,7 @@ class InstrLoad implements Instr
     @Override
     public String toString()
     {
-        return "LOAD " + this.value;
+        return "LOAD " + escape(this.value.toString());
     }
 
     /** @see Instr#write(JvmMethodWriter) */
@@ -79,5 +79,29 @@ class InstrLoad implements Instr
         default:
             throw new WeelException("Illegal value: " + this.value);
         }
+    }
+    
+    public final static String escape(final String input)
+    {
+        final StringBuilder sb = new StringBuilder(input.length());
+        for(int i = 0; i < input.length(); i++)
+        {
+            final char c = input.charAt(i);
+            switch(c)
+            {
+            case '\n':
+                sb.append("\\n");
+                break;
+            case '\r':
+                sb.append("\\r");
+                break;
+            case '\t':
+                sb.append("\\t");
+                break;
+            default:
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 }

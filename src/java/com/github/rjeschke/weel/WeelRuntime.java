@@ -39,7 +39,7 @@ public final class WeelRuntime
     /** The Weel stack pointer. */
     private int sp = -1;
     /** The Weel frame pointer. */
-    private int fp = -1;
+    int fp = -1;
     /** The Weel virtual function pointer. */
     private int vp = -1;
     /** Global variables. */
@@ -92,6 +92,20 @@ public final class WeelRuntime
     public void pop(final int count)
     {
         this.sp -= count;
+    }
+    
+    /**
+     * Pops <code>count</code> Values from the Weel stack and nullifies them.
+     * 
+     * @param count
+     *            Number of values to pop.
+     */
+    public void npop(final int count)
+    {
+        for(int i = 0; i < count; i++)
+        {
+            this.stack[this.sp--].setNull();
+        }
     }
 
     /**

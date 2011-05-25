@@ -1,3 +1,4 @@
+/*
 local a;
 
 println((a = 1) + 2)
@@ -54,4 +55,34 @@ for i = 0, 16777215 * 40 do
 end
 t0 = clock() - t0;
 printf("en", "Time: %.5f seconds\n", {t0})
+*/
 
+a = compile(
+"@{:
+    println('Hello '..this..'!');
+}")
+
+a("World");
+println("Test!");
+
+arr = {}
+
+@{ arr:test ()
+    println(this);
+    return 0;
+}
+
+arr.test("Hallo");
+
+private sub test2(a)
+    println(a);
+    error("It failed!");
+end
+
+//println(test2);
+
+ret = pcall(test2, "Hello");
+println(ret[1]);
+
+ret = pcall(compile, "@{ a = 10 }");
+println(ret[1]);

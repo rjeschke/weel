@@ -24,6 +24,8 @@ class Scope
     final Scope parent;
     /** The root. */
     final Scope root;
+    /** The root. */
+    final Compiler compiler;
     /** The CodeBlock. */
     WeelCode block;
     /** Local name to index mapping. */
@@ -40,8 +42,10 @@ class Scope
     Variable oopVariable;
     /** OOP array index. */
     String oopIndex;
-    /** Is this a 'real-oop' function. */
+    /** Is this a oop function? */
     boolean isOop;
+    /** Is this a private function. */
+    boolean isPrivate;
     /** Break label. */
     int breakLabel = -1;
     /** Continue label. */
@@ -55,12 +59,13 @@ class Scope
      * @param type
      *            The type.
      */
-    public Scope(final Weel weel, final ScopeType type)
+    public Scope(final Weel weel, final ScopeType type, final Compiler compiler)
     {
         this.type = type;
         this.weel = weel;
         this.parent = null;
         this.root = this;
+        this.compiler = compiler;
     }
 
     /**
@@ -78,6 +83,7 @@ class Scope
         this.block = parent.block;
         this.weel = parent.weel;
         this.root = parent.root;
+        this.compiler = parent.compiler;
     }
 
     /**
@@ -389,7 +395,7 @@ class Scope
                 var.type = Type.GLOBAL;
             }
         }
-        var.function = this.weel.findFunction(name);
+        var.function = this.compiler.findFunction(name);
         return var;
     }
 
@@ -439,7 +445,7 @@ class Scope
                 var.type = Type.GLOBAL;
             }
         }
-        var.function = this.weel.findFunction(name);
+        var.function = this.compiler.findFunction(name);
         return var;
     }
 

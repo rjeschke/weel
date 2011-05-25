@@ -34,7 +34,9 @@ public class WeelFunction
     String javaName;
     /** Invoker for invocation from outside Weel compiled code. */
     WeelInvoker invoker;
-
+    /** Class loader for runtime compiled functions. */
+    WeelLoader loader;
+    
     /**
      * Constructor.
      */

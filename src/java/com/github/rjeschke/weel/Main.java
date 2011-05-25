@@ -13,12 +13,12 @@ public class Main
         {
             final Weel weel = new Weel();
             weel.setDebugMode(false);
-            weel.enableCodeDump(true);
+            weel.enableCodeDump(false);
 
 //            weel.compileResource("com.github.rjeschke.weel.test.bench_fib_recursive");
 //            weel.compileResource("com.github.rjeschke.weel.test.bench1");
-            weel.compileResource("com.github.rjeschke.weel.test.mandel");
-//            weel.compileResource("com.github.rjeschke.weel.test.test2");
+//            weel.compileResource("com.github.rjeschke.weel.test.mandel");
+            weel.compileResource("com.github.rjeschke.weel.test.test2");
 //            weel.compileResource("com.github.rjeschke.weel.test.wunitArith");
 
 //            for(WeelLoader.ClassData cd : weel.classLoader.classData)
@@ -36,6 +36,7 @@ public class Main
             
             weel.runStatic();
             
+//            System.gc();
 //            weel.runMain("10", "5000");
             //weel.runMain("10000", "15");
 //            weel.runMain("5", "38");

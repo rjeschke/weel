@@ -129,17 +129,17 @@ public final class Weel
         this.closureStackSize = cStackSize;
 
         // Import standard library
-        for (final Class<?> c : STDLIB)
+        for(final Class<?> c : STDLIB)
         {
             this.importFunctions(c);
         }
         // Import classes
-        for (final Class<?> c : JCLASSES)
+        for(final Class<?> c : JCLASSES)
         {
             this.importFunctions(c);
         }
         // Initialize type functions
-        for (int i = 0; i < this.typeFunctions.length; i++)
+        for(int i = 0; i < this.typeFunctions.length; i++)
         {
             this.typeFunctions[i] = new TypeFunctions();
         }
@@ -184,7 +184,7 @@ public final class Weel
     {
         final WeelFunction function = this.findFunction(functionName,
                 args.length);
-        if (function == null)
+        if(function == null)
         {
             throw new WeelException("Unknown function '" + functionName + "'("
                     + args.length + ")");
@@ -279,10 +279,23 @@ public final class Weel
         {
             in.close();
         }
-        catch (IOException e)
+        catch(IOException e)
         {
             throw new WeelException(e);
         }
+    }
+
+    /**
+     * Compiles the given input String (which must be an anonymous function).
+     * 
+     * @param input
+     *            The input String.
+     * @return The compiled function.
+     */
+    public WeelFunction compileFunction(final String input)
+    {
+        final Compiler compiler = new Compiler(this);
+        return compiler.compileFunction(input);
     }
 
     /**
@@ -292,7 +305,10 @@ public final class Weel
     {
         final WeelRuntime runtime = this.getRuntime();
 
-        for (final String name : this.scriptClasses)
+        final String[] classes = this.scriptClasses
+                .toArray(new String[this.scriptClasses.size()]);
+
+        for(final String name : classes)
         {
             try
             {
@@ -300,11 +316,11 @@ public final class Weel
                 clazz.getMethod("STATIC", WeelRuntime.class).invoke(null,
                         runtime);
             }
-            catch (Exception e)
+            catch(Exception e)
             {
-                if (e instanceof WeelException)
+                if(e instanceof WeelException)
                     throw (WeelException) e;
-                if (e.getCause() != null
+                if(e.getCause() != null
                         && e.getCause() instanceof WeelException)
                     throw (WeelException) e.getCause();
                 throw new WeelException(e);
@@ -333,16 +349,16 @@ public final class Weel
     {
         final WeelFunction main = this.findFunction("main");
         final ValueMap vargs = new ValueMap();
-        if (args != null)
+        if(args != null)
         {
-            for (final String s : args)
+            for(final String s : args)
             {
                 vargs.append(new Value(s));
             }
         }
-        if (main != null)
+        if(main != null)
         {
-            if (main.arguments > 1)
+            if(main.arguments > 1)
             {
                 throw new WeelException("main() should only take one argument");
             }
@@ -351,11 +367,11 @@ public final class Weel
                 return main.arguments == 1 ? this.invoke(main, vargs) : this
                         .invoke(main);
             }
-            catch (Exception e)
+            catch(Exception e)
             {
-                if (e instanceof WeelException)
+                if(e instanceof WeelException)
                     throw (WeelException) e;
-                if (e.getCause() != null
+                if(e.getCause() != null
                         && e.getCause() instanceof WeelException)
                     throw (WeelException) e.getCause();
                 throw new WeelException(e);
@@ -399,7 +415,7 @@ public final class Weel
     public Value getGlobal(final String name)
     {
         final Integer index = this.mapGlobals.get(name.toLowerCase());
-        if (index == null)
+        if(index == null)
             throw new WeelException("Unknown global variable '" + name + "'");
         return this.globals.get(index).clone();
     }
@@ -417,7 +433,7 @@ public final class Weel
     public void setGlobal(final String name, final Value value)
     {
         final Integer index = this.mapGlobals.get(name.toLowerCase());
-        if (index == null)
+        if(index == null)
             throw new WeelException("Unknown global variable '" + name + "'");
         value.copyTo(this.globals.get(index));
     }
@@ -432,7 +448,7 @@ public final class Weel
      */
     public void createGlobal(final String name)
     {
-        if (this.mapGlobals.containsKey(name.toLowerCase()))
+        if(this.mapGlobals.containsKey(name.toLowerCase()))
             throw new WeelException("Duplicate global variable '" + name + "'");
         this.mapGlobals.put(name.toLowerCase(), this.globals.size());
         this.globals.add(new Value());
@@ -516,18 +532,20 @@ public final class Weel
      *            The function.
      * @param addToHash
      *            Add it to the function name hash map?
+     * @return The index.
      */
-    void addFunction(final String iname, final WeelFunction func,
+    int addFunction(final String iname, final WeelFunction func,
             final boolean addToHash)
     {
         final int index = this.functions.size();
         func.index = index;
         this.functions.add(func);
-        if (addToHash)
+        if(addToHash)
         {
             this.mapFunctions.put(func.name, index);
             this.mapFunctionsExact.put(iname, index);
         }
+        return index;
     }
 
     /**
@@ -544,13 +562,13 @@ public final class Weel
         final String prefix;
         MethodWrapper mw = null;
 
-        if (wclass != null)
+        if(wclass != null)
         {
             map = new ValueMap();
             final String clazzName = wclass.name().length() > 0 ? wclass.name()
                     .toLowerCase() : clazz.getSimpleName().toLowerCase();
             prefix = clazzName + (wclass.usesOop() ? "$$" : "$");
-            if (wclass.isPrivate() && clazzName.indexOf('.') == -1)
+            if(wclass.isPrivate() && clazzName.indexOf('.') == -1)
             {
                 //
                 try
@@ -558,14 +576,14 @@ public final class Weel
                     final Field me = clazz.getDeclaredField("ME");
                     me.set(null, map);
                 }
-                catch (Exception e)
+                catch(Exception e)
                 {
                     throw new WeelException("Can't access 'ME'", e);
                 }
             }
             else
             {
-                if (clazzName.indexOf('.') != -1)
+                if(clazzName.indexOf('.') != -1)
                 {
                     final String[] toks = clazzName.split("[.]");
                     final int g = this.hasGlobal(toks[0]) ? this.mapGlobals
@@ -573,7 +591,7 @@ public final class Weel
 
                     ValueMap cur;
 
-                    if (this.globals.get(g).type != ValueType.MAP)
+                    if(this.globals.get(g).type != ValueType.MAP)
                     {
                         this.globals.set(g, new Value(cur = new ValueMap()));
                     }
@@ -582,10 +600,10 @@ public final class Weel
                         cur = this.globals.get(g).getMap();
                     }
 
-                    for (int i = 1; i < toks.length; i++)
+                    for(int i = 1; i < toks.length; i++)
                     {
                         ValueMap next;
-                        if (!cur.hasKey(toks[i]))
+                        if(!cur.hasKey(toks[i]))
                         {
                             cur.set(toks[i], new Value(next = new ValueMap()));
                         }
@@ -599,7 +617,7 @@ public final class Weel
                 }
                 else
                 {
-                    if (this.hasGlobal(clazzName))
+                    if(this.hasGlobal(clazzName))
                     {
                         throw new WeelException(
                                 "Duplicate global variable for Weel clazz: "
@@ -616,22 +634,22 @@ public final class Weel
             prefix = "";
         }
 
-        for (int i = 0; i < methods.length; i++)
+        for(int i = 0; i < methods.length; i++)
         {
             final Method m = methods[i];
             final WeelRawMethod raw = m.getAnnotation(WeelRawMethod.class);
             final WeelMethod nice = m.getAnnotation(WeelMethod.class);
 
-            if ((m.getModifiers() & Modifier.STATIC) == 0)
+            if((m.getModifiers() & Modifier.STATIC) == 0)
             {
                 throw new WeelException("Weel only supports static functions: "
                         + m);
             }
 
             final WeelFunction func = new WeelFunction();
-            if (raw != null)
+            if(raw != null)
             {
-                if (m.getParameterTypes().length != 1
+                if(m.getParameterTypes().length != 1
                         || m.getReturnType() != void.class
                         || m.getParameterTypes()[0] != WeelRuntime.class)
                     throw new WeelException("Illegal raw Weel function: "
@@ -648,21 +666,21 @@ public final class Weel
                 func.javaName = m.getName();
 
                 final String iname = func.name + "#" + func.arguments;
-                if (this.mapFunctionsExact.containsKey(iname))
+                if(this.mapFunctionsExact.containsKey(iname))
                     throw new WeelException("Duplicate function: " + func.name
                             + "(" + func.arguments + ") ["
                             + m.toGenericString() + "]");
 
                 this.addFunction(iname, func);
 
-                if (map != null)
+                if(map != null)
                 {
                     map.set(fname, new Value(func));
                 }
             }
-            else if (nice != null)
+            else if(nice != null)
             {
-                if (mw == null)
+                if(mw == null)
                 {
                     mw = new MethodWrapper("Wrap$" + clazz.getSimpleName()
                             + "$" + wrapperCounter.getAndIncrement());
@@ -679,21 +697,21 @@ public final class Weel
                 func.javaName = mw.wrap(m, func);
 
                 final String iname = func.name + "#" + func.arguments;
-                if (this.mapFunctionsExact.containsKey(iname))
+                if(this.mapFunctionsExact.containsKey(iname))
                     throw new WeelException("Duplicate function: " + func.name
                             + "(" + func.arguments + ") ["
                             + m.toGenericString() + "]");
 
                 this.addFunction(iname, func);
 
-                if (map != null)
+                if(map != null)
                 {
                     map.set(fname, new Value(func));
                 }
             }
         }
 
-        if (mw != null && mw.classWriter.hasMethods())
+        if(mw != null && mw.classWriter.hasMethods())
         {
             this.classLoader.addClass(mw.classWriter);
         }
@@ -704,9 +722,9 @@ public final class Weel
      */
     void initAllInvokers()
     {
-        for (final WeelFunction func : this.functions)
+        for(final WeelFunction func : this.functions)
         {
-            if (func.invoker == null)
+            if(func.invoker == null)
                 func.invoker = WeelInvokerFactory.create();
             func.initialize(this);
         }

@@ -27,7 +27,9 @@ final class WeelReflectionInvoker implements WeelInvoker
 
         try
         {
-            final Class<?> clazz = weel.classLoader.loadClass(function.clazz);
+            final Class<?> clazz = function.loader == null ? weel.classLoader
+                    .loadClass(function.clazz) : function.loader
+                    .loadClass(function.clazz);
             this.method = clazz.getDeclaredMethod(function.javaName,
                     WeelRuntime.class);
         }
@@ -60,7 +62,10 @@ final class WeelReflectionInvoker implements WeelInvoker
         }
     }
 
-    /** @see com.github.rjeschke.weel.WeelInvoker#invoke(WeelRuntime, WeelFunction) */
+    /**
+     * @see com.github.rjeschke.weel.WeelInvoker#invoke(WeelRuntime,
+     *      WeelFunction)
+     */
     @Override
     public void invoke(WeelRuntime runtime, WeelFunction function)
     {

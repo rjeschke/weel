@@ -66,7 +66,7 @@ public final class WeelLibSys
         final int size = (int) runtime.popNumber();
         final ValueMap ret = new ValueMap();
         final Value val = new Value();
-        for(int i = 0; i < size; i++)
+        for (int i = 0; i < size; i++)
             ret.append(val);
         runtime.load(ret);
     }
@@ -86,7 +86,7 @@ public final class WeelLibSys
         final Value val = runtime.pop();
         final int size = (int) runtime.popNumber();
         final ValueMap ret = new ValueMap();
-        for(int i = 0; i < size; i++)
+        for (int i = 0; i < size; i++)
             ret.append(val);
         runtime.load(ret);
     }
@@ -257,7 +257,7 @@ public final class WeelLibSys
         final int args = (int) runtime.popNumber();
         final String name = runtime.popString();
         final WeelFunction func = runtime.getMother().findFunction(name, args);
-        if(func != null)
+        if (func != null)
             runtime.load(func);
         else
             runtime.load();
@@ -279,14 +279,14 @@ public final class WeelLibSys
         final String typeName = runtime.popString().toUpperCase();
         final ValueType type = ValueType.fromString(typeName);
 
-        if(type == null)
+        if (type == null)
         {
             throw new WeelException("Unknown type '" + typeName + "'");
         }
 
         final TypeFunctions funcs = runtime.mother.typeFunctions[type.ordinal()];
 
-        if(funcs == null)
+        if (funcs == null)
         {
             throw new WeelException("Unsupported type '" + type + "'");
         }
@@ -294,18 +294,18 @@ public final class WeelLibSys
         final Value vkey = new Value();
         final Value val = new Value();
         final ValueMapIterator it = map.createIterator();
-        
-        while(it.next(vkey, val))
+
+        while (it.next(vkey, val))
         {
             final String key = vkey.toString().toLowerCase();
-            if(val.isFunction())
+            if (val.isFunction())
             {
                 final String name;
-                final WeelFunction func = (WeelFunction)val.object;
-                if(key.endsWith("_"))
+                final WeelFunction func = (WeelFunction) val.object;
+                if (key.endsWith("_"))
                 {
                     int i = key.length() - 2;
-                    while(i > 0 && key.charAt(i) == '_')
+                    while (i > 0 && key.charAt(i) == '_')
                     {
                         --i;
                     }
@@ -315,7 +315,7 @@ public final class WeelLibSys
                 {
                     name = key + "#" + func.arguments;
                 }
-                if(funcs.findFunction(name) != null)
+                if (funcs.findFunction(name) != null)
                 {
                     throw new WeelException("Duplicate function '" + key + "("
                             + func.arguments + ")' for type '" + type + "'");
@@ -341,10 +341,10 @@ public final class WeelLibSys
         final boolean ret = runtime.popBoolean();
         final int args = (int) runtime.popNumber();
         final Value val = runtime.pop();
-        
+
         runtime.load(val.type == ValueType.FUNCTION
-                && ((WeelFunction)val.object).returnsValue == ret
-                && ((WeelFunction)val.object).arguments == args);
+                && ((WeelFunction) val.object).returnsValue == ret
+                && ((WeelFunction) val.object).arguments == args);
     }
 
     /**
@@ -365,18 +365,18 @@ public final class WeelLibSys
         final String typeName = runtime.popString().toUpperCase();
 
         final ValueType type = ValueType.fromString(typeName);
-        if(type == null)
+        if (type == null)
         {
             throw new WeelException("Unknown type '" + typeName + "'");
         }
 
         final TypeFunctions funcs = runtime.mother.typeFunctions[type.ordinal()];
-        if(funcs == null)
+        if (funcs == null)
         {
             throw new WeelException("Unsupported type '" + type + "'");
         }
 
-        if(funcs.findFunction(iname) != null)
+        if (funcs.findFunction(iname) != null)
         {
             throw new WeelException("Duplicate function '" + name + "("
                     + func.arguments + ")' for type '" + type + "'");
@@ -397,7 +397,7 @@ public final class WeelLibSys
     public final static void toNum(final WeelRuntime runtime)
     {
         final Value val = runtime.pop();
-        if(val.type != ValueType.STRING)
+        if (val.type != ValueType.STRING)
         {
             runtime.load(0);
         }
@@ -405,14 +405,14 @@ public final class WeelLibSys
         {
             try
             {
-                final String str = ((String)val.object).toLowerCase();
-                if(str.length() > 2)
+                final String str = ((String) val.object).toLowerCase();
+                if (str.length() > 2)
                 {
-                    if(str.startsWith("0b"))
+                    if (str.startsWith("0b"))
                         runtime.load(Integer.parseInt(str.substring(2), 2));
-                    else if(str.startsWith("0o"))
+                    else if (str.startsWith("0o"))
                         runtime.load(Integer.parseInt(str.substring(2), 8));
-                    else if(str.startsWith("0x"))
+                    else if (str.startsWith("0x"))
                         runtime.load(Integer.parseInt(str.substring(2), 16));
                     else
                         runtime.load(Double.parseDouble(str));
@@ -420,7 +420,7 @@ public final class WeelLibSys
                 else
                     runtime.load(Double.parseDouble(str));
             }
-            catch(NumberFormatException e)
+            catch (NumberFormatException e)
             {
                 runtime.load(0);
             }
@@ -474,7 +474,7 @@ public final class WeelLibSys
             Thread.sleep((long) runtime.popNumber());
             runtime.load(true);
         }
-        catch(InterruptedException e)
+        catch (InterruptedException e)
         {
             runtime.load(false);
         }
@@ -491,5 +491,183 @@ public final class WeelLibSys
     {
         runtime.load(Runtime.getRuntime().totalMemory()
                 - Runtime.getRuntime().freeMemory());
+    }
+
+    /**
+     * <code>compile(str)</code>
+     * <p>
+     * Compiles a Weel function contained in 'str' and returns it. Runtime
+     * compiled functions are designed to get garbage collected if there are no
+     * more references pointing at them.
+     * </p>
+     * <p>
+     * Remember: Compiled script classes use a long counter to avoid naming
+     * conflicts (the long counter will overflow and wrap after
+     * 9,223,372,036,854,775,809 compiled scripts).
+     * </p>
+     * 
+     * @param runtime
+     *            The Weel runtime.
+     */
+    @WeelRawMethod(args = 1, returnsValue = true)
+    public final static void compile(final WeelRuntime runtime)
+    {
+        final String code = runtime.popString();
+        Compiler compiler = new Compiler(runtime.getMother());
+        runtime.load(compiler.compileFunction(code));
+    }
+
+    @WeelRawMethod(args = 1)
+    public final static void error(final WeelRuntime runtime)
+    {
+        throw new WeelException(runtime.pop());
+    }
+
+    /**
+     * Calls a Weel function with error catching.
+     * 
+     * @param runtime
+     *            The runtime.
+     * @param argc
+     *            Number of arguments.
+     */
+    private final static void pcall(final WeelRuntime runtime, final int argc)
+    {
+        final ValueMap ret = new ValueMap();
+        final int sp = runtime.getStackPointer();
+        final int fp = runtime.fp;
+        try
+        {
+            runtime.stackCall(argc, true);
+            ret.append(new Value(-1));
+            ret.append(runtime.pop());
+        }
+        catch (Exception e)
+        {
+            runtime.npop(runtime.getStackPointer() - sp + argc + 1);
+            runtime.fp = fp;
+            ret.append(new Value(0));
+            if (e instanceof WeelException)
+            {
+                final WeelException ex = (WeelException) e;
+                final Value v = ex.getValue();
+                ret.append(v != null ? v : new Value(e.toString()));
+            }
+            else
+            {
+                ret.append(new Value(e.toString()));
+            }
+        }
+        runtime.load(ret);
+    }
+
+    /**
+     * Protected call.
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(name = "pcall", args = 1, returnsValue = true)
+    public final static void pcall1(final WeelRuntime runtime)
+    {
+        pcall(runtime, 0);
+    }
+
+    /**
+     * Protected call.
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(name = "pcall", args = 2, returnsValue = true)
+    public final static void pcall2(final WeelRuntime runtime)
+    {
+        System.out.println(runtime.getStackPointer());
+        pcall(runtime, 1);
+        System.out.println(runtime.getStackPointer());
+    }
+
+    /**
+     * Protected call.
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(name = "pcall", args = 3, returnsValue = true)
+    public final static void pcall3(final WeelRuntime runtime)
+    {
+        pcall(runtime, 2);
+    }
+
+    /**
+     * Protected call.
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(name = "pcall", args = 4, returnsValue = true)
+    public final static void pcall4(final WeelRuntime runtime)
+    {
+        pcall(runtime, 3);
+    }
+
+    /**
+     * Protected call.
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(name = "pcall", args = 5, returnsValue = true)
+    public final static void pcall5(final WeelRuntime runtime)
+    {
+        pcall(runtime, 4);
+    }
+
+    /**
+     * Protected call.
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(name = "pcall", args = 6, returnsValue = true)
+    public final static void pcall6(final WeelRuntime runtime)
+    {
+        pcall(runtime, 5);
+    }
+
+    /**
+     * Protected call.
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(name = "pcall", args = 7, returnsValue = true)
+    public final static void pcall7(final WeelRuntime runtime)
+    {
+        pcall(runtime, 6);
+    }
+
+    /**
+     * Protected call.
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(name = "pcall", args = 8, returnsValue = true)
+    public final static void pcall8(final WeelRuntime runtime)
+    {
+        pcall(runtime, 7);
+    }
+
+    /**
+     * Protected call.
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(name = "pcall", args = 9, returnsValue = true)
+    public final static void pcall9(final WeelRuntime runtime)
+    {
+        pcall(runtime, 8);
     }
 }
