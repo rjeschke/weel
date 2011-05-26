@@ -21,6 +21,7 @@ import com.github.rjeschke.weel.jclass.WeelIo;
 import com.github.rjeschke.weel.jclass.WeelLock;
 import com.github.rjeschke.weel.jclass.WeelReader;
 import com.github.rjeschke.weel.jclass.WeelSemaphore;
+import com.github.rjeschke.weel.jclass.WeelStack;
 import com.github.rjeschke.weel.jclass.WeelStringBuilder;
 import com.github.rjeschke.weel.jclass.WeelBlockingQueue;
 import com.github.rjeschke.weel.jclass.WeelSyncVar;
@@ -90,7 +91,8 @@ public final class Weel
     private final static Class<?>[] JCLASSES =
     { WeelStringBuilder.class, WeelImage.class, WeelThread.class,
             WeelLock.class, WeelSemaphore.class, WeelBlockingQueue.class,
-            WeelSyncVar.class, WeelIo.class, WeelReader.class, WeelWriter.class };
+            WeelSyncVar.class, WeelIo.class, WeelReader.class, WeelWriter.class,
+            WeelStack.class};
 
     /** ThreadLocal variable for Weel Runtimes associated with this Weel class. */
     private final ThreadLocal<WeelRuntime> runtime = new ThreadLocal<WeelRuntime>()
@@ -731,7 +733,7 @@ public final class Weel
     }
 
     /**
-     * Registeres a private variable.
+     * Registers a private variable.
      * 
      * @return The index.
      */

@@ -15,7 +15,7 @@ import java.io.Reader;
 final class Tokenizer
 {
     /** Unary operator priority. */
-    final static int UOPR_PRIORITY = 14;
+    final static int UOPR_PRIORITY = 15;
     /** The input stream: */
     private Reader reader;
     /** Builder for names/strings and numbers. */
@@ -361,6 +361,11 @@ final class Tokenizer
                     return this.token = Token.SUB;
                 case '*':
                     this.read();
+                    if (this.current == '*')
+                    {
+                        this.read();
+                        return this.token = Token.POW;
+                    }
                     if (this.current == '=')
                     {
                         this.read();
@@ -640,6 +645,7 @@ final class Tokenizer
         case MUL:
         case DIV:
         case MODULO:
+        case POW:
         case STRING_CONCAT:
         case MAP_CONCAT:
         case EQUAL:
@@ -711,6 +717,8 @@ final class Tokenizer
         {
         case MAP_CONCAT:
         case STRING_CONCAT:
+            return 14;
+        case POW:
             return 13;
         case MUL:
         case DIV:

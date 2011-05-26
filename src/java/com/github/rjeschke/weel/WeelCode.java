@@ -231,10 +231,9 @@ class WeelCode
     }
 
     /**
-     * Refactors this block's code, by replacing/reordering/removing common
-     * compilation 'artifacts'.
+     * Refactors ALU2 instructions.
      */
-    private void refactor()
+    private void refactorAlu()
     {
         final WeelRuntime rt = this.weel.getTempRuntime();
         boolean redo = true;
@@ -243,105 +242,8 @@ class WeelCode
             redo = false;
             for (int i = 0; i < this.instrs.size() - 1; i++)
             {
-                final Instr y = i > 1 ? this.instrs.get(i - 2) : null;
-                final Instr z = i > 0 ? this.instrs.get(i - 1) : null;
                 final Instr a = this.instrs.get(i);
-                final Instr b = this.instrs.get(i + 1);
-                switch (a.getType())
-                {
-                case SETMAP:
-                {
-                    final InstrSetMap sm = (InstrSetMap) a;
-                    if (sm.key == null)
-                    {
-                        int p = i;
-                        while (p >= 0 && this.instrs.get(p).getType() != Op.KEY)
-                        {
-                            p--;
-                        }
-                        if (p > 0
-                                && this.instrs.get(p - 1).getType() == Op.LOAD)
-                        {
-                            final Value v = ((InstrLoad) this.instrs.get(p - 1)).value
-                                    .clone();
-                            if (v.type == ValueType.NUMBER
-                                    || v.type == ValueType.STRING)
-                            {
-                                sm.key = v;
-                                this.instrs.remove(p - 1);
-                                redo = true;
-                            }
-                        }
-                    }
-                    break;
-                }
-                case GETMAP:
-                    if (z != null && z.getType() == Op.KEY && y != null
-                            && y.getType() == Op.LOAD)
-                    {
-                        final Value v = ((InstrLoad) y).value.clone();
-                        final InstrGetMap gm = (InstrGetMap) a;
-                        if (gm.key == null
-                                && (v.type == ValueType.STRING || v.type == ValueType.NUMBER))
-                        {
-                            gm.key = v;
-                            this.instrs.remove(i - 2);
-                            redo = true;
-                        }
-                    }
-                    break;
-                case GETMAPOOP:
-                    if (z != null && z.getType() == Op.KEY && y != null
-                            && y.getType() == Op.LOAD)
-                    {
-                        final Value v = ((InstrLoad) y).value.clone();
-                        final InstrGetMapOop gm = (InstrGetMapOop) a;
-                        if (gm.key == null && v.type == ValueType.STRING)
-                        {
-                            gm.key = v;
-                            this.instrs.remove(i - 2);
-                            redo = true;
-                        }
-                    }
-                    break;
-                case GOTO:
-                    if (b.getType() == Op.GOTO)
-                    {
-                        // Remove duplicate GOTOs
-                        this.instrs.remove(i + 1);
-                        redo = true;
-                    }
-                    else if (b.getType() == Op.LABEL)
-                    {
-                        if (((InstrGoto) a).index == ((InstrLabel) b).index)
-                        {
-                            // Remove GOTO to next line
-                            this.instrs.remove(i);
-                            redo = true;
-                        }
-                    }
-                    break;
-                case IFEQ:
-                    if (b.getType() == Op.GOTO)
-                    {
-                        // Replace IFEQ followed by GOTO with IFNE
-                        this.instrs
-                                .set(i, new InstrIfNe(((InstrGoto) b).index));
-                        this.instrs.remove(i + 1);
-                        redo = true;
-                    }
-                    break;
-                case IFNE:
-                    if (b.getType() == Op.GOTO)
-                    {
-                        // Replace IFNE followed by GOTO with IFEQ
-                        this.instrs
-                                .set(i, new InstrIfEq(((InstrGoto) b).index));
-                        this.instrs.remove(i + 1);
-                        redo = true;
-                    }
-                    break;
-                case ALU2:
+                if (a.getType() == Op.ALU2)
                 {
                     final InstrAlu2 alu = (InstrAlu2) a;
                     if (i > 1)
@@ -362,6 +264,7 @@ class WeelCode
                                         .popString()));
                                 this.instrs.remove(i - 1);
                                 this.instrs.remove(i - 1);
+                                i -= 2; 
                                 redo = true;
                             }
                             break;
@@ -384,6 +287,7 @@ class WeelCode
                                 {
                                     alu.value = ((InstrLoad) l1).value;
                                     this.instrs.remove(i - 1);
+                                    i--;
                                     redo = true;
                                 }
                                 else if (l0.getType() == Op.LOAD
@@ -411,6 +315,9 @@ class WeelCode
                                         break;
                                     case mod:
                                         rt.mod();
+                                        break;
+                                    case pow:
+                                        rt.pow();
                                         break;
                                     case and:
                                         rt.and();
@@ -453,6 +360,7 @@ class WeelCode
                                             .popNumber()));
                                     this.instrs.remove(i - 1);
                                     this.instrs.remove(i - 1);
+                                    i -= 2;
                                     redo = true;
                                 }
                                 break;
@@ -460,41 +368,190 @@ class WeelCode
                         }
                         }
                     }
-                    if (!redo)
+                }
+            }
+        }
+    }
+
+    /**
+     * Refactors map accesses and jumps.
+     */
+    private void refactorMapsAndJumps()
+    {
+        boolean redo = true;
+        while (redo)
+        {
+            redo = false;
+            for (int i = 0; i < this.instrs.size() - 1; i++)
+            {
+                final Instr y = i > 1 ? this.instrs.get(i - 2) : null;
+                final Instr z = i > 0 ? this.instrs.get(i - 1) : null;
+                final Instr a = this.instrs.get(i);
+                final Instr b = this.instrs.get(i + 1);
+                switch (a.getType())
+                {
+                case SETMAP:
+                {
+                    final InstrSetMap sm = (InstrSetMap) a;
+                    if (sm.key == null)
                     {
-                        switch (alu.type)
+                        int p = i;
+                        while (p >= 0 && this.instrs.get(p).getType() != Op.KEY)
                         {
-                        case cmpEq:
-                        case cmpGe:
-                        case cmpGt:
-                        case cmpLe:
-                        case cmpLt:
-                        case cmpNe:
-                            if (b.getType() == Op.POPBOOL)
+                            p--;
+                        }
+                        if (p > 0
+                                && this.instrs.get(p - 1).getType() == Op.LOAD)
+                        {
+                            final Value v = ((InstrLoad) this.instrs.get(p - 1)).value
+                                    .clone();
+                            if (v.type == ValueType.NUMBER
+                                    || v.type == ValueType.STRING)
                             {
-                                final InstrCmpPop icp = new InstrCmpPop(alu.type);
-                                icp.value = alu.value;
-                                this.instrs.set(i, icp);
-                                this.instrs.remove(i + 1);
+                                sm.key = v;
+                                this.instrs.remove(p - 1);
+                                i--;
                                 redo = true;
                             }
-                            break;
-                        default:
-                            break;
                         }
+                    }
+                    break;
+                }
+                case GETMAP:
+                    if (z != null && z.getType() == Op.KEY && y != null
+                            && y.getType() == Op.LOAD)
+                    {
+                        final Value v = ((InstrLoad) y).value.clone();
+                        final InstrGetMap gm = (InstrGetMap) a;
+                        if (gm.key == null
+                                && (v.type == ValueType.STRING || v.type == ValueType.NUMBER))
+                        {
+                            gm.key = v;
+                            this.instrs.remove(i - 2);
+                            i--;
+                            redo = true;
+                        }
+                    }
+                    break;
+                case GETMAPOOP:
+                    if (z != null && z.getType() == Op.KEY && y != null
+                            && y.getType() == Op.LOAD)
+                    {
+                        final Value v = ((InstrLoad) y).value.clone();
+                        final InstrGetMapOop gm = (InstrGetMapOop) a;
+                        if (gm.key == null && v.type == ValueType.STRING)
+                        {
+                            gm.key = v;
+                            this.instrs.remove(i - 2);
+                            i--;
+                            redo = true;
+                        }
+                    }
+                    break;
+                case GOTO:
+                    if (b.getType() == Op.GOTO)
+                    {
+                        // Remove duplicate GOTOs
+                        this.instrs.remove(i + 1);
+                        redo = true;
+                    }
+                    else if (b.getType() == Op.LABEL)
+                    {
+                        if (((InstrGoto) a).index == ((InstrLabel) b).index)
+                        {
+                            // Remove GOTO to next line
+                            this.instrs.remove(i);
+                            i--;
+                            redo = true;
+                        }
+                    }
+                    break;
+                case IFEQ:
+                    if (b.getType() == Op.GOTO)
+                    {
+                        // Replace IFEQ followed by GOTO with IFNE
+                        this.instrs
+                                .set(i, new InstrIfNe(((InstrGoto) b).index));
+                        this.instrs.remove(i + 1);
+                        redo = true;
+                    }
+                    break;
+                case IFNE:
+                    if (b.getType() == Op.GOTO)
+                    {
+                        // Replace IFNE followed by GOTO with IFEQ
+                        this.instrs
+                                .set(i, new InstrIfEq(((InstrGoto) b).index));
+                        this.instrs.remove(i + 1);
+                        redo = true;
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Refactors CMP.
+     */
+    private void refactorCmp()
+    {
+        boolean redo = true;
+        while (redo)
+        {
+            redo = false;
+            for (int i = 0; i < this.instrs.size() - 1; i++)
+            {
+                final Instr a = this.instrs.get(i);
+                final Instr b = this.instrs.get(i + 1);
+                switch (a.getType())
+                {
+                case ALU2:
+                {
+                    final InstrAlu2 alu = (InstrAlu2) a;
+                    switch (alu.type)
+                    {
+                    case cmpEq:
+                    case cmpGe:
+                    case cmpGt:
+                    case cmpLe:
+                    case cmpLt:
+                    case cmpNe:
+                        if (b.getType() == Op.POPBOOL)
+                        {
+                            final InstrCmpPop icp = new InstrCmpPop(
+                                    alu.type);
+                            icp.value = alu.value;
+                            this.instrs.set(i, icp);
+                            this.instrs.remove(i + 1);
+                            redo = true;
+                        }
+                        break;
+                    default:
+                        break;
                     }
                     break;
                 }
                 default:
                     break;
                 }
-                if (redo)
-                {
-                    // Size has changed, restart
-                    break;
-                }
             }
         }
+    }
+    
+    /**
+     * Refactors this block's code, by replacing/reordering/removing common
+     * compilation 'artifacts'.
+     */
+    // TODO check if my redesign works ;)
+    private void refactor()
+    {
+        this.refactorAlu();
+        // I think I could join these two
+        this.refactorMapsAndJumps();
+        this.refactorCmp();
     }
 
     /**
@@ -605,7 +662,7 @@ class WeelCode
                 }
                 break;
             case CMPPOP:
-                cur -= ((InstrCmpPop)in).value == null ? 2 : 1;
+                cur -= ((InstrCmpPop) in).value == null ? 2 : 1;
                 break;
             default:
                 cur += in.getType().getDelta();
@@ -617,14 +674,14 @@ class WeelCode
         {
             if (cur < 0 || cur > 1)
             {
-                System.err.println("Check this: " + cur);
+                throw new WeelException("What a terrible failure: recurse reached " + cur + ", contact the author.");
             }
             returns |= cur == 0;
             return returns ? 0 : 1;
         }
         if (cur < 0 || cur > 1)
         {
-            System.err.println("Check this: " + cur);
+            throw new WeelException("What a terrible failure: recurse reached " + cur + ", contact the author.");
         }
         return cur;
     }

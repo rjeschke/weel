@@ -95,4 +95,75 @@ public final class WeelLibMap
         final Value key = runtime.pop();
         runtime.load(runtime.popMap().hasKey(key));
     }
+    
+    /**
+     * <code>mapRem(m, k)</code>
+     * <p>
+     * Removes the key 'k' (and its value) from 'm'.
+     * </p>
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(args = 2)
+    public final static void mapRem(WeelRuntime runtime)
+    {
+        final Value key = runtime.pop();
+        runtime.popMap().remove(key);
+    }
+    
+    /**
+     * <code>mapReml(m)</code>
+     * <p>
+     * Removes the last entry from 'm' and returns it.
+     * </p>
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(args = 1, returnsValue = true)
+    public final static void mapReml(WeelRuntime runtime)
+    {
+        runtime.load(runtime.popMap().removeLast());
+    }
+    
+    /**
+     * <code>mapLastK(m)</code>
+     * <p>
+     * Returns the last key from 'm'.
+     * </p>
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(args = 1, returnsValue = true)
+    public final static void mapLastk(WeelRuntime runtime)
+    {
+        final ValueMap map = runtime.popMap();
+        if(map.size == 0)
+            runtime.load();
+        else if(map.ordered)
+            runtime.load(map.size - 1);
+        else
+            runtime.load(map.keys.get(map.size - 1));
+    }
+    
+    /**
+     * <code>mapLastV(m)</code>
+     * <p>
+     * Returns the last value from 'm'.
+     * </p>
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(args = 1, returnsValue = true)
+    public final static void mapLastv(WeelRuntime runtime)
+    {
+        final ValueMap map = runtime.popMap();
+        if(map.size == 0)
+            runtime.load();
+        else 
+            runtime.load(map.data.get(map.size - 1));
+    }
 }

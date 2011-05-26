@@ -5,6 +5,7 @@
 package com.github.rjeschke.weel;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import com.github.rjeschke.weel.ValueMap.ValueMapIterator;
 
@@ -66,11 +67,26 @@ public final class WeelRuntime
         this.frameStart = new int[weel.frameStackSize];
         this.frameSize = new int[weel.frameStackSize];
         this.closureFunctions = new WeelFunction[weel.closureStackSize];
-        
+
         for (int i = 0; i < this.stack.length; i++)
         {
             this.stack[i] = new Value();
         }
+    }
+
+    /**
+     * Resets this runtime, wiping the stacks and resetting all stack pointers.
+     */
+    public void reset()
+    {
+        this.sp = this.fp = this.vp = -1;
+        for(int i = 0; i < this.stack.length; i++)
+        {
+            this.stack[i].setNull();
+        }
+        Arrays.fill(this.frameSize, 0);
+        Arrays.fill(this.frameStart, 0);
+        Arrays.fill(this.closureFunctions, null);
     }
 
     /**
@@ -93,7 +109,7 @@ public final class WeelRuntime
     {
         this.sp -= count;
     }
-    
+
     /**
      * Pops <code>count</code> Values from the Weel stack and nullifies them.
      * 
@@ -102,7 +118,7 @@ public final class WeelRuntime
      */
     public void npop(final int count)
     {
-        for(int i = 0; i < count; i++)
+        for (int i = 0; i < count; i++)
         {
             this.stack[this.sp--].setNull();
         }
@@ -1076,6 +1092,36 @@ public final class WeelRuntime
     public void mod(final double operand)
     {
         this.stack[this.sp].number %= operand;
+    }
+
+    /**
+     * Pow.
+     * 
+     * <p>
+     * <code>..., value1, value2 &rArr; ..., value1 ** value2 </code>
+     * </p>
+     */
+    public void pow()
+    {
+        final Value b = this.stack[this.sp--];
+        final Value a = this.stack[this.sp];
+        a.number = Math.pow(a.number, b.number);
+    }
+
+    /**
+     * Pow.
+     * 
+     * <p>
+     * <code>..., value &rArr; ..., value ** operand</code>
+     * </p>
+     * 
+     * @param operand
+     *            Value.
+     */
+    public void pow(final double operand)
+    {
+        final Value a = this.stack[this.sp];
+        a.number = Math.pow(a.number, operand);
     }
 
     /**

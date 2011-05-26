@@ -7,6 +7,7 @@ package com.github.rjeschke.weel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 /**
  * Weel map implementation.
@@ -454,6 +455,100 @@ public final class ValueMap
         return ret;
     }
 
+    private void remap(final int r)
+    {
+        for(final Entry<Integer, Integer> e : this.intKeys.entrySet())
+        {
+            final int i = e.getValue();
+            if(i > r)
+            {
+                this.intKeys.put(e.getKey(), i - 1);
+            }
+        }
+        for(final Entry<String, Integer> e : this.strKeys.entrySet())
+        {
+            final int i = e.getValue();
+            if(i > r)
+            {
+                this.strKeys.put(e.getKey(), i - 1);
+            }
+        }
+    }
+    
+    /**
+     * Removes the last entry in this map.
+     */
+    public Value removeLast()
+    {
+        if(this.size < 1)
+            return new Value();
+        
+        this.size--;
+        final Value rem = this.data.remove(this.size);
+        if(!this.ordered)
+        {
+            final Value k = this.keys.remove(this.size);
+            this.data.remove(this.size);
+            if(k.type == ValueType.NUMBER)
+            {
+                this.intKeys.remove((int)k.number);
+            }
+            else
+            {
+                this.strKeys.remove(k.object);
+            }
+        }
+        return rem;
+    }
+    
+    public void remove(final Value index)
+    {
+        if(index.type == ValueType.NUMBER)
+        {
+            final int idx = (int) index.number;
+            if(this.ordered)
+            {
+                if(idx < 0 || idx >= this.size)
+                    return;
+                if(idx + 1 == this.size)
+                {
+                    this.size--;
+                    this.data.remove(this.size);
+                    return;
+                }
+                this.unorder();
+            }
+            final Integer idx2 = this.intKeys.get(idx);
+            if(idx2 != null)
+            {
+                final int r = idx2;
+                this.data.remove(r);
+                this.keys.remove(r);
+                this.intKeys.remove(idx);
+                this.remap(r);
+            }
+        }
+        else if(index.type == ValueType.STRING)
+        {
+            if(this.ordered)
+                return;
+            
+            final Integer idx2 = this.strKeys.get(index.object);
+            if(idx2 != null)
+            {
+                final int r = idx2;
+                this.data.remove(r);
+                this.keys.remove(r);
+                this.strKeys.remove(index.object);
+                this.remap(r);
+            }
+        }
+        else
+        {
+            throw new WeelException("Illegal map index type: " + index.type);
+        }
+    }
+    
     /**
      * Reverses this map.
      * 
@@ -461,6 +556,7 @@ public final class ValueMap
      */
     public ValueMap reverse()
     {
+        // FIXME ... hä?
         Collections.reverse(this.data);
         Collections.reverse(this.keys);
 

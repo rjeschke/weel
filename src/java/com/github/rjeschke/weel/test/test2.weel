@@ -1,5 +1,6 @@
-/*
 local a;
+
+/*
 
 println((a = 1) + 2)
 println(a);
@@ -55,7 +56,6 @@ for i = 0, 16777215 * 40 do
 end
 t0 = clock() - t0;
 printf("en", "Time: %.5f seconds\n", {t0})
-*/
 
 a = compile(
 "@{:
@@ -86,3 +86,15 @@ println(ret[1]);
 
 ret = pcall(compile, "@{ a = 10 }");
 println(ret[1]);
+*/
+
+ret = pexec({"java", "-esa"});
+println(ret[0]);
+r = io.openStringReader(ret[1]);
+l = r->readln();
+while isNotNull(l) do
+    println(l);
+    l = r->readln();
+end
+
+println(2**4)

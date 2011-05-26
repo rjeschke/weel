@@ -1180,6 +1180,9 @@ final class Compiler
             case MUL:
                 this.block.add(new InstrAlu2(Alu2InstrType.mul));
                 break;
+            case POW:
+                this.block.add(new InstrAlu2(Alu2InstrType.pow));
+                break;
             case DIV:
                 this.block.add(new InstrAlu2(Alu2InstrType.div));
                 break;

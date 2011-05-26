@@ -1,0 +1,155 @@
+/*
+L-System playground
+*/
+
+/*
+start = "F";
+n = 6;
+
+private rules = {
+    ["F"] = "F+F-F-F+F"
+};
+
+private functions = {
+    ["F"] = "move(2)",
+    ["+"] = "rotate(-1)",
+    ["-"] = "rotate(1)"
+};
+*/
+
+start = "FX";
+n = 18;
+
+private rules = {
+    ["X"] = "X+YF",
+    ["Y"] = "FX-Y"
+};
+
+private functions = {
+    ["F"] = "move(1)",
+    ["+"] = "rotate(-1)",
+    ["-"] = "rotate(1)"
+};
+
+turtle = {
+    x = 0,
+    y = 0,
+    d = 1,
+    down = true,
+    img = null,
+    dx = {0, 1, 0, -1},
+    dy = {-1, 0, 1, 0},
+    color = 0xff000000,
+    ctor = 
+        @{:(w, h)
+            this->img = new(java.Image, w, h, -1);
+            this->x = this->y = 0;
+            this->down = true;
+        },
+    set = 
+        @{:(x, y)
+            this->x = x;
+            this->y = y;
+        },
+    penUp =
+        @{:
+            this->down = false;
+        },
+    penDown =
+        @{:
+            this->down = true;
+        },
+    rotate = 
+        @{:(d)
+            this->d = (this->d + d) & 3;
+        },
+    move =
+        @{:(l)
+            ox = this->x;
+            oy = this->y;
+            this->x += l * this->dx[this->d];
+            this->y += l * this->dy[this->d];
+            if this->down then
+                this->img->drawLine(ox, oy, this->x, this->y, this->color);
+            end
+        }
+};
+
+private func replace(s)
+    sb = new(java.StringBuilder);
+    for i = 0, size(s) - 1 do
+        c = strSub(s, i, i + 1);
+        r = rules[c];
+        sb->append(r || c);
+    end
+    return sb->toString();
+end
+
+private func tofunc(s)
+    sb = new(java.StringBuilder);
+    sb->append("@{(t)");
+    for i = 0, size(s) - 1 do
+        c = strSub(s, i, i + 1);
+        r = functions[c];
+        if r then
+            sb->append("t->");
+            sb->append(r);
+            sb->append(";");
+        end
+    end
+    sb->append("}");
+    return compile(sb->toString());
+end
+
+private func tofuncs(s)
+    ret = {};
+    sb = new(java.StringBuilder);
+    sb->append("@{(t)");
+    oc = 0;
+    for i = 0, size(s) - 1 do
+        c = strSub(s, i, i + 1);
+        r = functions[c];
+        if r then
+            sb->append("t->");
+            sb->append(r);
+            sb->append(";");
+            oc += 1;
+            
+            if oc >= 2000 then
+                sb->append("}");
+                ret[] = compile(sb->toString());
+                sb->clear();
+                sb->append("@{(t)");
+                oc = 0;
+            end
+        end
+        
+    end
+    sb->append("}");
+    ret[] = compile(sb->toString());
+    return ret;
+end
+
+t0 = clock();
+for i = 1, n do
+    start = replace(start);
+end
+t0 = clock() - t0;
+//println(start);
+
+t1 = clock();
+f = tofuncs(start);
+t1 = clock() - t1;
+
+t2 = clock();
+t = new(turtle, 1280, 1024);
+t->set(400, 800);
+foreach fc in f do
+    fc(t);
+end
+t2 = clock() - t2;
+
+t->img->toPng("/home/rjeschke/l.png");
+
+printf("en", "N: %d, Replace: %.4f, tofuncs: %.4f (%d), paint: %.4f\n", {n, t0, t1, size(f), t2});
+

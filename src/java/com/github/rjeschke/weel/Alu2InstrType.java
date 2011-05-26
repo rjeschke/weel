@@ -6,7 +6,7 @@ package com.github.rjeschke.weel;
 
 enum Alu2InstrType
 {
-    add, sub, mul, div, mod,
+    add, sub, mul, div, mod, pow,
     
     and, or, xor,
     

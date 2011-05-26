@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 
 import com.github.rjeschke.weel.ValueMap;
@@ -47,6 +48,14 @@ public final class WeelIo
     public final static ValueMap openReader(final WeelRuntime runtime, final String filename)
     {
         return openReader(runtime, filename, "UTF-8");
+    }
+    
+    @WeelMethod
+    public final static ValueMap openStringReader(final WeelRuntime runtime, final String string)
+    {
+        final ValueMap clazz = WeelOop.newClass(runtime, WeelReader.ME);
+        WeelOop.setInstance(clazz, new BufferedReader(new StringReader(string)));
+        return clazz;
     }
     
     @WeelMethod

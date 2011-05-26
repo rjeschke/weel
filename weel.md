@@ -201,6 +201,7 @@ in the library)*.
 *   `*` : Multiplication
 *   `/` : Division
 *   `%` : Modulo
+*   `**` : Pow
 *   `..` : String concatenation
 *   `++` : Map concatenation
 *   `=` : Assign
@@ -462,20 +463,22 @@ arguments that returns a value, even if all others don't.
       
 There's also a shorter syntax available:
 
-    <expr> = @{ [(<arg-name>[,<arg-name>...])]
+    <expr> = @{ [:] [(<arg-name>[,<arg-name>...])]
         ...
         return <expr>
         ...
     }
     
-    <expr> = @{ [(<arg-name>[,<arg-name>...])]
+    <expr> = @{ [:] [(<arg-name>[,<arg-name>...])]
         ...
         [exit]  // this 'exits' the sub
         ...
     }
 
 As you can see you can leave out the argument declaration if you don't use
-any arguments, and the syntax for functions and subs is identically.
+any arguments, and the syntax for functions and subs is identically. If you
+add a colon after `@{` the anonymous function gets compiled as an Oop
+functions.
 
 #### Array function examples
 
@@ -964,7 +967,7 @@ So it's all a little bit cheating ... but it works ... and it's fast.
     No term reordering is performed, so be careful which expressions you use
 *   Reorder your expressions: `a = b * 2` is faster than `a = 2 * b`. Weel
     generates special calls for these cases (currently for `+`, `-`, `*`, `/`
-    and `%`)
+    ,`%`, `**` and compares using numbers: `==`, `!=`, `>`, `=>`, `<`, `<=`)
 *   local and closure variables are faster than global variables.
 *   `a = 2 * b` is faster than `a = b + b` (and `a = b * 2` is even faster).
 *   `a += 1` is exactly the same as writing `a = a + 1` --- it just is less 
@@ -1016,123 +1019,147 @@ benchmarks at <https://github.com/kragen/shootout>.
  </tr>
  <tr>
   <td>mandel (500)</td>
-  <td style="text-align: right;"> 1.11</td><td>~ 1.00</td>
-  <td style="text-align: right;"> 4.96</td><td>- 4.46</td>
-  <td style="text-align: right;"> 1.10</td><td>+ 1.01</td>
-  <td style="text-align: right;"> 0.99</td><td>+ 1.12</td>
-  <td style="text-align: right;"> 7.89</td><td>- 7.10</td>
+  <td style="text-align: right;"> 1.10</td><td>~ 1.00</td>
+  <td style="text-align: right;"> 5.04</td><td>- 4.59</td>
+  <td style="text-align: right;"> 1.10</td><td>- 1.00</td>
+  <td style="text-align: right;"> 0.91</td><td>+ 1.21</td>
+  <td style="text-align: right;"> 7.87</td><td>- 7.16</td>
  </tr>
  <tr>
   <td>mandel (2000)</td>
-  <td style="text-align: right;">10.48</td><td>~ 1.00</td>
-  <td style="text-align: right;">57.21</td><td>- 5.46</td>
-  <td style="text-align: right;">17.46</td><td>- 1.67</td>
-  <td style="text-align: right;">14.83</td><td>- 1.42</td>
-  <td style="text-align: right;">126.33</td><td>- 12.06</td>
+  <td style="text-align: right;">10.53</td><td>~ 1.00</td>
+  <td style="text-align: right;">57.35</td><td>- 5.44</td>
+  <td style="text-align: right;">17.38</td><td>- 1.65</td>
+  <td style="text-align: right;">14.72</td><td>- 1.40</td>
+  <td style="text-align: right;">125.76</td><td>- 11.94</td>
  </tr>
  <tr>
   <td>mandel (4000)</td>
-  <td style="text-align: right;">42.24</td><td>~ 1.00</td>
-  <td style="text-align: right;">218.05</td><td>- 5.16</td>
-  <td style="text-align: right;">71.35</td><td>- 1.69</td>
-  <td style="text-align: right;">55.62</td><td>- 1.32</td>
-  <td style="text-align: right;">499.05</td><td>- 11.81</td>
+  <td style="text-align: right;">42.29</td><td>~ 1.00</td>
+  <td style="text-align: right;">218.60</td><td>- 5.17</td>
+  <td style="text-align: right;">69.50</td><td>- 1.64</td>
+  <td style="text-align: right;">56.08</td><td>- 1.33</td>
+  <td style="text-align: right;">499.31</td><td>- 11.81</td>
  </tr>
  <tr>
   <td>spectral-norm (500)</td>
-  <td style="text-align: right;"> 2.21</td><td>~ 1.00</td>
-  <td style="text-align: right;">12.50</td><td>- 5.67</td>
-  <td style="text-align: right;"> 3.37</td><td>- 1.53</td>
-  <td style="text-align: right;"> 0.42</td><td>+ 5.20</td>
-  <td style="text-align: right;"> 7.94</td><td>- 3.60</td>
+  <td style="text-align: right;"> 2.18</td><td>~ 1.00</td>
+  <td style="text-align: right;">12.21</td><td>- 5.60</td>
+  <td style="text-align: right;"> 3.37</td><td>- 1.54</td>
+  <td style="text-align: right;"> 0.41</td><td>+ 5.28</td>
+  <td style="text-align: right;"> 7.95</td><td>- 3.64</td>
  </tr>
  <tr>
   <td>spectral-norm (1000)</td>
-  <td style="text-align: right;"> 7.23</td><td>~ 1.00</td>
-  <td style="text-align: right;">43.19</td><td>- 5.97</td>
-  <td style="text-align: right;">13.54</td><td>- 1.87</td>
-  <td style="text-align: right;"> 1.29</td><td>+ 5.60</td>
-  <td style="text-align: right;">31.80</td><td>- 4.40</td>
+  <td style="text-align: right;"> 7.16</td><td>~ 1.00</td>
+  <td style="text-align: right;">43.00</td><td>- 6.00</td>
+  <td style="text-align: right;">13.61</td><td>- 1.90</td>
+  <td style="text-align: right;"> 1.29</td><td>+ 5.55</td>
+  <td style="text-align: right;">31.75</td><td>- 4.43</td>
  </tr>
  <tr>
   <td>spectral-norm (2000)</td>
-  <td style="text-align: right;">26.98</td><td>~ 1.00</td>
-  <td style="text-align: right;">167.90</td><td>- 6.22</td>
-  <td style="text-align: right;">53.74</td><td>- 1.99</td>
-  <td style="text-align: right;"> 4.94</td><td>+ 5.46</td>
-  <td style="text-align: right;">126.57</td><td>- 4.69</td>
+  <td style="text-align: right;">26.90</td><td>~ 1.00</td>
+  <td style="text-align: right;">171.29</td><td>- 6.37</td>
+  <td style="text-align: right;">53.91</td><td>- 2.00</td>
+  <td style="text-align: right;"> 4.94</td><td>+ 5.45</td>
+  <td style="text-align: right;">127.00</td><td>- 4.72</td>
  </tr>
  <tr>
   <td>n-body (50000)</td>
-  <td style="text-align: right;"> 1.41</td><td>~ 1.00</td>
-  <td style="text-align: right;"> 3.39</td><td>- 2.41</td>
-  <td style="text-align: right;"> 0.70</td><td>+ 2.02</td>
-  <td style="text-align: right;"> 0.15</td><td>+ 9.25</td>
-  <td style="text-align: right;"> 1.98</td><td>- 1.41</td>
+  <td style="text-align: right;"> 1.40</td><td>~ 1.00</td>
+  <td style="text-align: right;"> 3.44</td><td>- 2.46</td>
+  <td style="text-align: right;"> 0.70</td><td>+ 2.01</td>
+  <td style="text-align: right;"> 0.14</td><td>+ 9.87</td>
+  <td style="text-align: right;"> 1.95</td><td>- 1.39</td>
  </tr>
  <tr>
   <td>n-body (500000)</td>
-  <td style="text-align: right;"> 8.06</td><td>~ 1.00</td>
-  <td style="text-align: right;">16.89</td><td>- 2.09</td>
-  <td style="text-align: right;"> 6.75</td><td>+ 1.19</td>
-  <td style="text-align: right;"> 0.76</td><td>+ 10.65</td>
-  <td style="text-align: right;">19.13</td><td>- 2.37</td>
+  <td style="text-align: right;"> 7.94</td><td>~ 1.00</td>
+  <td style="text-align: right;">17.11</td><td>- 2.16</td>
+  <td style="text-align: right;"> 6.76</td><td>+ 1.17</td>
+  <td style="text-align: right;"> 0.76</td><td>+ 10.50</td>
+  <td style="text-align: right;">19.33</td><td>- 2.44</td>
  </tr>
  <tr>
   <td>n-body (5000000)</td>
-  <td style="text-align: right;">74.01</td><td>~ 1.00</td>
-  <td style="text-align: right;">154.34</td><td>- 2.09</td>
-  <td style="text-align: right;">67.52</td><td>+ 1.10</td>
-  <td style="text-align: right;"> 6.95</td><td>+ 10.64</td>
-  <td style="text-align: right;">215.97</td><td>- 2.92</td>
+  <td style="text-align: right;">73.74</td><td>~ 1.00</td>
+  <td style="text-align: right;">154.85</td><td>- 2.10</td>
+  <td style="text-align: right;">68.15</td><td>+ 1.08</td>
+  <td style="text-align: right;"> 6.94</td><td>+ 10.62</td>
+  <td style="text-align: right;">194.56</td><td>- 2.64</td>
  </tr>
  <tr>
   <td>binary-trees (12)</td>
-  <td style="text-align: right;"> 2.34</td><td>~ 1.00</td>
-  <td style="text-align: right;"> 2.35</td><td>- 1.00</td>
-  <td style="text-align: right;"> 1.27</td><td>+ 1.84</td>
-  <td style="text-align: right;"> 0.13</td><td>+ 17.76</td>
-  <td style="text-align: right;"> 1.90</td><td>+ 1.23</td>
+  <td style="text-align: right;"> 2.35</td><td>~ 1.00</td>
+  <td style="text-align: right;"> 2.38</td><td>- 1.01</td>
+  <td style="text-align: right;"> 1.26</td><td>+ 1.87</td>
+  <td style="text-align: right;"> 0.13</td><td>+ 17.71</td>
+  <td style="text-align: right;"> 1.95</td><td>+ 1.21</td>
  </tr>
  <tr>
   <td>binary-trees (14)</td>
-  <td style="text-align: right;"> 6.19</td><td>~ 1.00</td>
-  <td style="text-align: right;"> 4.76</td><td>+ 1.30</td>
-  <td style="text-align: right;"> 6.47</td><td>- 1.05</td>
-  <td style="text-align: right;"> 0.34</td><td>+ 18.00</td>
-  <td style="text-align: right;"> 8.79</td><td>- 1.42</td>
+  <td style="text-align: right;"> 6.39</td><td>~ 1.00</td>
+  <td style="text-align: right;"> 4.71</td><td>+ 1.36</td>
+  <td style="text-align: right;"> 6.52</td><td>- 1.02</td>
+  <td style="text-align: right;"> 0.34</td><td>+ 18.62</td>
+  <td style="text-align: right;"> 8.88</td><td>- 1.39</td>
  </tr>
  <tr>
   <td>binary-trees (16)</td>
-  <td style="text-align: right;">29.32</td><td>~ 1.00</td>
-  <td style="text-align: right;">15.42</td><td>+ 1.90</td>
-  <td style="text-align: right;">31.82</td><td>- 1.09</td>
-  <td style="text-align: right;"> 1.46</td><td>+ 20.03</td>
-  <td style="text-align: right;">41.02</td><td>- 1.40</td>
+  <td style="text-align: right;">28.69</td><td>~ 1.00</td>
+  <td style="text-align: right;">15.46</td><td>+ 1.86</td>
+  <td style="text-align: right;">31.81</td><td>- 1.11</td>
+  <td style="text-align: right;"> 1.48</td><td>+ 19.33</td>
+  <td style="text-align: right;">40.69</td><td>- 1.42</td>
  </tr>
  <tr>
   <td>thread-ring (5000)</td>
-  <td style="text-align: right;"> 2.84</td><td>~ 1.00</td>
-  <td style="text-align: right;"> 1.14</td><td>+ 2.48</td>
+  <td style="text-align: right;"> 2.75</td><td>~ 1.00</td>
+  <td style="text-align: right;"> 1.12</td><td>+ 2.46</td>
   <td style="text-align: right;">---</td><td>---</td>
   <td style="text-align: right;">---</td><td>---</td>
   <td style="text-align: right;">---</td><td>---</td>
  </tr>
  <tr>
   <td>thread-ring (50000)</td>
-  <td style="text-align: right;"> 3.60</td><td>~ 1.00</td>
-  <td style="text-align: right;"> 1.80</td><td>+ 2.00</td>
+  <td style="text-align: right;"> 3.46</td><td>~ 1.00</td>
+  <td style="text-align: right;"> 1.78</td><td>+ 1.94</td>
   <td style="text-align: right;">---</td><td>---</td>
   <td style="text-align: right;">---</td><td>---</td>
   <td style="text-align: right;">---</td><td>---</td>
  </tr>
  <tr>
   <td>thread-ring (500000)</td>
-  <td style="text-align: right;"> 9.96</td><td>~ 1.00</td>
-  <td style="text-align: right;"> 8.19</td><td>+ 1.22</td>
+  <td style="text-align: right;"> 9.93</td><td>~ 1.00</td>
+  <td style="text-align: right;"> 8.25</td><td>+ 1.20</td>
   <td style="text-align: right;">---</td><td>---</td>
   <td style="text-align: right;">---</td><td>---</td>
   <td style="text-align: right;">---</td><td>---</td>
+ </tr>
+ <tr>
+  <td>fib (30)</td>
+  <td style="text-align: right;"> 0.68</td><td>~ 1.00</td>
+  <td style="text-align: right;"> 1.31</td><td>- 1.92</td>
+  <td style="text-align: right;"> 0.50</td><td>+ 1.35</td>
+  <td style="text-align: right;"> 0.12</td><td>+ 5.61</td>
+  <td style="text-align: right;"> 0.65</td><td>+ 1.06</td>
+ </tr>
+ <tr>
+  <td>fib (35)</td>
+  <td style="text-align: right;"> 2.29</td><td>~ 1.00</td>
+  <td style="text-align: right;"> 2.99</td><td>- 1.30</td>
+  <td style="text-align: right;"> 5.23</td><td>- 2.28</td>
+  <td style="text-align: right;"> 0.48</td><td>+ 4.74</td>
+  <td style="text-align: right;"> 7.07</td><td>- 3.08</td>
+ </tr>
+ <tr>
+  <td>fib (40)</td>
+  <td style="text-align: right;">22.46</td><td>~ 1.00</td>
+  <td style="text-align: right;">20.75</td><td>+ 1.08</td>
+  <td style="text-align: right;">57.32</td><td>- 2.55</td>
+  <td style="text-align: right;"> 4.81</td><td>+ 4.67</td>
+  <td style="text-align: right;">78.76</td><td>- 3.51</td>
  </tr>
 </table>
 

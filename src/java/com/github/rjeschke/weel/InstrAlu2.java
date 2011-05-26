@@ -18,6 +18,7 @@ class InstrAlu2 implements Instr
             Alu2InstrType.mul,
             Alu2InstrType.div,
             Alu2InstrType.mod,
+            Alu2InstrType.pow,
             Alu2InstrType.cmpEq,
             Alu2InstrType.cmpNe,
             Alu2InstrType.cmpGt,

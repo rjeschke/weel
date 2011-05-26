@@ -1,28 +1,5 @@
-/*
-require 'benchmark'
-
-def fib_ruby(n)
-  if n < 2
-    n
-  else
-    fib_ruby(n - 2) + fib_ruby(n - 1)
-  end
-end
-
-TIMES = (ARGV[0] || 5).to_i
-N = (ARGV[1] || 30).to_i
-TIMES.times {
-  puts Benchmark.measure { puts fib_ruby(N) }
-}
-
-*/
-
 func fib_weel(n)
-  if n < 2 then
-    return n
-  else
-    return fib_weel(n - 2) + fib_weel(n - 1)
-  end
+    return n < 2 ? n : fib_weel(n - 2) + fib_weel(n - 1);
 end
 
 sub main(args)

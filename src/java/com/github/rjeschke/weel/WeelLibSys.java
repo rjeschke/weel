@@ -4,6 +4,10 @@
  */
 package com.github.rjeschke.weel;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
 import com.github.rjeschke.weel.ValueMap.ValueMapIterator;
 import com.github.rjeschke.weel.annotations.WeelRawMethod;
 
@@ -669,5 +673,106 @@ public final class WeelLibSys
     public final static void pcall9(final WeelRuntime runtime)
     {
         pcall(runtime, 8);
+    }
+
+    /**
+     * Executes an external command.
+     * 
+     * @param cmd
+     *            The command.
+     * @param args
+     *            The arguments.
+     * @return The return values.
+     */
+    private final static ValueMap pexec(final ValueMap args)
+    {
+        final ValueMap ret = new ValueMap();
+        if (args != null && args.size > 0)
+        {
+            final String[] cmda = new String[args.size];
+            for (int i = 0; i < args.size; i++)
+            {
+                cmda[i] = args.data.get(i).toString();
+            }
+
+            try
+            {
+                final ProcessBuilder pb = new ProcessBuilder(cmda);
+                pb.redirectErrorStream();
+                final Process p = pb.start();
+                final BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(p.getInputStream(), "UTF-8"));
+                final StringBuilder sb = new StringBuilder();
+                int r = 0;
+                for (;;)
+                {
+                    try
+                    {
+                        r = p.exitValue();
+                        break;
+                    }
+                    catch (IllegalThreadStateException e)
+                    {
+                        //
+                    }
+                    int c = reader.read();
+                    while (c != -1)
+                    {
+                        sb.append((char) c);
+                        c = reader.read();
+                    }
+                    try
+                    {
+                        Thread.sleep(10);
+                    }
+                    catch (InterruptedException e)
+                    {
+                        // ignore
+                    }
+                }
+                int c = reader.read();
+                while (c != -1)
+                {
+                    sb.append((char) c);
+                    c = reader.read();
+                }
+                reader.close();
+                ret.append(new Value(r));
+                ret.append(new Value(sb.toString()));
+            }
+            catch (IOException e)
+            {
+                ret.append(new Value(-1));
+                ret.append(new Value(e.toString()));
+            }
+        }
+        else
+        {
+            ret.append(new Value(-1));
+            ret.append(new Value());
+        }
+        return ret;
+    }
+
+    /**
+     * <code>ret = pexec(cmd)</code>
+     * 
+     * @param runtime
+     *            The runtime.
+     */
+    @WeelRawMethod(name = "pexec", args = 1, returnsValue = true)
+    public final static void pexec1(final WeelRuntime runtime)
+    {
+        final Value val = runtime.pop();
+        if(!val.isMap())
+        {
+            final ValueMap args = new ValueMap();
+            args.append(new Value(val.toString()));
+            runtime.load(pexec(args));
+        }
+        else
+        {
+            runtime.load(pexec(val.getMap()));
+        }
     }
 }
