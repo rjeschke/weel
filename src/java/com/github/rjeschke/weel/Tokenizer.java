@@ -328,6 +328,14 @@ final class Tokenizer
                 case '\'':
                     this.readString();
                     return this.token = Token.STRING;
+                case '`':
+                    this.readString();
+                    if(this.string.length() != 1)
+                    {
+                        throw new WeelException(this.error("Illegal character constant"));
+                    }
+                    this.number = this.string.charAt(0);
+                    return this.token = Token.NUMBER;
                 case '+':
                     this.read();
                     if (this.current == '=')

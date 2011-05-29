@@ -103,6 +103,14 @@ in the library)*.
     Allowed escape characters:
         \n  \r  \t  \'  \"  \\
 
+*   Character constants: (`number`)
+        ```a```
+        ```\n```
+        ```0```
+        
+    Allowed escape characters:
+        \n  \r  \t  \'  \"  \\
+
 *   Numbers: (`number`)
     *   Decimal:
             -10.3

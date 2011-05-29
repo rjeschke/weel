@@ -1013,9 +1013,6 @@ public final class WeelRuntime
      * <p>
      * <code>..., value1, value2 &rArr; ..., value1 * value2 </code>
      * </p>
-     * 
-     * @param operand
-     *            Value to multiply with.
      */
     public void mul()
     {
@@ -1030,6 +1027,9 @@ public final class WeelRuntime
      * <p>
      * <code>..., value &rArr; ..., value * operand</code>
      * </p>
+     * 
+     * @param operand
+     *            Value to multiply with.
      */
     public void mul(final double operand)
     {
