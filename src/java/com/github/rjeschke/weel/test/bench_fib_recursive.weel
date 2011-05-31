@@ -1,3 +1,11 @@
+private func fib_f(i, r, n)
+    return i > 0 ? fib_f(i - 1, n, r + n) : r;
+end
+
+func fib(n)
+    return fib_f(n, 0, 1);
+end
+
 func fib_weel(n)
     return n < 2 ? n : fib_weel(n - 2) + fib_weel(n - 1);
 end
@@ -5,6 +13,13 @@ end
 sub main(args)
     local times = toNum(args[0]) || 5;
     local n = toNum(args[1]) || 30;
+
+    for i = 1, times do
+        t = clock();
+        fib(n);
+        t = clock() - t;
+        println(i .. ": " .. t);
+    end
 
     for i = 1, times do
         t = clock();

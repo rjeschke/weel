@@ -5,6 +5,7 @@
 package com.github.rjeschke.weel;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 import com.github.rjeschke.weel.Variable.Type;
@@ -183,13 +184,10 @@ class WeelCode
                     + "' return a value" + this.source);
         }
 
+        this.refactorTailCalls();
+
         // Create frame
-        this.instrs.add(null);
-        for (int i = this.instrs.size() - 2; i >= 0; i--)
-        {
-            this.instrs.set(i + 1, this.instrs.get(i));
-        }
-        this.instrs.set(0, this.function != null ? new InstrOframe(
+        this.insertInstr(0, this.function != null ? new InstrOframe(
                 this.function.getNumArguments(), this.locals.size()
                         - this.function.getNumArguments()) : new InstrOframe(0,
                 this.locals.size()));
@@ -538,6 +536,102 @@ class WeelCode
                     break;
                 }
             }
+        }
+    }
+
+    /**
+     * Inserts an instruction.
+     * 
+     * @param index The index.
+     * @param ins The instruction.
+     */
+    private void insertInstr(final int index, final Instr ins)
+    {
+        if(index == this.instrs.size())
+        {
+            this.instrs.add(ins);
+        }
+        else
+        {
+            this.instrs.add(null);
+            for(int i = this.instrs.size() - 2; i >= index; i--)
+            {
+                this.instrs.set(i + 1, this.instrs.get(i));
+            }
+            this.instrs.set(index, ins);
+        }
+    }
+    
+    /**
+     * Refactors tail calls.
+     */
+    private void refactorTailCalls()
+    {
+        if(this.instrs.size() < 1 || this.function == null)
+        {
+            return;
+        }
+        
+        final int fidx = this.function.index;
+        boolean changed = false;
+        final int l = this.registerLabel();
+        if(this.instrs.get(this.instrs.size() - 1).getType() == Op.LABEL)
+        {
+            int n = this.instrs.size() - 1;
+            final ArrayList<Integer> labels = new ArrayList<Integer>();
+            while(n > 0 && this.instrs.get(n).getType() == Op.LABEL)
+            {
+                labels.add(((InstrLabel)this.instrs.get(n--)).index);
+            }
+            n++;
+            
+            for(int i = 1; i < this.instrs.size() - 1; i++)
+            {
+                final Instr a = this.instrs.get(i);
+                final Instr b = this.instrs.get(i + 1);
+                if(a.getType() == Op.CALL && (b.getType() == Op.GOTO || (i + 1) == n))
+                {
+                    final InstrCall call = (InstrCall)a;
+                    if((call.func.index != fidx) || (b.getType() == Op.GOTO && !labels.contains(((InstrGoto)b).index)))
+                    {
+                        continue;
+                    }
+
+                    // Remove return/exit GOTO
+                    if(b.getType() == Op.GOTO)
+                    {
+                        this.instrs.remove(i + 1);
+                    }
+
+                    // Place new GOTO
+                    this.instrs.set(i, new InstrGoto(l));
+                    for(int p = 0; p < this.function.arguments; p++)
+                    {
+                        this.insertInstr(i, new InstrVarStore(VarInstrType.LOCAL, p));
+                    }
+                    i += this.function.arguments;
+                    changed = true;
+                }
+            }
+        }
+        else if(this.instrs.get(this.instrs.size() - 1).getType() == Op.CALL)
+        {
+            final InstrCall call = (InstrCall)this.instrs.get(this.instrs.size() - 1);
+            if(call.func.index == fidx)
+            {
+                final int i = this.instrs.size() - 1;
+                this.instrs.set(i, new InstrGoto(l));
+                for(int p = 0; p < this.function.arguments; p++)
+                {
+                    this.insertInstr(i, new InstrVarStore(VarInstrType.LOCAL, p));
+                }
+                changed = true;
+            }
+        }
+        
+        if(changed)
+        {
+            this.insertInstr(0, new InstrLabel(l));
         }
     }
     
