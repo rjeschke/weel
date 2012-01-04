@@ -164,6 +164,37 @@ public final class Value
         return v;
     }
 
+    /**
+     * Returns an internal String representation of this value.
+     * 
+     * @return The String.
+     */
+    public String toIntString()
+    {
+        switch (this.type)
+        {
+        case NULL:
+            return "null";
+        case NUMBER:
+        {
+            // Hack
+            final long temp = (long)this.number;
+            if(temp == this.number)
+                return Long.toString(temp);
+            return Double.toString(this.number);
+        }
+        case STRING:
+            return "\"" + InstrLoad.escape((String)this.object) + "\"";
+        case MAP:
+            return ((ValueMap)this.object).toString();
+        case FUNCTION:
+            return ((WeelFunction)this.object).toString();
+        case OBJECT:
+            return this.object.toString();
+        }
+        return "null";
+    }
+    
     /** @see java.lang.Object#toString() */
     @Override
     public String toString()
@@ -183,7 +214,7 @@ public final class Value
         case STRING:
             return (String)this.object;
         case MAP:
-            return "map(" + ((ValueMap)this.object).size + ")";
+            return ((ValueMap)this.object).toString();
         case FUNCTION:
             return ((WeelFunction)this.object).toString();
         case OBJECT:

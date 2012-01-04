@@ -5,7 +5,6 @@
 package com.github.rjeschke.weel;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 
 import com.github.rjeschke.weel.Variable.Type;

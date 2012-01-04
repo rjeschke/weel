@@ -630,6 +630,34 @@ public final class ValueMap
     @Override
     public String toString()
     {
-        return "map(" + this.size + ")";
+        if(this.size == 0)
+            return "{}";
+        final StringBuilder sb = new StringBuilder();
+        sb.append('{');
+        if(this.ordered)
+        {
+            sb.append(this.data.get(0).toIntString());
+            for(int i = 1; i < this.size; i++)
+            {
+                sb.append(',');
+                sb.append(this.data.get(i).toIntString());
+            }
+        }
+        else
+        {
+            final Value k = new Value(), v = new Value();
+            final ValueMapIterator it = new ValueMapIterator(this);
+            while(it.next(k, v))
+            {
+                if(sb.length() > 1)
+                    sb.append(',');
+                sb.append('[');
+                sb.append(k.toIntString());
+                sb.append("]=");
+                sb.append(v.toIntString());
+            }
+        }
+        sb.append('}');
+        return sb.toString();
     }
 }
