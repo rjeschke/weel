@@ -19,11 +19,11 @@ elements from C, C++, Java and functional programming languages.
 
 As usual the term 'fast' is relative. Weel is of course much slower than
 doing the same things in pure Java, but it beats most other existing 
-dynamically typed languages running on the JVM *( I'll prove this later ;-) )*.
+dynamically typed languages running on the JVM.
 
 ### Development state
 
-*beta*
+*still-beta*
 
 ### Features
 
@@ -37,7 +37,8 @@ For more informations have a look [here](http://rjeschke.github.com/weel/).
 
 ### TODO
 
-*   Switch to Apache v2 license
+*   Var-args
+*   Call anonymous functions without assigning them (e.g. @{println "Doh!"}(); )
 *   Finish standard library (Map/IO functions)
 *   Add a security mechanism to control which libraries/functions get loaded
 *   Add mechanism for user library registering and loading on demand

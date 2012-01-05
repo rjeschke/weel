@@ -159,9 +159,9 @@ public final class Run
         System.out.println("Options:");
         System.out.println("--debug    : Enabled debug mode (asserts)");
         System.out.println("--dump     : Dump generated intermediate code");
-        System.out.println("--vstack n : Sets the value stack size to 'n' slots");
-        System.out.println("--fstack n : Sets the frame stack size to 'n' slots");
-        System.out.println("--cstack n : Sets the closure function stack size to 'n' slots");
+        System.out.println("--vstack n : Sets the value stack size to 'n' slots (Default: " + Weel.DEFAULT_VALUE_STACK_SIZE + ")");
+        System.out.println("--fstack n : Sets the frame stack size to 'n' slots (Default: " + Weel.DEFAULT_FRAME_STACK_SIZE + ")");
+        System.out.println("--cstack n : Sets the closure function stack size to 'n' slots (Default: " + Weel.DEFAULT_CLOSURE_STACK_SIZE + ")");
     }
     
     private static int parseSize(final String sz)
