@@ -597,9 +597,7 @@ public final class WeelLibSys
     @WeelRawMethod(name = "pcall", args = 2, returnsValue = true)
     public final static void pcall2(final WeelRuntime runtime)
     {
-        System.out.println(runtime.getStackPointer());
         pcall(runtime, 1);
-        System.out.println(runtime.getStackPointer());
     }
 
     /**
