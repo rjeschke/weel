@@ -1,0 +1,299 @@
+ms = {};
+
+func ms:fold(fc)
+    assert(isMap(this),
+        "Value is not a map");
+    
+    if size(this) == 0 then
+        return null;
+    elseif size(this) == 1 then
+        return this[0];
+    else
+        ret = fc(this[0], this[1]);
+        for i = 2, size(this) - 1 do
+            ret = fc(ret, this[i]);
+        end
+        return ret;
+    end
+end 
+
+func ms:populate(sz, fc)
+    assert(sz > 0,
+        "Size is zero or less");
+    assert(isMap(this),
+        "Value is not a map");
+    assert(funcCheck(fc, 1, true) || funcCheck(fc, 2, true), 
+        "Illegal populator function signature");
+     
+    if funcArgs(fc) == 2 then
+        for i = 0, sz - 1 do
+            this[] = fc(this, i);
+        end
+    else
+        for i = 0, sz - 1 do
+            this[] = fc(i);
+        end
+    end
+    return this;
+end
+
+func ms:filter(fc)
+    assert(funcCheck(fc, 1, true),
+        "Illegal filter function.");
+    assert(isMap(this),
+        "Value is not a map");
+    
+    ret = {};
+    foreach v in this do
+        if fc(v) then
+            ret[] = v;
+        end
+    end
+    return ret;
+end
+
+sub ms:print()
+    assert(isMap(this),
+        "Value is not a map");
+    
+    print("{");
+    if size(this) then
+        print(this[0]);
+        for i = 1, size(this) - 1 do
+            print(", "..this[i]);
+        end
+    end
+    println("}"); 
+end
+
+funcReg("map", ms);
+
+println(
+    {}
+        ::populate(9, @{(i) return i + 1})
+        ::filter(
+            @{ (v) 
+                return (v % 3) && (v % 5) ? false : true;
+             })
+        ::fold(
+            @{ (a, b) 
+                return a + b;
+             })
+       );
+
+println(
+    {}
+        ::populate(999, @{(i) return i + 1})
+        ::filter(
+            @{ (v) 
+                return (v % 3) && (v % 5) ? false : true;
+             })
+        ::fold(
+            @{ (a, b) 
+                return a + b;
+             })
+       );
+
+
+funcReg("number", {
+    toString = @{(v)
+        return toStr(v);
+    },
+    print = @{(v)
+        println(v);
+    },
+    isEven = @{(v)
+        return !(v % 2);
+    },
+    isOdd = @{(v)
+        return v % 2 != 0;
+    },
+    bool = @{(v)
+        return v ? "true" : "false";
+    }
+});
+
+funcReg("null", "check", @{ (v)
+        println("Calling on NULL ... scary^^");
+    }
+);
+
+// Fibonacci
+fib = {}::populate(1477, @{(l, i)
+    return i < 2 ? i : l[i - 2] + l[i - 1];
+});
+
+println(
+    {}
+    ::populate(1477, 
+        @{(l, i)
+            return i < 2 ? i : l[i - 2] + l[i - 1];
+        })
+    ::filter(
+        @{(a) 
+            return a <= 4000000 && !(a % 2);
+        })
+    ::fold(
+        @{ (a, b) 
+            return a + b;
+        })
+    );
+
+
+fib::print();
+
+/*
+println(0::isEven()::bool())
+println(1::isOdd()::bool())
+println(2::isEven()::bool())
+null::check();
+
+println(mapIsList({0, 1, 2})::bool());
+println(mapIsList({0, 1, test = 2})::bool());
+
+
+str = "";
+t = clock();
+for i = 0, 65535 do
+    str ..= "A";
+end
+t = clock() - t;
+println(t);
+
+sb = new(java.lang.StringBuilder, 65536);
+//sb->clear();
+t = clock();
+for i = 0, 65535 do
+    sb->append("A");
+end
+t = clock() - t;
+println(t);
+
+
+// Lazylist
+
+lazylist = {
+    list = null,
+    populator = null,
+    initialized = false
+};
+
+sub lazylist:ctor(fn)
+    assert(funcCheck(fn, 1, true) || funcCheck(fn, 2, true),
+        "Illegal populator function signature"); 
+    this->initialized = true;
+    this->list = {};
+    this->populator = fn;
+end
+
+func lazylist:size()
+    assert(this->initialized,
+        "Lazylist not initialized!");
+        
+    return size(this->list);
+end
+
+func lazylist:get(i)
+    assert(this->initialized,
+        "Lazylist not initialized!");
+        
+    if i >= size(this->list) then
+        if funcArgs(this->populator) == 2 then
+            for n = size(this->list), i do
+                this->list[] = this.populator(this->list, n);
+            end
+        else
+            for n = size(this->list), i do
+                this->list[] = this.populator(n);
+            end
+        end 
+    end
+    return this->list[i];
+end
+
+ll = new(lazylist, @{(l, i)
+    return i < 2 ? i : l[i - 2] + l[i - 1];
+}); 
+
+ll.list::print();
+
+println(ll->get(10))
+
+ll.list::print();
+
+println(ll->get(50))
+
+ll.list::print();
+*/
+
+println(floor(rand(-128, 128)));
+println(rand(5));
+println(rand(5));
+
+private xk = "cd";
+
+sub priv()
+    println("xk"..xk);
+end
+
+priv();
+
+private sem;
+
+func haha()
+    for i = 0, 9 do
+        println(i);
+        sleep(500);
+    end
+    return "Finished!";
+end
+
+sub hahaEnd(val)
+    println(val);
+    sem->acquire();
+end
+
+
+local nums = 10;
+
+sem = new(java.Semaphore, nums);
+
+wrapper = 
+    @{ (value)
+        return
+            @{
+                for i = 0, 9 do
+                    println(value..": "..i);
+                    sleep(500);
+                end
+                return value..": Finished!";
+            }
+    }
+
+threads = {}
+for i = 0, nums - 1 do
+    threads[i] = new(java.Thread, wrapper("ID"..(i + 1)), hahaEnd);
+    threads[i]->start();
+    sleep(100);
+end
+
+str = "";
+t = clock();
+for i = 0, 65535 do
+    str ..= "A";
+end
+t = clock() - t;
+println(t);
+
+sb = new(java.StringBuilder, 65536);
+//sb->clear();
+t = clock();
+for i = 0, 65535 do
+    sb->append("A");
+end
+t = clock() - t;
+println(t);
+
+while sem->available() do
+    sleep(100);
+end

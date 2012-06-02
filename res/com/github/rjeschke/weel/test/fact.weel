@@ -1,0 +1,44 @@
+/*
+Testing new tail call elimination feature
+*/
+
+// Tail recursive factorial
+private func fact_f(n, result)
+    return n > 0 ? fact_f(n - 1, result * n) : result;
+end
+
+func fact(n)
+    return fact_f(n, 1);
+end
+
+t = clock();
+println(fact(1000))
+t = clock() - t;
+println(t);
+
+
+// Tail recursive loop
+private sub loop(n, m)
+    if n < m then
+        loop(n + 1, m);
+    else
+        println("Done: "..m); 
+    end
+end
+
+sub loop(m)
+    loop(0, m);
+end
+
+loop(10000000);
+
+// Tail recursive fibonacci
+private func fib_f(i, r, n)
+    return i > 0 ? fib_f(i - 1, n, r + n) : r;
+end
+
+func fib(n)
+    return fib_f(n, 0, 1);
+end
+
+println(fib(1000))

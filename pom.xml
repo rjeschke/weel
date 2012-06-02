@@ -83,6 +83,12 @@
     
     <sourceDirectory>${basedir}/src/java</sourceDirectory>
 
+    <resources>
+      <resource>
+        <directory>${basedir}/res</directory>
+      </resource>
+    </resources>
+
   </build>
   
   <dependencies>

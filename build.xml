@@ -51,6 +51,9 @@
 
   <target name="jar" depends="compile" description="Creates the binary release inside build/jar">
     <mkdir dir="build/jar"/>
+    <copy toDir="build/classes">
+      <fileset dir="res"/>
+    </copy>
     <jar destfile="build/jar/weel.jar" basedir="build/classes"/>
   </target>
 
